@@ -1,9 +1,4 @@
-import { hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-const defaultCompanyName = "Confecção Modelo";
-const defaultAdminEmail = "admin@confeccontrol.local";
-const defaultAdminPassword = "admin123";
 
 // Cria as etapas de produção padrão para uma empresa nova.
 export async function seedCompanyStages(companyId: string) {
@@ -19,44 +14,4 @@ export async function seedCompanyStages(companyId: string) {
       { companyId, name: "Entregue", position: 8, color: "#6f675b" },
     ],
   });
-}
-
-// Garante que exista pelo menos um usuário dono para a empresa poder logar.
-export async function ensureDefaultUser(companyId: string) {
-  const existing = await prisma.user.findFirst({ where: { companyId } });
-  if (existing) return existing;
-
-  return prisma.user.create({
-    data: {
-      companyId,
-      name: "Administrador",
-      email: defaultAdminEmail,
-      password: hashPassword(defaultAdminPassword),
-      role: "ADMIN",
-    },
-  });
-}
-
-export async function getDefaultCompany() {
-  const existing = await prisma.company.findFirst({
-    orderBy: { createdAt: "asc" },
-  });
-
-  if (existing) {
-    await ensureDefaultUser(existing.id);
-    return existing;
-  }
-
-  const company = await prisma.company.create({
-    data: {
-      name: defaultCompanyName,
-      email: "admin@confeccontrol.local",
-      phone: "(11) 99999-9999",
-    },
-  });
-
-  await seedCompanyStages(company.id);
-  await ensureDefaultUser(company.id);
-
-  return company;
 }

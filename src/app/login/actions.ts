@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { createSession, destroySession, verifyPassword } from "@/lib/auth";
-import { getDefaultCompany } from "@/lib/db-bootstrap";
 import { prisma } from "@/lib/prisma";
 
 export type LoginState = { error?: string };
@@ -14,9 +13,6 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
   if (!email || !password) {
     return { error: "Informe e-mail e senha." };
   }
-
-  // Garante empresa + usuário admin padrão na primeira execucao.
-  await getDefaultCompany();
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || !user.active || !verifyPassword(password, user.password)) {

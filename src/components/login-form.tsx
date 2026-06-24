@@ -20,9 +20,8 @@ export function LoginForm() {
             type="email"
             required
             autoComplete="email"
-            defaultValue="admin@confeccontrol.local"
             className="h-11 w-full rounded-lg border border-[#d8cfbf] pl-10 pr-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
-            placeholder="admin@confeccontrol.com"
+            placeholder="voce@suaempresa.com"
           />
         </div>
       </label>
@@ -52,10 +51,6 @@ export function LoginForm() {
       >
         {pending ? "Entrando..." : "Entrar no painel"}
       </button>
-
-      <p className="text-center text-xs text-[#9a9285]">
-        Primeiro acesso: admin@confeccontrol.local / admin123
-      </p>
     </form>
   );
 }
