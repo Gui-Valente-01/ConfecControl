@@ -1,0 +1,165 @@
+"use server";
+
+import { StockMovementType } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import type { FormState } from "@/lib/form-state";
+import { prisma } from "@/lib/prisma";
+
+function quantityFromText(value: string) {
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function revalidateStock() {
+  revalidatePath("/");
+  revalidatePath("/estoque");
+  revalidatePath("/produtos");
+}
+
+export async function createMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const name = String(formData.get("name") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
+  const unit = String(formData.get("unit") ?? "").trim();
+  const current = quantityFromText(String(formData.get("current") ?? ""));
+  const min = quantityFromText(String(formData.get("min") ?? ""));
+  const supplier = String(formData.get("supplier") ?? "").trim();
+
+  if (!name) return { error: "Informe o nome do material." };
+
+  const companyId = await requireCompanyId();
+
+  const material = await prisma.material.create({
+    data: {
+      companyId,
+      name,
+      category: category || null,
+      unit: unit || "unidades",
+      currentQuantity: current,
+      minimumQuantity: min,
+      supplier: supplier || null,
+    },
+  });
+
+  // Registra o saldo inicial como entrada para o histórico.
+  if (current > 0) {
+    await prisma.stockMovement.create({
+      data: { materialId: material.id, type: "IN", quantity: current, note: "Saldo inicial" },
+    });
+  }
+
+  revalidateStock();
+  return { success: `Material ${name} cadastrado.` };
+}
+
+export async function updateMaterialAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!id || !name) return;
+
+  const companyId = await adminCompanyId();
+  if (!companyId) return; // só o Dono edita
+
+  await prisma.material.updateMany({
+    where: { id, companyId },
+    data: {
+      name,
+      category: String(formData.get("category") ?? "").trim() || null,
+      unit: String(formData.get("unit") ?? "").trim() || "unidades",
+      minimumQuantity: quantityFromText(String(formData.get("min") ?? "")),
+      supplier: String(formData.get("supplier") ?? "").trim() || null,
+    },
+  });
+
+  revalidateStock();
+}
+
+export async function deleteMaterialAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const companyId = await requireCompanyId();
+  await prisma.material.deleteMany({ where: { id, companyId } });
+
+  revalidateStock();
+}
+
+const movementTypes: StockMovementType[] = ["IN", "OUT", "ADJUSTMENT"];
+
+export async function registerStockMovementAction(formData: FormData) {
+  const materialId = String(formData.get("materialId") ?? "");
+  const typeRaw = String(formData.get("type") ?? "");
+  const quantity = quantityFromText(String(formData.get("quantity") ?? ""));
+  const note = String(formData.get("note") ?? "").trim();
+
+  if (!materialId || !movementTypes.includes(typeRaw as StockMovementType) || quantity < 0) return;
+  const type = typeRaw as StockMovementType;
+
+  const companyId = await requireCompanyId();
+
+  await prisma.$transaction(async (tx) => {
+    // Confere que o material pertence a empresa e bloqueia o registro saldo errado.
+    const material = await tx.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } });
+    if (!material) return;
+
+    // Atualiza o saldo de forma atômica no banco (evita lost update em movimentos concorrentes).
+    if (type === "IN") {
+      await tx.material.update({ where: { id: materialId }, data: { currentQuantity: { increment: quantity } } });
+    } else if (type === "OUT") {
+      await tx.$executeRaw`
+        UPDATE \`materiais\`
+        SET \`currentQuantity\` = GREATEST(0, \`currentQuantity\` - ${quantity})
+        WHERE \`id\` = ${materialId} AND \`companyId\` = ${companyId}`;
+    } else {
+      await tx.material.update({ where: { id: materialId }, data: { currentQuantity: quantity } }); // ADJUSTMENT: saldo absoluto
+    }
+
+    await tx.stockMovement.create({
+      data: { materialId, type, quantity, note: note || null },
+    });
+  });
+
+  revalidateStock();
+}
+
+// --------- Ficha tecnica (BOM): materiais que cada produto consome ---------
+
+export async function setProductMaterialAction(formData: FormData) {
+  const productId = String(formData.get("productId") ?? "");
+  const materialId = String(formData.get("materialId") ?? "");
+  const quantityPerUnit = quantityFromText(String(formData.get("quantityPerUnit") ?? ""));
+
+  if (!productId || !materialId || quantityPerUnit <= 0) return;
+
+  const companyId = await requireCompanyId();
+  const [product, material] = await Promise.all([
+    prisma.product.findFirst({ where: { id: productId, companyId }, select: { id: true } }),
+    prisma.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } }),
+  ]);
+  if (!product || !material) return;
+
+  await prisma.productMaterial.upsert({
+    where: { productId_materialId: { productId, materialId } },
+    update: { quantityPerUnit },
+    create: { productId, materialId, quantityPerUnit },
+  });
+
+  revalidatePath("/produtos");
+}
+
+export async function removeProductMaterialAction(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const companyId = await requireCompanyId();
+  // Garante que a ficha pertence a um produto da empresa.
+  const link = await prisma.productMaterial.findFirst({
+    where: { id, product: { companyId } },
+    select: { id: true },
+  });
+  if (!link) return;
+
+  await prisma.productMaterial.delete({ where: { id } });
+
+  revalidatePath("/produtos");
+}
