@@ -1,9 +1,9 @@
-// Service worker do Confekta (PWA).
+// Service worker do ConfecControl (PWA).
 // IMPORTANTE: cacheia APENAS assets estaticos imutaveis (build do Next e icones).
 // Paginas, dados e Server Actions SEMPRE vao para a rede — assim nao ha risco de
 // mostrar conteudo desatualizado ou de outro usuario quando offline.
 
-const CACHE = "confekta-static-v1";
+const CACHE = "confeccontrol-static-v1";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

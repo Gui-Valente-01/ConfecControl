@@ -15,12 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Confekta",
+  title: "ConfecControl",
   description: "Sistema para controle de pedidos, produção e clientes de confecções.",
-  applicationName: "Confekta",
+  applicationName: "ConfecControl",
   appleWebApp: {
     capable: true,
-    title: "Confekta",
+    title: "ConfecControl",
     statusBarStyle: "default",
   },
   icons: {

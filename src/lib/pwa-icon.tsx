@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-// Marca do Confekta desenhada em SVG (sem depender de fontes):
+// Marca do ConfecControl desenhada em SVG (sem depender de fontes):
 // quadrado escuro com um "C" teal e uma conta creme (alusao a linha/agulha).
 function iconSvg(rounded: boolean): string {
   const radius = rounded ? 112 : 0;

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Confekta — Gestão de Confecção",
-    short_name: "Confekta",
+    name: "ConfecControl — Gestão de Confecção",
+    short_name: "ConfecControl",
     description:
       "Sistema para controle de pedidos, produção e clientes de confecções.",
     lang: "pt-BR",
