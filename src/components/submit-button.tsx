@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 const defaultClass =
-  "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1d1b16] px-4 text-sm font-semibold text-white transition disabled:opacity-60";
+  "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-60";
 
 type SubmitButtonProps = {
   children: ReactNode;

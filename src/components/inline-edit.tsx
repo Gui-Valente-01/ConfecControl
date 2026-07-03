@@ -24,21 +24,21 @@ type InlineEditProps = {
 export function InlineEdit({ action, id, fields, message = "Alteracoes salvas." }: InlineEditProps) {
   return (
     <details className="mt-3 text-sm">
-      <summary className="inline-flex cursor-pointer items-center gap-1 text-xs font-semibold text-[#0f8b8d]">
+      <summary className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1 py-1 text-xs font-semibold text-[#087f7d] transition hover:bg-[#e8f6f3]">
         <Pencil size={12} aria-hidden="true" />
         Editar
       </summary>
-      <ToastForm action={action} message={message} className="mt-2 space-y-2">
+      <ToastForm action={action} message={message} className="mt-2 space-y-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
         <input type="hidden" name="id" value={id} />
         {fields.map((field) => (
           <label key={field.name} className="block">
-            <span className="text-xs text-[#766d5d]">{field.label}</span>
+            <span className="text-xs text-[#63736b]">{field.label}</span>
             {field.textarea ? (
               <textarea
                 name={field.name}
                 defaultValue={field.defaultValue}
                 placeholder={field.placeholder}
-                className="mt-1 min-h-16 w-full rounded-lg border border-[#d8cfbf] px-2 py-1.5 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                className="mt-1 min-h-16 w-full rounded-lg border border-[#c7d3ce] px-2 py-1.5 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
               />
             ) : (
               <input
@@ -47,12 +47,12 @@ export function InlineEdit({ action, id, fields, message = "Alteracoes salvas." 
                 defaultValue={field.defaultValue}
                 placeholder={field.placeholder}
                 required={field.required}
-                className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
               />
             )}
           </label>
         ))}
-        <button className="h-9 w-full rounded-lg bg-[#1d1b16] text-xs font-semibold text-white">Salvar alterações</button>
+        <button className="h-9 w-full rounded-lg bg-[#087f7d] text-xs font-semibold text-white transition hover:bg-[#05605e]">Salvar alterações</button>
       </ToastForm>
     </details>
   );

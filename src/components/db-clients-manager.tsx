@@ -3,6 +3,7 @@ import { deleteClientAction, updateClientAction } from "@/app/clientes/actions";
 import { ClientCreateForm } from "@/components/client-create-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { InlineEdit } from "@/components/inline-edit";
+import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency } from "@/lib/format";
@@ -40,37 +41,40 @@ export function DbClientsManager({ clients, canEdit }: DbClientsManagerProps) {
           ["Clientes ativos", String(activeClients), "já possuem pedidos"],
           ["Clientes novos", String(newClients), "sem pedido cadastrado"],
           ["Total vendido", centsToCurrency(totalValue), "somando pedidos reais"],
-        ].map(([label, value, note]) => (
-          <article key={label} className="rounded-lg border border-[#ded7ca] bg-white p-5 shadow-sm">
-            <p className="text-sm font-medium text-[#766d5d]">{label}</p>
-            <p className="mt-2 text-3xl font-semibold">{value}</p>
-            <p className="mt-4 text-sm text-[#6f675b]">{note}</p>
-          </article>
+        ].map(([label, value, note], index) => (
+          <MetricCard
+            key={label}
+            label={label}
+            value={value}
+            note={note}
+            icon={index === 2 ? undefined : Users}
+            tone={index === 1 ? "neutral" : "primary"}
+          />
         ))}
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <SectionCard eyebrow="Base comercial" title="Cadastro de clientes">
           {clients.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#d8cfbf] bg-[#fbf8f1] p-8 text-center">
-              <Users className="mx-auto text-[#0f8b8d]" size={28} aria-hidden="true" />
+            <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
+              <Users className="mx-auto text-[#087f7d]" size={28} aria-hidden="true" />
               <h3 className="mt-3 font-semibold">Nenhum cliente cadastrado</h3>
-              <p className="mt-2 text-sm text-[#6f675b]">Cadastre o primeiro cliente para iniciar os pedidos reais.</p>
+              <p className="mt-2 text-sm text-[#66756d]">Cadastre o primeiro cliente para iniciar os pedidos reais.</p>
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {clients.map((client) => {
                 const total = client.orders.reduce((sum, order) => sum + order.totalAmountInCents, 0);
                 return (
-                  <article key={client.id} className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-4">
+                  <article key={client.id} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm transition hover:border-[#c7d3ce]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex gap-3">
-                        <div className="flex size-11 items-center justify-center rounded-lg bg-white text-[#0f8b8d]">
+                        <div className="flex size-11 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
                           <Users size={20} aria-hidden="true" />
                         </div>
                         <div>
                           <h3 className="font-semibold">{client.name}</h3>
-                          <p className="mt-1 text-sm text-[#6f675b]">{client.contact || "Contato não informado"}</p>
+                          <p className="mt-1 text-sm text-[#66756d]">{client.contact || "Contato não informado"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -81,20 +85,20 @@ export function DbClientsManager({ clients, canEdit }: DbClientsManagerProps) {
                           action={deleteClientAction}
                           id={client.id}
                           title="Remover cliente"
-                          message={`Excluir o cliente ${client.name}? Esta acao não pode ser desfeita.`}
+                          message={`Excluir o cliente ${client.name}? Esta ação não pode ser desfeita.`}
                         />
                       </div>
                     </div>
                     <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                       <p>
-                        <span className="block text-[#766d5d]">Pedidos</span>
+                        <span className="block text-[#63736b]">Pedidos</span>
                         <strong>{client._count.orders}</strong>
                       </p>
                       <p>
-                        <span className="block text-[#766d5d]">Total vendido</span>
+                        <span className="block text-[#63736b]">Total vendido</span>
                         <strong>{centsToCurrency(total)}</strong>
                       </p>
-                      <p className="flex items-end gap-2 text-[#544d43]">
+                      <p className="flex items-end gap-2 text-[#405047]">
                         <Phone size={15} aria-hidden="true" />
                         {client.phone || "(00) 00000-0000"}
                       </p>

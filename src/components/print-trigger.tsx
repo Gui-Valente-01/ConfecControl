@@ -14,12 +14,12 @@ export function PrintTrigger() {
     <div className="print:hidden">
       <button
         onClick={() => window.print()}
-        className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#1d1b16] px-4 text-sm font-semibold text-white"
+        className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e]"
       >
         <Printer size={16} aria-hidden="true" />
         Imprimir / Salvar PDF
       </button>
-      <p className="mt-2 text-xs text-[#9a9285]">
+      <p className="mt-2 text-xs text-[#8a9890]">
         Dica: na janela de impressão, escolha o destino &quot;Salvar como PDF&quot; para baixar o recibo.
       </p>
     </div>

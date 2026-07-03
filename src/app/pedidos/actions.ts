@@ -1,6 +1,6 @@
 "use server";
 
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { PaymentStatus, Prisma } from "@prisma/client";
@@ -8,33 +8,37 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currencyToCents, dateInputToDate } from "@/lib/format";
 import { requireCompanyId } from "@/lib/auth";
+import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
+import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB
 
-export async function uploadAttachmentAction(formData: FormData) {
+export async function uploadAttachmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const orderId = String(formData.get("orderId") ?? "");
   const file = formData.get("file");
-  if (!orderId || !(file instanceof File) || file.size === 0) return;
-  if (file.size > MAX_UPLOAD_BYTES) return;
+  if (!orderId || !(file instanceof File) || file.size === 0) return { error: "Selecione um arquivo para enviar." };
+  if (file.size > MAX_UPLOAD_BYTES) return { error: "Arquivo acima de 8 MB. Envie um arquivo menor." };
+  if (!storageConfigured()) {
+    return { error: "Armazenamento de anexos não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY." };
+  }
 
   const companyId = await requireCompanyId();
   const order = await prisma.order.findFirst({ where: { id: orderId, companyId }, select: { id: true } });
-  if (!order) return;
+  if (!order) return { error: "Pedido não encontrado." };
 
   const safeName = file.name.replace(/[^\w.\-]/g, "_").slice(-60) || "arquivo";
-  const fileName = `${randomUUID()}-${safeName}`;
-  const uploadDir = join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(join(uploadDir, fileName), buffer);
+  const path = `${companyId}/${orderId}/${randomUUID()}-${safeName}`;
+  const url = await uploadAttachmentToStorage(path, await file.arrayBuffer(), file.type || null);
+  if (!url) return { error: "Falha ao enviar o arquivo. Tente novamente." };
 
   await prisma.attachment.create({
-    data: { orderId, name: file.name, url: `/uploads/${fileName}`, type: file.type || null },
+    data: { orderId, name: file.name, url, type: file.type || null },
   });
 
   revalidatePath(`/pedidos/${orderId}`);
+  return { success: "Anexo enviado." };
 }
 
 export async function deleteAttachmentAction(formData: FormData) {
@@ -50,13 +54,15 @@ export async function deleteAttachmentAction(formData: FormData) {
 
   await prisma.attachment.delete({ where: { id: attachment.id } });
 
-  // Remove o arquivo fisico (ignora erro se não existir).
   if (attachment.url.startsWith("/uploads/")) {
+    // Anexo antigo salvo no filesystem local, antes da migração para o Storage.
     try {
       await unlink(join(process.cwd(), "public", attachment.url));
     } catch {
       // arquivo já removido
     }
+  } else {
+    await removeAttachmentFromStorage(attachment.url);
   }
 
   revalidatePath(`/pedidos/${attachment.orderId}`);
@@ -117,7 +123,7 @@ function resolvePaymentStatus(paid: number, total: number): PaymentStatus {
   return "PARTIAL";
 }
 
-export async function createOrderAction(formData: FormData) {
+export async function createOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
@@ -125,13 +131,13 @@ export async function createOrderAction(formData: FormData) {
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
 
-  if (!clientId || items.length === 0) return;
+  if (!clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
   const companyId = await requireCompanyId();
 
   // Confirma que o cliente pertence a empresa do usuário.
   const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true } });
-  if (!client) return;
+  if (!client) return { error: "Cliente inválido." };
 
   // Completa descrição de itens que vieram so com produto selecionado (apenas produtos da empresa).
   const productIds = items.map((item) => item.productId).filter((id): id is string => Boolean(id));
@@ -156,9 +162,10 @@ export async function createOrderAction(formData: FormData) {
   // Cria pedido, itens, pagamento e baixa de estoque numa única transação.
   // O número é gerado dentro da transação; se houver corrida (P2002 no
   // @@unique [companyId, number]), tenta de novo com o próximo número.
+  let createdNumber: number | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      await prisma.$transaction(async (tx) => {
+      createdNumber = await prisma.$transaction(async (tx) => {
         const last = await tx.order.findFirst({
           where: { companyId },
           orderBy: { number: "desc" },
@@ -203,6 +210,7 @@ export async function createOrderAction(formData: FormData) {
         });
 
         await consumeStockForOrder(tx, created.id, number, companyId, normalizedItems);
+        return number;
       });
       break;
     } catch (e) {
@@ -213,11 +221,16 @@ export async function createOrderAction(formData: FormData) {
     }
   }
 
+  if (createdNumber === null) {
+    return { error: "Não foi possível gerar o número do pedido. Tente novamente." };
+  }
+
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
   revalidatePath("/financeiro");
   revalidatePath("/estoque");
+  return { success: `Pedido #${createdNumber} criado.` };
 }
 
 // Baixa automática de materiais conforme a ficha tecnica (BOM) dos produtos do pedido.
@@ -253,9 +266,9 @@ async function consumeStockForOrder(
   for (const [materialId, qty] of consumption) {
     if (qty <= 0) continue;
     const affected = await tx.$executeRaw`
-      UPDATE \`materiais\`
-      SET \`currentQuantity\` = GREATEST(0, \`currentQuantity\` - ${qty})
-      WHERE \`id\` = ${materialId} AND \`companyId\` = ${companyId}`;
+      UPDATE "materiais"
+      SET "currentQuantity" = GREATEST(0, "currentQuantity" - ${qty})
+      WHERE "id" = ${materialId} AND "companyId" = ${companyId}`;
     if (affected > 0) {
       await tx.stockMovement.create({
         data: { materialId, orderId, type: "OUT", quantity: qty, note: `Baixa automática do pedido #${orderNumber}` },
@@ -280,7 +293,7 @@ async function reverseStockForOrder(tx: Prisma.TransactionClient, orderId: strin
   await tx.stockMovement.deleteMany({ where: { orderId, type: "OUT" } });
 }
 
-export async function updateOrderAction(formData: FormData) {
+export async function updateOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
@@ -289,7 +302,7 @@ export async function updateOrderAction(formData: FormData) {
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
 
-  if (!id || !clientId || items.length === 0) return;
+  if (!id || !clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
   const companyId = await requireCompanyId();
 
@@ -297,10 +310,10 @@ export async function updateOrderAction(formData: FormData) {
     where: { id, companyId },
     include: { payments: { orderBy: { createdAt: "asc" } } },
   });
-  if (!order) return;
+  if (!order) return { error: "Pedido não encontrado." };
 
   const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true } });
-  if (!client) return;
+  if (!client) return { error: "Cliente inválido." };
 
   const productIds = items.map((item) => item.productId).filter((p): p is string => Boolean(p));
   const products = productIds.length

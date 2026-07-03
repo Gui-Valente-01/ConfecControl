@@ -24,16 +24,16 @@ export function MaterialCreateForm() {
     <form className="space-y-3" action={formAction}>
       {fields.map(([field, label, placeholder]) => (
         <label key={field} className="block">
-          <span className="text-sm font-medium text-[#544d43]">{label}</span>
+          <span className="text-sm font-medium text-[#405047]">{label}</span>
           <input
-            className="mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
             name={field}
             placeholder={placeholder}
             required={field === "name"}
           />
         </label>
       ))}
-      {state.error ? <p className="rounded-lg bg-[#fdecef] px-3 py-2 text-sm font-medium text-[#b23647]">{state.error}</p> : null}
+      {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
       <SubmitButton>
         <Plus size={17} aria-hidden="true" />
         Salvar material

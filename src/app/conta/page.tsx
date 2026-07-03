@@ -15,19 +15,19 @@ export default async function ContaPage() {
         <SectionCard eyebrow="Perfil" title="Meus dados">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-[#766d5d]">Nome</dt>
+              <dt className="text-[#63736b]">Nome</dt>
               <dd className="font-medium">{user.name}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#766d5d]">E-mail</dt>
+              <dt className="text-[#63736b]">E-mail</dt>
               <dd className="font-medium">{user.email}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#766d5d]">Cargo</dt>
+              <dt className="text-[#63736b]">Cargo</dt>
               <dd className="font-medium">{roleLabels[user.role]}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#766d5d]">Empresa</dt>
+              <dt className="text-[#63736b]">Empresa</dt>
               <dd className="font-medium">{user.companyName}</dd>
             </div>
           </dl>

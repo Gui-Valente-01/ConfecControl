@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MessageCircle, Paperclip, Pencil, Printer, Upload } from "lucide-react";
+import { ArrowLeft, MessageCircle, Paperclip, Pencil, Printer } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { AttachmentUploadForm } from "@/components/attachment-upload-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
-import { ToastForm } from "@/components/toast-form";
-import { deleteAttachmentAction, deleteOrderAction, uploadAttachmentAction } from "@/app/pedidos/actions";
+import { deleteAttachmentAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { centsToCurrency, formatDateTime, formatLongDate } from "@/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
@@ -46,14 +46,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const phoneDigits = (order.client.phone ?? "").replace(/\D/g, "");
   const whatsappPhone = phoneDigits ? (phoneDigits.length <= 11 ? `55${phoneDigits}` : phoneDigits) : "";
   const whatsappMessage = encodeURIComponent(
-    `Ola ${order.client.name}! Sobre o seu pedido #${order.number}: situação atual "${orderStatusLabels[order.status]}". Qualquer duvida estamos a disposição.`,
+    `Olá ${order.client.name}! Sobre o seu pedido #${order.number}: situação atual "${orderStatusLabels[order.status]}". Qualquer dúvida estamos à disposição.`,
   );
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${whatsappMessage}` : null;
 
   return (
     <AppShell eyebrow="Operação" title={`Pedido #${order.number}`} actionLabel="Novo pedido" user={user}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/pedidos" className="inline-flex items-center gap-2 text-sm font-semibold text-[#544d43] hover:underline">
+        <Link href="/pedidos" className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar para pedidos
         </Link>
@@ -73,14 +73,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             href={`/pedidos/${order.id}/imprimir`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d8cfbf] px-4 text-sm font-semibold text-[#544d43]"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
           >
             <Printer size={16} aria-hidden="true" />
             Imprimir / PDF
           </a>
           <Link
             href={`/pedidos/${order.id}/editar`}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#1d1b16] px-4 text-sm font-semibold text-white"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e]"
           >
             <Pencil size={16} aria-hidden="true" />
             Editar
@@ -90,7 +90,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             id={order.id}
             variant="full"
             label="Excluir"
-            message={`Excluir o pedido #${order.number}? Esta acao não pode ser desfeita.`}
+            message={`Excluir o pedido #${order.number}? Esta ação não pode ser desfeita.`}
           />
         </div>
       </div>
@@ -98,21 +98,21 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <SectionCard eyebrow="Resumo" title={order.client.name}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-xs font-medium text-[#766d5d]">Status da produção</p>
+            <p className="text-xs font-medium text-[#63736b]">Status da produção</p>
             <p className="mt-1"><StatusBadge tone="dark">{orderStatusLabels[order.status]}</StatusBadge></p>
-            {order.currentStage ? <p className="mt-1 text-xs text-[#9a9285]">Etapa: {order.currentStage.name}</p> : null}
+            {order.currentStage ? <p className="mt-1 text-xs text-[#8a9890]">Etapa: {order.currentStage.name}</p> : null}
           </div>
           <div>
-            <p className="text-xs font-medium text-[#766d5d]">Pagamento</p>
+            <p className="text-xs font-medium text-[#63736b]">Pagamento</p>
             <p className="mt-1"><StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge></p>
-            {order.paymentMethod ? <p className="mt-1 text-xs text-[#9a9285]">{order.paymentMethod}</p> : null}
+            {order.paymentMethod ? <p className="mt-1 text-xs text-[#8a9890]">{order.paymentMethod}</p> : null}
           </div>
           <div>
-            <p className="text-xs font-medium text-[#766d5d]">Data do pedido</p>
+            <p className="text-xs font-medium text-[#63736b]">Data do pedido</p>
             <p className="mt-1 text-sm font-medium">{formatLongDate(order.orderDate)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-[#766d5d]">Prazo de entrega</p>
+            <p className="text-xs font-medium text-[#63736b]">Prazo de entrega</p>
             <p className="mt-1 text-sm font-medium">
               {formatLongDate(order.deliveryDate)} {late ? <StatusBadge tone="warn">Atrasado</StatusBadge> : null}
             </p>
@@ -120,41 +120,41 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-4">
-            <p className="text-xs font-medium text-[#766d5d]">Total</p>
+          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium text-[#63736b]">Total</p>
             <p className="mt-1 text-2xl font-semibold">{centsToCurrency(order.totalAmountInCents)}</p>
           </div>
-          <div className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-4">
-            <p className="text-xs font-medium text-[#766d5d]">Pago</p>
-            <p className="mt-1 text-2xl font-semibold text-[#0f696b]">{centsToCurrency(order.paidAmountInCents)}</p>
+          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium text-[#63736b]">Pago</p>
+            <p className="mt-1 text-2xl font-semibold text-[#05605e]">{centsToCurrency(order.paidAmountInCents)}</p>
           </div>
-          <div className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-4">
-            <p className="text-xs font-medium text-[#766d5d]">Saldo</p>
-            <p className="mt-1 text-2xl font-semibold text-[#b23647]">{centsToCurrency(balanceInCents)}</p>
+          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+            <p className="text-xs font-medium text-[#63736b]">Saldo</p>
+            <p className="mt-1 text-2xl font-semibold text-[#9f2f42]">{centsToCurrency(balanceInCents)}</p>
           </div>
         </div>
 
         {order.client.phone || order.client.contact ? (
-          <p className="mt-4 text-sm text-[#6f675b]">
+          <p className="mt-4 text-sm text-[#66756d]">
             Contato: {[order.client.contact, order.client.phone].filter(Boolean).join(" - ")}
           </p>
         ) : null}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-3">
-            <p className="text-xs font-medium text-[#766d5d]">Responsável na produção</p>
+          <div className="rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm">
+            <p className="text-xs font-medium text-[#63736b]">Responsável na produção</p>
             <p className="mt-1 text-sm font-medium">{order.assignee || "Não definido"}</p>
           </div>
-          <div className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-3">
-            <p className="text-xs font-medium text-[#766d5d]">Terceirizada</p>
+          <div className="rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm">
+            <p className="text-xs font-medium text-[#63736b]">Terceirizada</p>
             {order.partner ? (
               <p className="mt-1 text-sm font-medium">
                 {order.partner.name}
-                {order.partner.service ? <span className="text-[#9a9285]"> - {order.partner.service}</span> : null}
-                {order.partner.phone ? <span className="block text-xs text-[#9a9285]">{order.partner.phone}</span> : null}
+                {order.partner.service ? <span className="text-[#8a9890]"> - {order.partner.service}</span> : null}
+                {order.partner.phone ? <span className="block text-xs text-[#8a9890]">{order.partner.phone}</span> : null}
               </p>
             ) : (
-              <p className="mt-1 text-sm text-[#9a9285]">Nenhuma</p>
+              <p className="mt-1 text-sm text-[#8a9890]">Nenhuma</p>
             )}
           </div>
         </div>
@@ -164,25 +164,25 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-sm">
             <thead>
-              <tr className="text-[#766d5d]">
-                <th className="border-b border-[#ded7ca] pb-3 font-semibold">Descrição</th>
-                <th className="border-b border-[#ded7ca] pb-3 font-semibold">Tam./Cor</th>
-                <th className="border-b border-[#ded7ca] pb-3 text-right font-semibold">Qtd.</th>
-                <th className="border-b border-[#ded7ca] pb-3 text-right font-semibold">Preço un.</th>
-                <th className="border-b border-[#ded7ca] pb-3 text-right font-semibold">Total</th>
+              <tr className="text-[#63736b]">
+                <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Descrição</th>
+                <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Tam./Cor</th>
+                <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Qtd.</th>
+                <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Preço un.</th>
+                <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th>
               </tr>
             </thead>
             <tbody>
               {order.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="border-b border-[#eee8dc] py-3 font-medium">
+                <tr key={item.id} className="transition hover:bg-[#f8faf9]">
+                  <td className="border-b border-[#edf2ef] py-3 font-medium">
                     {item.description}
-                    {item.product ? <span className="ml-1 text-xs text-[#9a9285]">({item.product.name})</span> : null}
+                    {item.product ? <span className="ml-1 text-xs text-[#8a9890]">({item.product.name})</span> : null}
                   </td>
-                  <td className="border-b border-[#eee8dc] py-3 text-[#6f675b]">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
-                  <td className="border-b border-[#eee8dc] py-3 text-right">{item.quantity}</td>
-                  <td className="border-b border-[#eee8dc] py-3 text-right">{centsToCurrency(item.unitPriceInCents)}</td>
-                  <td className="border-b border-[#eee8dc] py-3 text-right font-semibold">{centsToCurrency(item.totalPriceInCents)}</td>
+                  <td className="border-b border-[#edf2ef] py-3 text-[#66756d]">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
+                  <td className="border-b border-[#edf2ef] py-3 text-right">{item.quantity}</td>
+                  <td className="border-b border-[#edf2ef] py-3 text-right">{centsToCurrency(item.unitPriceInCents)}</td>
+                  <td className="border-b border-[#edf2ef] py-3 text-right font-semibold">{centsToCurrency(item.totalPriceInCents)}</td>
                 </tr>
               ))}
             </tbody>
@@ -193,14 +193,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <div className="grid gap-6 lg:grid-cols-2">
         <SectionCard eyebrow="Financeiro" title="Pagamentos">
           {order.payments.length === 0 ? (
-            <p className="text-sm text-[#6f675b]">Nenhum pagamento registrado.</p>
+            <p className="text-sm text-[#66756d]">Nenhum pagamento registrado.</p>
           ) : (
             <ul className="space-y-3">
               {order.payments.map((payment) => (
-                <li key={payment.id} className="flex items-center justify-between rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] px-4 py-3">
+                <li key={payment.id} className="flex items-center justify-between rounded-lg border border-[#d9e1dd] bg-white px-4 py-3 shadow-sm">
                   <div>
                     <p className="font-semibold">{centsToCurrency(payment.amountInCents)}</p>
-                    <p className="text-xs text-[#9a9285]">
+                    <p className="text-xs text-[#8a9890]">
                       {payment.method ?? "Sem forma definida"}
                       {payment.paidAt ? ` - pago em ${formatLongDate(payment.paidAt)}` : ""}
                     </p>
@@ -215,26 +215,26 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <SectionCard eyebrow="Produção" title="Histórico de etapas">
           <ul className="space-y-3">
             <li className="flex gap-3">
-              <div className="mt-1 size-2.5 shrink-0 rounded-full bg-[#0f8b8d]" aria-hidden="true" />
+              <div className="mt-1 size-2.5 shrink-0 rounded-full bg-[#087f7d]" aria-hidden="true" />
               <div>
                 <p className="text-sm font-medium">Pedido criado</p>
-                <p className="text-xs text-[#9a9285]">{formatDateTime(order.createdAt)}</p>
+                <p className="text-xs text-[#8a9890]">{formatDateTime(order.createdAt)}</p>
               </div>
             </li>
             {order.history.map((entry) => (
               <li key={entry.id} className="flex gap-3">
-                <div className="mt-1 size-2.5 shrink-0 rounded-full bg-[#edae49]" aria-hidden="true" />
+                <div className="mt-1 size-2.5 shrink-0 rounded-full bg-[#c88a2b]" aria-hidden="true" />
                 <div>
                   <p className="text-sm font-medium">
                     {entry.fromStage ? `${entry.fromStage.name} -> ` : ""}{entry.toStage.name}
                   </p>
-                  <p className="text-xs text-[#9a9285]">{formatDateTime(entry.changedAt)}</p>
-                  {entry.note ? <p className="mt-0.5 text-xs text-[#6f675b]">{entry.note}</p> : null}
+                  <p className="text-xs text-[#8a9890]">{formatDateTime(entry.changedAt)}</p>
+                  {entry.note ? <p className="mt-0.5 text-xs text-[#66756d]">{entry.note}</p> : null}
                 </div>
               </li>
             ))}
             {order.history.length === 0 ? (
-              <li className="text-sm text-[#6f675b]">Pedido ainda na etapa inicial.</li>
+              <li className="text-sm text-[#66756d]">Pedido ainda na etapa inicial.</li>
             ) : null}
           </ul>
         </SectionCard>
@@ -242,43 +242,31 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
       {order.internalNotes ? (
         <SectionCard eyebrow="Anotações" title="Observações internas">
-          <p className="whitespace-pre-line text-sm leading-6 text-[#544d43]">{order.internalNotes}</p>
+          <p className="whitespace-pre-line text-sm leading-6 text-[#405047]">{order.internalNotes}</p>
         </SectionCard>
       ) : null}
 
       <SectionCard eyebrow="Arquivos" title="Anexos (arte, molde, foto)">
-        <ToastForm action={uploadAttachmentAction} message="Anexo enviado." className="flex flex-wrap items-center gap-2">
-          <input type="hidden" name="orderId" value={order.id} />
-          <input
-            type="file"
-            name="file"
-            required
-            className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1d1b16] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
-          />
-          <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d8cfbf] px-4 text-sm font-semibold text-[#544d43]">
-            <Upload size={16} aria-hidden="true" />
-            Enviar
-          </button>
-        </ToastForm>
+        <AttachmentUploadForm orderId={order.id} />
 
         {order.attachments.length === 0 ? (
-          <p className="mt-4 text-sm text-[#9a9285]">Nenhum anexo. Envie a arte, o molde ou uma foto de referência (até 8 MB).</p>
+          <p className="mt-4 text-sm text-[#8a9890]">Nenhum anexo. Envie a arte, o molde ou uma foto de referência (até 8 MB).</p>
         ) : (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {order.attachments.map((attachment) => {
               const isImage = (attachment.type ?? "").startsWith("image/");
               return (
-                <li key={attachment.id} className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-3">
+                <li key={attachment.id} className="rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm transition hover:border-[#c7d3ce]">
                   <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="block">
                     {isImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={attachment.url} alt={attachment.name} className="mb-2 h-28 w-full rounded-md object-cover" />
                     ) : (
-                      <div className="mb-2 flex h-28 items-center justify-center rounded-md bg-white text-[#766d5d]">
+                      <div className="mb-2 flex h-28 items-center justify-center rounded-md bg-white text-[#63736b]">
                         <Paperclip size={24} aria-hidden="true" />
                       </div>
                     )}
-                    <span className="block truncate text-sm font-medium text-[#544d43]" title={attachment.name}>{attachment.name}</span>
+                    <span className="block truncate text-sm font-medium text-[#405047]" title={attachment.name}>{attachment.name}</span>
                   </a>
                   <div className="mt-2 flex justify-end">
                     <ConfirmDeleteButton

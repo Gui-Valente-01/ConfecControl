@@ -4,14 +4,14 @@ import { prisma } from "@/lib/prisma";
 export async function seedCompanyStages(companyId: string) {
   await prisma.productionStage.createMany({
     data: [
-      { companyId, name: "Recebido", position: 1, color: "#4c6fff" },
+      { companyId, name: "Recebido", position: 1, color: "#5b68d8" },
       { companyId, name: "Aguardando material", position: 2, color: "#8a6fdb" },
-      { companyId, name: "Corte", position: 3, color: "#0f8b8d" },
-      { companyId, name: "Costura", position: 4, color: "#edae49" },
+      { companyId, name: "Corte", position: 3, color: "#087f7d" },
+      { companyId, name: "Costura", position: 4, color: "#c88a2b" },
       { companyId, name: "Bordado/estampa", position: 5, color: "#c87941" },
-      { companyId, name: "Acabamento", position: 6, color: "#d1495b" },
-      { companyId, name: "Pronto", position: 7, color: "#1d1b16" },
-      { companyId, name: "Entregue", position: 8, color: "#6f675b" },
+      { companyId, name: "Acabamento", position: 6, color: "#c43f54" },
+      { companyId, name: "Pronto", position: 7, color: "#111a16" },
+      { companyId, name: "Entregue", position: 8, color: "#66756d" },
     ],
   });
 }

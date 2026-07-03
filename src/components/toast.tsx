@@ -37,10 +37,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {items.map((item) => {
           const tone =
             item.kind === "success"
-              ? "border-[#bfe3df] bg-[#eef7f6] text-[#0f696b]"
+              ? "border-[#bfe3df] bg-[#e8f6f3] text-[#05605e]"
               : item.kind === "error"
-                ? "border-[#f0c8ce] bg-[#fdecef] text-[#b23647]"
-                : "border-[#ded7ca] bg-white text-[#544d43]";
+                ? "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]"
+                : "border-[#d9e1dd] bg-white text-[#405047]";
           const Icon = item.kind === "error" ? XCircle : CheckCircle2;
           return (
             <div key={item.id} className={`pointer-events-auto flex items-start gap-2 rounded-lg border px-3 py-2 shadow-sm ${tone}`}>

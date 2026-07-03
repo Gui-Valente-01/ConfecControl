@@ -7,15 +7,15 @@ type SectionCardProps = {
 
 export function SectionCard({ eyebrow, title, children, action }: SectionCardProps) {
   return (
-    <section className="rounded-lg border border-[#ded7ca] bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-lg border border-[#d9e1dd] bg-white shadow-[var(--cc-shadow-soft)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#edf2ef] bg-[#fbfcfb] px-5 py-4">
         <div>
-          {eyebrow ? <p className="text-sm font-medium text-[#766d5d]">{eyebrow}</p> : null}
-          <h2 className="text-xl font-semibold">{title}</h2>
+          {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#63736b]">{eyebrow}</p> : null}
+          <h2 className="mt-0.5 text-lg font-semibold text-[#1c2420]">{title}</h2>
         </div>
         {action}
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="p-5">{children}</div>
     </section>
   );
 }

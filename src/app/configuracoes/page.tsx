@@ -30,7 +30,7 @@ export default async function ConfiguracoesPage() {
   }));
 
   return (
-    <AppShell eyebrow="Administracao" title="Configurações" actionLabel="Salvar" user={user}>
+    <AppShell eyebrow="Administração" title="Configurações" actionLabel="Salvar" user={user}>
       <DbSettingsPanel company={company} />
       <StagesManager stages={mappedStages} />
     </AppShell>

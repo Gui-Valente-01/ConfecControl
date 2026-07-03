@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f2ec;
-  --foreground: #171717;
+  --background: #f4f6f5;
+  --foreground: #1c2420;
+  --cc-surface: #ffffff;
+  --cc-surface-muted: #f8faf9;
+  --cc-surface-soft: #eef4f1;
+  --cc-border: #d9e1dd;
+  --cc-border-strong: #c7d3ce;
+  --cc-muted: #63736b;
+  --cc-muted-strong: #405047;
+  --cc-primary: #087f7d;
+  --cc-primary-dark: #05605e;
+  --cc-danger: #c43f54;
+  --cc-danger-dark: #9f2f42;
+  --cc-warning: #c88a2b;
+  --cc-info: #5b68d8;
+  --cc-ink: #111a16;
+  --cc-ring: rgba(8, 127, 125, 0.18);
+  --cc-shadow: 0 16px 40px rgba(17, 26, 22, 0.08);
+  --cc-shadow-soft: 0 8px 24px rgba(17, 26, 22, 0.06);
 }
 
 @theme inline {
@@ -16,6 +33,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: "Geist", "Geist Fallback", Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 * {
@@ -32,4 +50,31 @@ textarea {
 
 html {
   scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgba(8, 127, 125, 0.18);
+}
+
+input,
+select,
+textarea {
+  background-color: var(--cc-surface);
+  color: var(--foreground);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8a9890;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cc-primary);
+  outline-offset: 2px;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+  }
 }

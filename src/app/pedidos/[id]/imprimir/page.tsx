@@ -27,15 +27,15 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
   const balance = Math.max(0, order.totalAmountInCents - order.paidAmountInCents);
 
   return (
-    <main className="mx-auto max-w-3xl bg-white p-8 text-[#1d1b16]">
+    <main className="mx-auto max-w-3xl bg-white p-8 text-[#111a16]">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{order.company.name}</h1>
-          <p className="text-sm text-[#6f675b]">Ordem de produção / Recibo</p>
+          <p className="text-sm text-[#66756d]">Ordem de produção / Recibo</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-bold">Pedido #{order.number}</p>
-          <p className="text-sm text-[#6f675b]">{formatLongDate(order.orderDate)}</p>
+          <p className="text-sm text-[#66756d]">{formatLongDate(order.orderDate)}</p>
         </div>
       </div>
 
@@ -59,7 +59,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
 
       <table className="mt-6 w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b-2 border-[#1d1b16] text-left">
+          <tr className="border-b-2 border-[#111a16] text-left">
             <th className="py-2">Descrição</th>
             <th className="py-2">Tam./Cor</th>
             <th className="py-2 text-right">Qtd.</th>
@@ -69,7 +69,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         </thead>
         <tbody>
           {order.items.map((item) => (
-            <tr key={item.id} className="border-b border-[#ded7ca]">
+            <tr key={item.id} className="border-b border-[#d9e1dd]">
               <td className="py-2">{item.description}</td>
               <td className="py-2">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
               <td className="py-2 text-right">{item.quantity}</td>
@@ -98,7 +98,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         </section>
       ) : null}
 
-      <p className="mt-10 text-center text-xs text-[#9a9285]">Gerado pelo ConfecControl</p>
+      <p className="mt-10 text-center text-xs text-[#8a9890]">Gerado pelo ConfecControl</p>
     </main>
   );
 }

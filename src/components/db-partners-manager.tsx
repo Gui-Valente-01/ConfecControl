@@ -25,7 +25,7 @@ type DbPartner = {
 };
 
 const fieldClass =
-  "mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4";
+  "mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4";
 
 const suggestedServices = ["Bordado", "Estampa", "Lavanderia", "Corte", "Costura", "Estamparia", "Serigrafia"];
 
@@ -44,37 +44,37 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
       <SectionCard
         eyebrow="Parceiros"
         title="Empresas terceirizadas"
-        action={<div className="rounded-lg bg-[#f0e7d8] px-3 py-2 text-sm font-semibold text-[#544d43]">{partners.length} empresa(s)</div>}
+        action={<div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{partners.length} empresa(s)</div>}
       >
         {partners.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#d8cfbf] bg-[#fbf8f1] p-8 text-center">
-            <Handshake className="mx-auto text-[#0f8b8d]" size={28} aria-hidden="true" />
+          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
+            <Handshake className="mx-auto text-[#087f7d]" size={28} aria-hidden="true" />
             <h3 className="mt-3 font-semibold">Nenhuma terceirizada cadastrada</h3>
-            <p className="mt-2 text-sm text-[#6f675b]">Cadastre empresas que fazem serviços externos (bordado, estampa, lavanderia...).</p>
+            <p className="mt-2 text-sm text-[#66756d]">Cadastre empresas que fazem serviços externos (bordado, estampa, lavanderia...).</p>
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {partners.map((partner) => (
-              <article key={partner.id} className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-4">
+            <article key={partner.id} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm transition hover:border-[#c7d3ce]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex gap-3">
-                    <div className="flex size-11 items-center justify-center rounded-lg bg-white text-[#0f8b8d]">
+                    <div className="flex size-11 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
                       <Handshake size={20} aria-hidden="true" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{partner.name}</h3>
-                      <p className="mt-0.5 text-sm text-[#6f675b]">{partner.service || "Serviço não informado"}</p>
+                      <p className="mt-0.5 text-sm text-[#66756d]">{partner.service || "Serviço não informado"}</p>
                     </div>
                   </div>
                   <StatusBadge tone={partner.active ? "good" : "warn"}>{partner.active ? "Ativa" : "Inativa"}</StatusBadge>
                 </div>
 
-                <div className="mt-3 space-y-1 text-sm text-[#544d43]">
+                <div className="mt-3 space-y-1 text-sm text-[#405047]">
                   {partner.contact ? <p>Contato: {partner.contact}</p> : null}
                   {partner.phone ? <p className="flex items-center gap-2"><Phone size={13} aria-hidden="true" />{partner.phone}</p> : null}
                   {partner.email ? <p className="flex items-center gap-2"><Mail size={13} aria-hidden="true" />{partner.email}</p> : null}
-                  {partner.notes ? <p className="text-[#6f675b]">{partner.notes}</p> : null}
-                  <p className="text-xs text-[#9a9285]">{partner.orderCount} pedido(s) vinculado(s)</p>
+                  {partner.notes ? <p className="text-[#66756d]">{partner.notes}</p> : null}
+                  <p className="text-xs text-[#8a9890]">{partner.orderCount} pedido(s) vinculado(s)</p>
                 </div>
 
                 {canEdit ? (
@@ -100,7 +100,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
                   >
                     <input type="hidden" name="id" value={partner.id} />
                     <input type="hidden" name="active" value={(!partner.active).toString()} />
-                    <button className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#d8cfbf] px-3 text-xs font-semibold text-[#544d43] transition hover:bg-[#f0e7d8]">
+                    <button className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
                       <Power size={13} aria-hidden="true" />
                       {partner.active ? "Desativar" : "Ativar"}
                     </button>
@@ -121,33 +121,33 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
       <SectionCard eyebrow="Nova terceirizada" title="Cadastrar empresa">
         <form className="space-y-3" action={formAction}>
           <label className="block">
-            <span className="text-sm font-medium text-[#544d43]">Nome da empresa</span>
+            <span className="text-sm font-medium text-[#405047]">Nome da empresa</span>
             <input name="name" required className={fieldClass} placeholder="Ex.: Bordados Aurora" />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-[#544d43]">Serviço prestado</span>
+            <span className="text-sm font-medium text-[#405047]">Serviço prestado</span>
             <input name="service" list="services-list" className={fieldClass} placeholder="Bordado, estampa..." />
           </label>
           <label className="block">
-            <span className="text-sm font-medium text-[#544d43]">Contato</span>
+            <span className="text-sm font-medium text-[#405047]">Contato</span>
             <input name="contact" className={fieldClass} placeholder="Nome da pessoa" />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
-              <span className="text-sm font-medium text-[#544d43]">Telefone</span>
+              <span className="text-sm font-medium text-[#405047]">Telefone</span>
               <input name="phone" className={fieldClass} placeholder="(11) 99999-9999" />
             </label>
             <label className="block">
-              <span className="text-sm font-medium text-[#544d43]">E-mail</span>
+              <span className="text-sm font-medium text-[#405047]">E-mail</span>
               <input name="email" type="email" className={fieldClass} placeholder="contato@empresa.com" />
             </label>
           </div>
           <label className="block">
-            <span className="text-sm font-medium text-[#544d43]">Observações</span>
-            <textarea name="notes" className="mt-1 min-h-20 w-full rounded-lg border border-[#d8cfbf] px-3 py-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4" placeholder="Prazo medio, valores, etc." />
+            <span className="text-sm font-medium text-[#405047]">Observações</span>
+            <textarea name="notes" className="mt-1 min-h-20 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="Prazo médio, valores, etc." />
           </label>
 
-          {state.error ? <p className="rounded-lg bg-[#fdecef] px-3 py-2 text-sm font-medium text-[#b23647]">{state.error}</p> : null}
+          {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
 
           <SubmitButton>
             <Plus size={17} aria-hidden="true" />

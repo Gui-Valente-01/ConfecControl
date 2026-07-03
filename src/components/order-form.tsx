@@ -1,9 +1,11 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { useActionFeedback } from "@/components/toast";
 import { centsToCurrency } from "@/lib/format";
+import { emptyFormState, type FormState } from "@/lib/form-state";
 
 type ClientOption = { id: string; name: string };
 type ProductOption = { id: string; name: string; standardPriceInCents: number };
@@ -39,7 +41,7 @@ type OrderFormDefaults = {
 type OrderFormProps = {
   clients: ClientOption[];
   products: ProductOption[];
-  action: (formData: FormData) => void;
+  action: (prev: FormState, formData: FormData) => Promise<FormState>;
   submitLabel: string;
   orderId?: string;
   defaults?: OrderFormDefaults;
@@ -66,7 +68,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1d1b16] px-4 text-sm font-semibold text-white disabled:opacity-60"
+      className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60"
     >
       <Plus size={17} aria-hidden="true" />
       {pending ? "Salvando..." : label}
@@ -75,6 +77,9 @@ function SubmitButton({ label }: { label: string }) {
 }
 
 export function OrderForm({ clients, products, action, submitLabel, orderId, defaults }: OrderFormProps) {
+  const [state, formAction] = useActionState(action, emptyFormState);
+  useActionFeedback(state);
+
   const [items, setItems] = useState<EditableItem[]>(() => {
     if (defaults?.items?.length) {
       return defaults.items.map((item) =>
@@ -140,17 +145,17 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
   );
 
   return (
-    <form className="space-y-4" action={action}>
+    <form className="space-y-4" action={formAction}>
       {orderId ? <input type="hidden" name="id" value={orderId} /> : null}
       <input type="hidden" name="items" value={itemsJson} />
 
       <label className="block">
-        <span className="text-sm font-medium text-[#544d43]">Cliente</span>
+        <span className="text-sm font-medium text-[#405047]">Cliente</span>
         <select
           name="clientId"
           required
           defaultValue={defaults?.clientId ?? ""}
-          className="mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] bg-white px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+          className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
         >
           <option value="">Selecione</option>
           {clients.map((client) => (
@@ -161,11 +166,11 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#544d43]">Itens do pedido</span>
+          <span className="text-sm font-semibold text-[#405047]">Itens do pedido</span>
           <button
             type="button"
             onClick={addItem}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#d8cfbf] bg-white px-3 py-1.5 text-xs font-semibold text-[#544d43] transition hover:bg-[#f0e7d8]"
+            className="inline-flex items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 py-1.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
           >
             <Plus size={14} aria-hidden="true" />
             Adicionar item
@@ -173,14 +178,14 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
         </div>
 
         {items.map((item) => (
-          <div key={item.key} className="rounded-lg border border-[#e3dbcd] bg-[#fbf8f1] p-3">
+          <div key={item.key} className="rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Produto</span>
+                <span className="text-xs font-medium text-[#63736b]">Produto</span>
                 <select
                   value={item.productId}
                   onChange={(e) => onProductChange(item.key, e.target.value)}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] bg-white px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                 >
                   <option value="">Produto avulso</option>
                   {products.map((product) => (
@@ -189,53 +194,53 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Descrição</span>
+                <span className="text-xs font-medium text-[#63736b]">Descrição</span>
                 <input
                   value={item.description}
                   onChange={(e) => updateItem(item.key, { description: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                   placeholder="Ex.: Camiseta polo branca"
                 />
               </label>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-4">
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Tam.</span>
+                <span className="text-xs font-medium text-[#63736b]">Tam.</span>
                 <input
                   value={item.size}
                   onChange={(e) => updateItem(item.key, { size: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                   placeholder="M"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Cor</span>
+                <span className="text-xs font-medium text-[#63736b]">Cor</span>
                 <input
                   value={item.color}
                   onChange={(e) => updateItem(item.key, { color: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                   placeholder="Branca"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Qtd.</span>
+                <span className="text-xs font-medium text-[#63736b]">Qtd.</span>
                 <input
                   type="number"
                   min="1"
                   value={item.quantity}
                   onChange={(e) => updateItem(item.key, { quantity: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#766d5d]">Preço un. (R$)</span>
+                <span className="text-xs font-medium text-[#63736b]">Preço un. (R$)</span>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={item.unitPrice}
                   onChange={(e) => updateItem(item.key, { unitPrice: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#d8cfbf] px-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                   placeholder="45,00"
                 />
               </label>
@@ -245,7 +250,7 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
                 <button
                   type="button"
                   onClick={() => removeItem(item.key)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#b23647]"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#9f2f42]"
                 >
                   <Trash2 size={13} aria-hidden="true" />
                   Remover item
@@ -258,48 +263,52 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
 
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-medium text-[#544d43]">Prazo de entrega</span>
+          <span className="text-sm font-medium text-[#405047]">Prazo de entrega</span>
           <input
             name="deliveryDate"
             type="date"
             defaultValue={defaults?.deliveryDate ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
           />
         </label>
         <label className="block">
-          <span className="text-sm font-medium text-[#544d43]">Forma de pagamento</span>
+          <span className="text-sm font-medium text-[#405047]">Forma de pagamento</span>
           <input
             name="paymentMethod"
             defaultValue={defaults?.paymentMethod ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
-            placeholder="Pix, cartao, boleto..."
+            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            placeholder="Pix, cartão, boleto..."
           />
         </label>
       </div>
 
       <label className="block">
-        <span className="text-sm font-medium text-[#544d43]">Entrada / valor pago (R$)</span>
+        <span className="text-sm font-medium text-[#405047]">Entrada / valor pago (R$)</span>
         <input
           name="paid"
           defaultValue={defaults?.paidReais ?? ""}
-          className="mt-1 h-10 w-full rounded-lg border border-[#d8cfbf] px-3 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+          className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
           placeholder="1.000,00"
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-[#544d43]">Observações internas</span>
+        <span className="text-sm font-medium text-[#405047]">Observações internas</span>
         <textarea
           name="notes"
           defaultValue={defaults?.internalNotes ?? ""}
-          className="mt-1 min-h-24 w-full rounded-lg border border-[#d8cfbf] px-3 py-2 text-sm outline-none ring-[#0f8b8d]/20 focus:ring-4"
+          className="mt-1 min-h-24 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
         />
       </label>
 
-      <div className="flex items-center justify-between rounded-lg bg-[#f0e7d8] px-3 py-2 text-sm">
-        <span className="font-medium text-[#544d43]">Total do pedido</span>
+      <div className="flex items-center justify-between rounded-lg bg-[#eef4f1] px-3 py-2 text-sm">
+        <span className="font-medium text-[#405047]">Total do pedido</span>
         <span className="font-semibold">{centsToCurrency(totalInCents)}</span>
       </div>
+
+      {state.error ? (
+        <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p>
+      ) : null}
 
       <SubmitButton label={submitLabel} />
     </form>

@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f5f2ec",
+  themeColor: "#f4f6f5",
   viewportFit: "cover",
 };
 
@@ -47,7 +47,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#f5f2ec]">
+      <body className="min-h-full flex flex-col bg-[#f4f6f5]">
         <ToastProvider>{children}</ToastProvider>
         <PwaRegister />
       </body>
