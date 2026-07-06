@@ -6,6 +6,9 @@ const SESSION_COOKIE = "confec_session";
 // Redireciona para /login quem não tem cookie de sessao.
 // A verificacao real da assinatura acontece no servidor (getSessionUser).
 export function proxy(req: NextRequest) {
+  // A raiz é pública: sem sessão ela mostra a landing (decisão em app/page.tsx).
+  if (req.nextUrl.pathname === "/") return NextResponse.next();
+
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
   if (!hasSession) {
     const url = req.nextUrl.clone();

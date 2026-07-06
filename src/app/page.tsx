@@ -1,12 +1,15 @@
 import { AppShell } from "@/components/app-shell";
 import { DbDashboard } from "@/components/db-dashboard";
-import { requireUser } from "@/lib/auth";
+import { LandingPage } from "@/components/landing/landing-page";
+import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const user = await requireUser();
+  // Visitante sem sessão vê a página de apresentação; usuário logado vê o painel.
+  const user = await getSessionUser();
+  if (!user) return <LandingPage />;
   const [orders, stages, materials] = await Promise.all([
     prisma.order.findMany({
       where: { companyId: user.companyId },

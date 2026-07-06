@@ -63,7 +63,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
   return (
     <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
       <div className="flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white lg:block">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 overflow-y-auto border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white lg:block">
           <Link href="/" className="flex items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-lg bg-[#087f7d] text-white shadow-sm">
               <Factory size={22} aria-hidden="true" />
