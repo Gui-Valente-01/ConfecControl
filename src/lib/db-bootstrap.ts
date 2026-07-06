@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
+type StageClient = Pick<typeof prisma, "productionStage">;
+
 // Cria as etapas de produção padrão para uma empresa nova.
-export async function seedCompanyStages(companyId: string) {
-  await prisma.productionStage.createMany({
+export async function seedCompanyStages(companyId: string, db: StageClient = prisma) {
+  await db.productionStage.createMany({
     data: [
       { companyId, name: "Recebido", position: 1, color: "#5b68d8" },
       { companyId, name: "Aguardando material", position: 2, color: "#8a6fdb" },

@@ -15,12 +15,19 @@ export function SignupForm() {
   return (
     <form className="mt-6 space-y-4" action={formAction}>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Código de acesso</span>
+        <span className="text-sm font-medium text-[#405047]">Token de acesso</span>
         <div className={wrapClass}>
           <KeyRound className={iconClass} size={17} aria-hidden="true" />
-          <input name="accessCode" required className={inputClass} placeholder="recebido na contratação" autoComplete="off" />
+          <input
+            name="accessCode"
+            required
+            inputMode="numeric"
+            className={inputClass}
+            placeholder="8 dígitos recebidos na contratação"
+            autoComplete="one-time-code"
+          />
         </div>
-        <span className="mt-1 block text-xs text-[#8a9890]">Você recebe esse código ao contratar o ConfecControl.</span>
+        <span className="mt-1 block text-xs text-[#8a9890]">Use a numeração que o administrador master gerou para você.</span>
       </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Nome da empresa</span>
