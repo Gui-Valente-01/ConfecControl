@@ -62,8 +62,12 @@ export default async function LoginPage() {
                 Se você é o dono e perdeu o acesso, entre em contato com o suporte para recuperar a conta.
               </p>
             </details>
-            <p className="mt-4 text-center text-sm text-[#66756d]">
-              Não tem conta?{" "}
+            <p className="mt-4 rounded-lg bg-[#f8faf9] px-3 py-2.5 text-center text-sm leading-6 text-[#66756d]">
+              <strong className="font-semibold text-[#405047]">Funcionário:</strong> seu acesso é criado pelo dono da
+              confecção. Peça a ele seu e-mail e senha de entrada.
+            </p>
+            <p className="mt-3 text-center text-sm text-[#66756d]">
+              É dono e recebeu o código de acesso?{" "}
               <Link href="/cadastro" className="font-semibold text-[#087f7d] hover:text-[#05605e]">Criar empresa</Link>
             </p>
           </div>

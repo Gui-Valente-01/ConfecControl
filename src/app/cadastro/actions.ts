@@ -7,10 +7,20 @@ import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 
 export async function signupAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const accessCode = String(formData.get("accessCode") ?? "").trim();
   const companyName = String(formData.get("companyName") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
+
+  // Venda presencial: só cria empresa quem recebeu o código de acesso na contratação.
+  const expectedCode = process.env.SIGNUP_ACCESS_CODE?.trim();
+  if (!expectedCode) {
+    return { error: "O cadastro de novas empresas está fechado no momento. Fale com quem apresentou o sistema para você." };
+  }
+  if (accessCode.toUpperCase() !== expectedCode.toUpperCase()) {
+    return { error: "Código de acesso inválido. Use o código recebido na contratação." };
+  }
 
   if (!companyName || !name || !email) return { error: "Preencha empresa, nome e e-mail." };
   if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };

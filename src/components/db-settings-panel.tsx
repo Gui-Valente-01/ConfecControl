@@ -37,7 +37,7 @@ export function DbSettingsPanel({ company }: DbSettingsPanelProps) {
           <div className="grid gap-4 lg:grid-cols-3">
             {[
               ["Dono", "Acesso total ao sistema", ShieldCheck],
-              ["Gerente", "Ve tudo e gerencia usuários", UserCog],
+              ["Gerente", "Vê tudo, exceto a gestão de funcionários", UserCog],
               ["Produção / Financeiro", "Acesso só às áreas do cargo", Workflow],
             ].map(([role, text, Icon]) => (
               <article key={role as string} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">

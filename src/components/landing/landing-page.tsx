@@ -42,8 +42,8 @@ const steps = [
 
 const faqs = [
   {
-    q: "Quanto custa?",
-    a: "Hoje o ConfecControl é gratuito. Você cria a conta da sua confecção e começa a usar no mesmo dia.",
+    q: "Como contrato?",
+    a: "A contratação é feita direto com a gente, de forma pessoal. Você recebe um código de acesso, cria a conta da sua confecção e começa no mesmo dia.",
   },
   {
     q: "Preciso instalar alguma coisa?",
@@ -80,7 +80,7 @@ function PrimaryCta({ className }: { className?: string }) {
       href="/cadastro"
       className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#087f7d] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e] active:scale-[0.98] ${className ?? ""}`}
     >
-      Criar conta grátis
+      Criar minha conta
     </Link>
   );
 }
@@ -323,7 +323,7 @@ export function LandingPage() {
           </div>
           <div className="flex items-center gap-5 text-sm font-medium text-[#405047]">
             <Link href="/login" className="transition hover:text-[#087f7d]">Entrar</Link>
-            <Link href="/cadastro" className="transition hover:text-[#087f7d]">Criar conta grátis</Link>
+            <Link href="/cadastro" className="transition hover:text-[#087f7d]">Criar minha conta</Link>
           </div>
         </div>
       </footer>

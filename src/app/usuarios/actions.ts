@@ -10,15 +10,15 @@ export type UserFormState = { error?: string; success?: string };
 
 const roles: UserRole[] = ["ADMIN", "MANAGER", "PRODUCTION", "FINANCE", "SALES"];
 
-// Apenas Dono (ADMIN) e Gerente (MANAGER) administram usuários.
-async function requireManager() {
+// Apenas o Dono (ADMIN) administra os funcionários da empresa.
+async function requireOwner() {
   const actor = await requireUser();
-  if (actor.role !== "ADMIN" && actor.role !== "MANAGER") redirect("/");
+  if (actor.role !== "ADMIN") redirect("/");
   return actor;
 }
 
 export async function createUserAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
-  const actor = await requireManager();
+  const actor = await requireOwner();
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -51,7 +51,7 @@ export async function createUserAction(_prev: UserFormState, formData: FormData)
 }
 
 export async function updateUserDetailsAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
-  const actor = await requireManager();
+  const actor = await requireOwner();
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -78,7 +78,7 @@ export async function updateUserDetailsAction(_prev: UserFormState, formData: Fo
 }
 
 export async function toggleUserActiveAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
-  const actor = await requireManager();
+  const actor = await requireOwner();
   const id = String(formData.get("id") ?? "");
   const active = String(formData.get("active") ?? "") === "true";
   if (!id) return { error: "Funcionário não encontrado." };
@@ -96,7 +96,7 @@ export async function toggleUserActiveAction(_prev: UserFormState, formData: For
 }
 
 export async function resetUserPasswordAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
-  const actor = await requireManager();
+  const actor = await requireOwner();
   const id = String(formData.get("id") ?? "");
   const password = String(formData.get("password") ?? "");
   if (!id || password.length < 6) return { error: "A nova senha deve ter ao menos 6 caracteres." };
@@ -112,7 +112,7 @@ export async function resetUserPasswordAction(_prev: UserFormState, formData: Fo
 }
 
 export async function deleteUserAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
-  const actor = await requireManager();
+  const actor = await requireOwner();
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Funcionário não encontrado." };
   if (id === actor.id) return { error: "Você não pode excluir o seu próprio usuário." };

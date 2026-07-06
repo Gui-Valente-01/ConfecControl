@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, LockKeyhole, Mail, UserRound } from "lucide-react";
+import { Building2, KeyRound, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { useActionState } from "react";
 import { signupAction } from "@/app/cadastro/actions";
 import { emptyFormState } from "@/lib/form-state";
@@ -14,6 +14,14 @@ export function SignupForm() {
 
   return (
     <form className="mt-6 space-y-4" action={formAction}>
+      <label className="block">
+        <span className="text-sm font-medium text-[#405047]">Código de acesso</span>
+        <div className={wrapClass}>
+          <KeyRound className={iconClass} size={17} aria-hidden="true" />
+          <input name="accessCode" required className={inputClass} placeholder="recebido na contratação" autoComplete="off" />
+        </div>
+        <span className="mt-1 block text-xs text-[#8a9890]">Você recebe esse código ao contratar o ConfecControl.</span>
+      </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Nome da empresa</span>
         <div className={wrapClass}>
