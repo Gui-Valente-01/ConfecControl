@@ -30,7 +30,7 @@ export function StagesManager({ stages }: { stages: Stage[] }) {
 
       <div className="mt-4 space-y-2">
         {stages.map((stage) => (
-          <ToastForm key={stage.id} action={updateStageAction} message="Etapa salva." className="flex flex-wrap items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm">
+          <ToastForm key={stage.id} action={updateStageAction} className="flex flex-wrap items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm">
             <input type="hidden" name="id" value={stage.id} />
             <input type="color" name="color" defaultValue={stage.color || "#087f7d"} className="h-9 w-9 rounded border border-[#c7d3ce] bg-white" title="Cor" />
             <input name="name" defaultValue={stage.name} required className="h-9 flex-1 min-w-32 rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" />
@@ -46,7 +46,7 @@ export function StagesManager({ stages }: { stages: Stage[] }) {
             {stage.inUse ? (
               <StatusBadge tone="neutral">em uso</StatusBadge>
             ) : (
-              <ConfirmDeleteButton action={deleteStageAction} id={stage.id} title="Remover etapa" message={`Remover a etapa ${stage.name}?`} toastMessage="Etapa removida." />
+              <ConfirmDeleteButton action={deleteStageAction} id={stage.id} title="Remover etapa" message={`Remover a etapa ${stage.name}?`} />
             )}
           </ToastForm>
         ))}

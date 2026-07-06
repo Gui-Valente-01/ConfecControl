@@ -3,12 +3,13 @@
 import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { PaymentStatus, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currencyToCents, dateInputToDate } from "@/lib/format";
 import { requireCompanyId } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
+import { parseItems, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
@@ -41,16 +42,16 @@ export async function uploadAttachmentAction(_prev: FormState, formData: FormDat
   return { success: "Anexo enviado." };
 }
 
-export async function deleteAttachmentAction(formData: FormData) {
+export async function deleteAttachmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Anexo não encontrado." };
 
   const companyId = await requireCompanyId();
   const attachment = await prisma.attachment.findFirst({
     where: { id, order: { companyId } },
     select: { id: true, url: true, orderId: true },
   });
-  if (!attachment) return;
+  if (!attachment) return { error: "Anexo não encontrado." };
 
   await prisma.attachment.delete({ where: { id: attachment.id } });
 
@@ -66,61 +67,7 @@ export async function deleteAttachmentAction(formData: FormData) {
   }
 
   revalidatePath(`/pedidos/${attachment.orderId}`);
-}
-
-type RawItem = {
-  productId?: string | null;
-  description?: string;
-  size?: string;
-  color?: string;
-  quantity?: number | string;
-  unitPrice?: number | string;
-};
-
-type ParsedItem = {
-  productId: string | null;
-  description: string;
-  size: string | null;
-  color: string | null;
-  quantity: number;
-  unitPriceInCents: number;
-  totalPriceInCents: number;
-};
-
-function parseItems(raw: string): ParsedItem[] {
-  let parsed: RawItem[] = [];
-  try {
-    parsed = JSON.parse(raw) as RawItem[];
-  } catch {
-    return [];
-  }
-  if (!Array.isArray(parsed)) return [];
-
-  return parsed
-    .map((item) => {
-      const quantity = Math.max(0, Math.floor(Number(item.quantity) || 0));
-      const unitPriceInCents =
-        typeof item.unitPrice === "number"
-          ? Math.round(item.unitPrice * 100)
-          : currencyToCents(String(item.unitPrice ?? ""));
-      const description = String(item.description ?? "").trim();
-      return {
-        productId: item.productId ? String(item.productId) : null,
-        description,
-        size: item.size ? String(item.size).trim() : null,
-        color: item.color ? String(item.color).trim() : null,
-        quantity,
-        unitPriceInCents,
-        totalPriceInCents: unitPriceInCents * quantity,
-      };
-    })
-    .filter((item) => item.quantity > 0 && (item.productId || item.description));
-}
-
-function resolvePaymentStatus(paid: number, total: number): PaymentStatus {
-  if (paid <= 0) return "PENDING";
-  if (paid >= total) return "PAID";
-  return "PARTIAL";
+  return { success: "Anexo removido." };
 }
 
 export async function createOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -382,19 +329,30 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
   redirect(`/pedidos/${id}`);
 }
 
-export async function deleteOrderAction(formData: FormData) {
+export async function deleteOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Pedido não encontrado." };
 
   const companyId = await requireCompanyId();
 
-  await prisma.$transaction(async (tx) => {
-    const order = await tx.order.findFirst({ where: { id, companyId }, select: { id: true } });
-    if (!order) return;
+  const attachmentUrls = await prisma.$transaction(async (tx) => {
+    const order = await tx.order.findFirst({
+      where: { id, companyId },
+      select: { id: true, attachments: { select: { url: true } } },
+    });
+    if (!order) return null;
     // Devolve o estoque baixado antes de remover o pedido (os movimentos seriam perdidos).
     await reverseStockForOrder(tx, id);
     await tx.order.delete({ where: { id } });
+    return order.attachments.map((a) => a.url);
   });
+  if (attachmentUrls === null) return { error: "Pedido não encontrado." };
+
+  // Depois do commit, remove do Storage os arquivos dos anexos (melhor esforço;
+  // anexos legados em /uploads/ não existem na Vercel e são ignorados).
+  for (const url of attachmentUrls) {
+    if (!url.startsWith("/uploads/")) await removeAttachmentFromStorage(url);
+  }
 
   revalidatePath("/");
   revalidatePath("/pedidos");

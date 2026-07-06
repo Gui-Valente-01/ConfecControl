@@ -112,7 +112,6 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
                       <InlineEdit
                         action={updateMaterialAction}
                         id={item.id}
-                        message="Material atualizado."
                         fields={[
                           { name: "name", label: "Material", defaultValue: item.name, required: true },
                           { name: "category", label: "Categoria", defaultValue: item.category ?? "" },
@@ -123,7 +122,7 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
                       />
                     ) : null}
 
-                    <ToastForm action={registerStockMovementAction} message="Movimentação registrada." className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-3">
+                    <ToastForm action={registerStockMovementAction} className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-3">
                       <input type="hidden" name="materialId" value={item.id} />
                       <label className="w-24">
                         <span className="text-xs text-[#63736b]">Tipo</span>

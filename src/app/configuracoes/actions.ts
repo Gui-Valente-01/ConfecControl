@@ -56,36 +56,42 @@ export async function createStageAction(_prev: FormState, formData: FormData): P
   return { success: `Etapa ${name} criada.` };
 }
 
-export async function updateStageAction(formData: FormData) {
+export async function updateStageAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const color = String(formData.get("color") ?? "").trim();
   const position = Number(formData.get("position") ?? 0);
   const active = String(formData.get("active") ?? "") === "on";
-  if (!id || !name) return;
+  if (!id || !name) return { error: "Informe o nome da etapa." };
 
   const companyId = await requireCompanyId();
-  await prisma.productionStage.updateMany({
+  const updated = await prisma.productionStage.updateMany({
     where: { id, companyId },
     data: { name, color: color || null, position: Number.isFinite(position) ? position : 0, active },
   });
+  if (updated.count === 0) return { error: "Etapa não encontrada." };
 
   revalidateStages();
+  return { success: "Etapa atualizada." };
 }
 
-export async function deleteStageAction(formData: FormData) {
+export async function deleteStageAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Etapa não encontrada." };
 
   const companyId = await requireCompanyId();
   const stage = await prisma.productionStage.findFirst({
     where: { id, companyId },
     select: { id: true, _count: { select: { currentOrders: true, toHistory: true } } },
   });
+  if (!stage) return { error: "Etapa não encontrada." };
   // So apaga etapa sem pedidos atuais e sem histórico (senao desative).
-  if (!stage || stage._count.currentOrders > 0 || stage._count.toHistory > 0) return;
+  if (stage._count.currentOrders > 0 || stage._count.toHistory > 0) {
+    return { error: "Esta etapa tem pedidos ou histórico vinculados. Desative-a em vez de excluir." };
+  }
 
   await prisma.productionStage.delete({ where: { id } });
 
   revalidateStages();
+  return { success: "Etapa excluída." };
 }

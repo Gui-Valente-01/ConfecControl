@@ -7,10 +7,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
     "postinstall": "prisma generate",
     "db:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-mysql.ps1",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:baseline": "prisma migrate resolve --applied 20260706000000_init",
+    "db:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio"
   },
   "dependencies": {
@@ -29,6 +32,7 @@
     "eslint-config-next": "16.2.9",
     "prisma": "^6.19.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

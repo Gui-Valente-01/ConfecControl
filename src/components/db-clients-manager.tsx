@@ -107,7 +107,6 @@ export function DbClientsManager({ clients, canEdit }: DbClientsManagerProps) {
                       <InlineEdit
                         action={updateClientAction}
                         id={client.id}
-                        message="Cliente atualizado."
                         fields={[
                           { name: "name", label: "Nome", defaultValue: client.name, required: true },
                           { name: "contact", label: "Contato", defaultValue: client.contact ?? "" },

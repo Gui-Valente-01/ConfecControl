@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { requireCompanyId } from "@/lib/auth";
+import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 
-export async function markPaymentPaidAction(formData: FormData) {
+export async function markPaymentPaidAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const paymentId = String(formData.get("paymentId") ?? "");
   const orderId = String(formData.get("orderId") ?? "");
-  if (!paymentId || !orderId) return;
+  if (!paymentId || !orderId) return { error: "Pagamento não encontrado." };
 
   const companyId = await requireCompanyId();
 
@@ -17,7 +18,7 @@ export async function markPaymentPaidAction(formData: FormData) {
     where: { id: orderId, companyId },
     select: { id: true, totalAmountInCents: true },
   });
-  if (!order) return;
+  if (!order) return { error: "Pedido não encontrado." };
 
   await prisma.$transaction([
     prisma.payment.updateMany({
@@ -39,4 +40,5 @@ export async function markPaymentPaidAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/financeiro");
+  return { success: "Pagamento marcado como pago." };
 }

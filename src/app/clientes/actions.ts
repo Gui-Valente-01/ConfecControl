@@ -35,15 +35,15 @@ export async function createClientAction(_prev: FormState, formData: FormData): 
   return { success: `Cliente ${name} cadastrado.` };
 }
 
-export async function updateClientAction(formData: FormData) {
+export async function updateClientAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return;
+  if (!id || !name) return { error: "Informe o nome do cliente." };
 
   const companyId = await adminCompanyId();
-  if (!companyId) return; // só o Dono edita
+  if (!companyId) return { error: "Apenas o dono pode editar clientes." };
 
-  await prisma.client.updateMany({
+  const updated = await prisma.client.updateMany({
     where: { id, companyId },
     data: {
       name,
@@ -55,18 +55,22 @@ export async function updateClientAction(formData: FormData) {
       notes: String(formData.get("notes") ?? "").trim() || null,
     },
   });
+  if (updated.count === 0) return { error: "Cliente não encontrado." };
 
   revalidatePath("/clientes");
+  return { success: "Cliente atualizado." };
 }
 
-export async function deleteClientAction(formData: FormData) {
+export async function deleteClientAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Cliente não encontrado." };
 
   const companyId = await requireCompanyId();
 
   // deleteMany com companyId garante que so apaga clientes da empresa do usuário.
-  await prisma.client.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.client.deleteMany({ where: { id, companyId } });
+  if (deleted.count === 0) return { error: "Cliente não encontrado." };
 
   revalidatePath("/clientes");
+  return { success: "Cliente removido." };
 }

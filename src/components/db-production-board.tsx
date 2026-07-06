@@ -127,7 +127,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                   const late = isOrderLate(order.deliveryDate, order.status);
                   return (
                     <article key={order.id} className="relative rounded-lg border border-[#d9e1dd] bg-white shadow-sm transition hover:border-[#c7d3ce]">
-                      <ToastForm action={moveOrderStageAction} message={`Pedido #${order.number} avançado.`} className="absolute right-2 top-2 z-10">
+                      <ToastForm action={moveOrderStageAction} className="absolute right-2 top-2 z-10">
                         <input type="hidden" name="orderId" value={order.id} />
                         <input type="hidden" name="currentStageId" value={stage.id} />
                         <button
@@ -176,7 +176,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                             {firstItem?.quantity ?? 0} unidades
                           </div>
 
-                          <ToastForm action={setOrderProductionAction} message="Pedido atualizado." className="space-y-2">
+                          <ToastForm action={setOrderProductionAction} className="space-y-2">
                             <input type="hidden" name="orderId" value={order.id} />
                             <select name="priority" defaultValue={order.priority} className={selectClass}>
                               {(Object.keys(orderPriorityLabels) as OrderPriority[]).map((priority) => (
@@ -203,7 +203,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                             <button className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">Salvar</button>
                           </ToastForm>
 
-                          <ToastForm action={moveOrderStageAction} message={`Pedido #${order.number} avançado.`} className="space-y-2">
+                          <ToastForm action={moveOrderStageAction} className="space-y-2">
                             <input type="hidden" name="orderId" value={order.id} />
                             <input type="hidden" name="currentStageId" value={stage.id} />
                             <input

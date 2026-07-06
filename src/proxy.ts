@@ -5,7 +5,7 @@ const SESSION_COOKIE = "confec_session";
 
 // Redireciona para /login quem não tem cookie de sessao.
 // A verificacao real da assinatura acontece no servidor (getSessionUser).
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
   if (!hasSession) {
     const url = req.nextUrl.clone();

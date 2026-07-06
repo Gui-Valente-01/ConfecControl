@@ -50,7 +50,7 @@ export async function createUserAction(_prev: UserFormState, formData: FormData)
   return { success: `Funcionário ${name} cadastrado.` };
 }
 
-export async function updateUserDetailsAction(formData: FormData) {
+export async function updateUserDetailsAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const actor = await requireManager();
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -58,13 +58,15 @@ export async function updateUserDetailsAction(formData: FormData) {
   const roleRaw = String(formData.get("role") ?? "");
   const sector = String(formData.get("sector") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  if (!id || !name || !email || !roles.includes(roleRaw as UserRole)) return;
+  if (!id || !name || !email || !roles.includes(roleRaw as UserRole)) {
+    return { error: "Informe nome, e-mail e um cargo válido." };
+  }
 
   // Confirma que o funcionario e da empresa e que o e-mail nao pertence a outro.
   const target = await prisma.user.findFirst({ where: { id, companyId: actor.companyId }, select: { id: true } });
-  if (!target) return;
+  if (!target) return { error: "Funcionário não encontrado." };
   const emailTaken = await prisma.user.findFirst({ where: { email, NOT: { id } }, select: { id: true } });
-  if (emailTaken) return;
+  if (emailTaken) return { error: "Já existe um funcionário com esse e-mail." };
 
   await prisma.user.update({
     where: { id },
@@ -72,44 +74,52 @@ export async function updateUserDetailsAction(formData: FormData) {
   });
 
   revalidatePath("/usuarios");
+  return { success: "Dados do funcionário atualizados." };
 }
 
-export async function toggleUserActiveAction(formData: FormData) {
+export async function toggleUserActiveAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const actor = await requireManager();
   const id = String(formData.get("id") ?? "");
   const active = String(formData.get("active") ?? "") === "true";
-  if (!id) return;
+  if (!id) return { error: "Funcionário não encontrado." };
   // Não permite o proprio usuário se desativar e ficar sem acesso.
-  if (id === actor.id && !active) return;
+  if (id === actor.id && !active) return { error: "Você não pode desativar o seu próprio acesso." };
 
-  await prisma.user.updateMany({
+  const updated = await prisma.user.updateMany({
     where: { id, companyId: actor.companyId },
     data: { active },
   });
+  if (updated.count === 0) return { error: "Funcionário não encontrado." };
 
   revalidatePath("/usuarios");
+  return { success: active ? "Acesso reativado." : "Acesso desativado." };
 }
 
-export async function resetUserPasswordAction(formData: FormData) {
+export async function resetUserPasswordAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const actor = await requireManager();
   const id = String(formData.get("id") ?? "");
   const password = String(formData.get("password") ?? "");
-  if (!id || password.length < 6) return;
+  if (!id || password.length < 6) return { error: "A nova senha deve ter ao menos 6 caracteres." };
 
-  await prisma.user.updateMany({
+  const updated = await prisma.user.updateMany({
     where: { id, companyId: actor.companyId },
     data: { password: hashPassword(password) },
   });
+  if (updated.count === 0) return { error: "Funcionário não encontrado." };
 
   revalidatePath("/usuarios");
+  return { success: "Senha redefinida." };
 }
 
-export async function deleteUserAction(formData: FormData) {
+export async function deleteUserAction(_prev: UserFormState, formData: FormData): Promise<UserFormState> {
   const actor = await requireManager();
   const id = String(formData.get("id") ?? "");
-  if (!id || id === actor.id) return; // não pode excluir a si mesmo
+  if (!id) return { error: "Funcionário não encontrado." };
+  if (id === actor.id) return { error: "Você não pode excluir o seu próprio usuário." };
 
-  await prisma.user.deleteMany({ where: { id, companyId: actor.companyId } });
+  const deleted = await prisma.user.deleteMany({ where: { id, companyId: actor.companyId } });
+  if (deleted.count === 0) return { error: "Funcionário não encontrado." };
 
   revalidatePath("/usuarios");
+  return { success: "Funcionário removido." };
 }

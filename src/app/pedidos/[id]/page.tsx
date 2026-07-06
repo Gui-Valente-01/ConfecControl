@@ -274,7 +274,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       id={attachment.id}
                       title="Remover anexo"
                       message={`Remover o anexo ${attachment.name}?`}
-                      toastMessage="Anexo removido."
                     />
                   </div>
                 </li>

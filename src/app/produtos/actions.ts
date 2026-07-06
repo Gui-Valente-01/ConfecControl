@@ -39,15 +39,15 @@ export async function createProductAction(_prev: FormState, formData: FormData):
   return { success: `Peça ${name} cadastrada.` };
 }
 
-export async function updateProductAction(formData: FormData) {
+export async function updateProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return;
+  if (!id || !name) return { error: "Informe o nome da peça." };
 
   const companyId = await adminCompanyId();
-  if (!companyId) return; // só o Dono edita
+  if (!companyId) return { error: "Apenas o dono pode editar peças." };
 
-  await prisma.product.updateMany({
+  const updated = await prisma.product.updateMany({
     where: { id, companyId },
     data: {
       name,
@@ -58,17 +58,21 @@ export async function updateProductAction(formData: FormData) {
       averageProductionDays: daysFromText(String(formData.get("time") ?? "")),
     },
   });
+  if (updated.count === 0) return { error: "Peça não encontrada." };
 
   revalidatePath("/produtos");
+  return { success: "Peça atualizada." };
 }
 
-export async function deleteProductAction(formData: FormData) {
+export async function deleteProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Peça não encontrada." };
 
   const companyId = await requireCompanyId();
 
-  await prisma.product.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.product.deleteMany({ where: { id, companyId } });
+  if (deleted.count === 0) return { error: "Peça não encontrada." };
 
   revalidatePath("/produtos");
+  return { success: "Peça removida." };
 }

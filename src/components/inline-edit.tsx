@@ -2,6 +2,7 @@
 
 import { Pencil } from "lucide-react";
 import { ToastForm } from "@/components/toast-form";
+import type { FormState } from "@/lib/form-state";
 
 export type EditField = {
   name: string;
@@ -14,21 +15,20 @@ export type EditField = {
 };
 
 type InlineEditProps = {
-  action: (formData: FormData) => void;
+  action: (prev: FormState, formData: FormData) => Promise<FormState>;
   id: string;
   fields: EditField[];
-  message?: string;
 };
 
 // "Editar" expansivel, reutilizavel. Visivel apenas para quem pode editar (Dono).
-export function InlineEdit({ action, id, fields, message = "Alteracoes salvas." }: InlineEditProps) {
+export function InlineEdit({ action, id, fields }: InlineEditProps) {
   return (
     <details className="mt-3 text-sm">
       <summary className="inline-flex cursor-pointer items-center gap-1 rounded-md px-1 py-1 text-xs font-semibold text-[#087f7d] transition hover:bg-[#e8f6f3]">
         <Pencil size={12} aria-hidden="true" />
         Editar
       </summary>
-      <ToastForm action={action} message={message} className="mt-2 space-y-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
+      <ToastForm action={action} className="mt-2 space-y-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
         <input type="hidden" name="id" value={id} />
         {fields.map((field) => (
           <label key={field.name} className="block">

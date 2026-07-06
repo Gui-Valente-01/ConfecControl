@@ -84,7 +84,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                   <StatusBadge tone={user.active ? "good" : "warn"}>{user.active ? "Ativo" : "Inativo"}</StatusBadge>
                 </div>
 
-                <form action={updateUserDetailsAction} className="mt-4 flex flex-wrap items-end gap-2">
+                <ToastForm action={updateUserDetailsAction} className="mt-4 flex flex-wrap items-end gap-2">
                   <input type="hidden" name="id" value={user.id} />
                   <label>
                     <span className="text-xs text-[#63736b]">Nome</span>
@@ -113,19 +113,19 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                   <button className="h-9 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
                     Salvar
                   </button>
-                </form>
+                </ToastForm>
 
                 {!isSelf ? (
                   <div className="mt-2 flex flex-wrap items-end gap-2">
-                    <form action={toggleUserActiveAction}>
+                    <ToastForm action={toggleUserActiveAction}>
                       <input type="hidden" name="id" value={user.id} />
                       <input type="hidden" name="active" value={(!user.active).toString()} />
                       <button className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
                         <Power size={13} aria-hidden="true" />
                         {user.active ? "Desativar" : "Ativar"}
                       </button>
-                    </form>
-                    <ToastForm action={resetUserPasswordAction} message="Senha redefinida." className="flex items-end gap-1">
+                    </ToastForm>
+                    <ToastForm action={resetUserPasswordAction} className="flex items-end gap-1">
                       <input type="hidden" name="id" value={user.id} />
                       <input name="password" type="password" minLength={6} required placeholder="Nova senha" className="h-9 w-28 rounded-lg border border-[#c7d3ce] px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" />
                       <button className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">

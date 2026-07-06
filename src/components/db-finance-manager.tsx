@@ -80,7 +80,7 @@ export function DbFinanceManager({ payments }: DbFinanceManagerProps) {
                     <td className="border-b border-[#edf2ef] py-4">{centsToCurrency(payment.status === "PAID" ? payment.amountInCents : payment.order.paidAmountInCents)}</td>
                     <td className="border-b border-[#edf2ef] py-4 text-right font-semibold">{centsToCurrency(payment.amountInCents)}</td>
                     <td className="border-b border-[#edf2ef] py-4 text-right">
-                      <ToastForm action={markPaymentPaidAction} message={`Pagamento do pedido #${payment.order.number} recebido.`}>
+                      <ToastForm action={markPaymentPaidAction}>
                         <input type="hidden" name="paymentId" value={payment.id} />
                         <input type="hidden" name="orderId" value={payment.orderId} />
                         <input type="hidden" name="amountInCents" value={payment.amountInCents} />

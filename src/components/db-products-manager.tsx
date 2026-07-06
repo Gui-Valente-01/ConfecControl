@@ -4,6 +4,7 @@ import { removeProductMaterialAction, setProductMaterialAction } from "@/app/est
 import { InlineEdit } from "@/components/inline-edit";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ProductCreateForm } from "@/components/product-create-form";
+import { ToastForm } from "@/components/toast-form";
 import { SectionCard } from "@/components/section-card";
 import { centsToCurrency, centsToInput } from "@/lib/format";
 
@@ -88,7 +89,6 @@ export function DbProductsManager({ products, materials, canEdit }: DbProductsMa
                   <InlineEdit
                     action={updateProductAction}
                     id={product.id}
-                    message="Peça atualizada."
                     fields={[
                       { name: "name", label: "Nome", defaultValue: product.name, required: true },
                       { name: "category", label: "Categoria", defaultValue: product.category ?? "" },
@@ -115,12 +115,12 @@ export function DbProductsManager({ products, materials, canEdit }: DbProductsMa
                           <span>{entry.material.name}</span>
                           <span className="flex items-center gap-2">
                             <span className="font-medium">{entry.quantityPerUnit} {entry.material.unit}</span>
-                            <form action={removeProductMaterialAction}>
+                            <ToastForm action={removeProductMaterialAction}>
                               <input type="hidden" name="id" value={entry.id} />
                               <button className="text-[#9f2f42]" title="Remover material da ficha" aria-label="Remover material da ficha">
                                 <Trash2 size={13} aria-hidden="true" />
                               </button>
-                            </form>
+                            </ToastForm>
                           </span>
                         </li>
                       ))}
@@ -128,7 +128,7 @@ export function DbProductsManager({ products, materials, canEdit }: DbProductsMa
                   )}
 
                   {materials.length > 0 ? (
-                    <form action={setProductMaterialAction} className="mt-3 flex flex-wrap items-end gap-2">
+                    <ToastForm action={setProductMaterialAction} className="mt-3 flex flex-wrap items-end gap-2">
                       <input type="hidden" name="productId" value={product.id} />
                       <label className="min-w-32 flex-1">
                         <span className="text-xs text-[#63736b]">Material</span>
@@ -146,7 +146,7 @@ export function DbProductsManager({ products, materials, canEdit }: DbProductsMa
                         <Plus size={14} aria-hidden="true" />
                         Vincular
                       </button>
-                    </form>
+                    </ToastForm>
                   ) : (
                     <p className="mt-2 text-xs text-[#8a9890]">Cadastre materiais no estoque para montar a ficha técnica.</p>
                   )}

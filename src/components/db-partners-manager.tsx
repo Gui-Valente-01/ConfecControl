@@ -81,7 +81,6 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
                   <InlineEdit
                     action={updatePartnerAction}
                     id={partner.id}
-                    message="Terceirizada atualizada."
                     fields={[
                       { name: "name", label: "Nome", defaultValue: partner.name, required: true },
                       { name: "service", label: "Serviço", defaultValue: partner.service ?? "" },
@@ -94,10 +93,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <ToastForm
-                    action={togglePartnerActiveAction}
-                    message={partner.active ? "Terceirizada desativada." : "Terceirizada ativada."}
-                  >
+                  <ToastForm action={togglePartnerActiveAction}>
                     <input type="hidden" name="id" value={partner.id} />
                     <input type="hidden" name="active" value={(!partner.active).toString()} />
                     <button className="inline-flex h-9 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">

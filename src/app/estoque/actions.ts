@@ -52,15 +52,15 @@ export async function createMaterialAction(_prev: FormState, formData: FormData)
   return { success: `Material ${name} cadastrado.` };
 }
 
-export async function updateMaterialAction(formData: FormData) {
+export async function updateMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return;
+  if (!id || !name) return { error: "Informe o nome do material." };
 
   const companyId = await adminCompanyId();
-  if (!companyId) return; // só o Dono edita
+  if (!companyId) return { error: "Apenas o dono pode editar materiais." };
 
-  await prisma.material.updateMany({
+  const updated = await prisma.material.updateMany({
     where: { id, companyId },
     data: {
       name,
@@ -70,46 +70,52 @@ export async function updateMaterialAction(formData: FormData) {
       supplier: String(formData.get("supplier") ?? "").trim() || null,
     },
   });
+  if (updated.count === 0) return { error: "Material não encontrado." };
 
   revalidateStock();
+  return { success: "Material atualizado." };
 }
 
-export async function deleteMaterialAction(formData: FormData) {
+export async function deleteMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Material não encontrado." };
 
   const companyId = await requireCompanyId();
-  await prisma.material.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.material.deleteMany({ where: { id, companyId } });
+  if (deleted.count === 0) return { error: "Material não encontrado." };
 
   revalidateStock();
+  return { success: "Material removido." };
 }
 
 const movementTypes: StockMovementType[] = ["IN", "OUT", "ADJUSTMENT"];
 
-export async function registerStockMovementAction(formData: FormData) {
+export async function registerStockMovementAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const materialId = String(formData.get("materialId") ?? "");
   const typeRaw = String(formData.get("type") ?? "");
   const quantity = quantityFromText(String(formData.get("quantity") ?? ""));
   const note = String(formData.get("note") ?? "").trim();
 
-  if (!materialId || !movementTypes.includes(typeRaw as StockMovementType) || quantity < 0) return;
+  if (!materialId || !movementTypes.includes(typeRaw as StockMovementType) || quantity < 0) {
+    return { error: "Dados do movimento inválidos. Confira o tipo e a quantidade." };
+  }
   const type = typeRaw as StockMovementType;
 
   const companyId = await requireCompanyId();
 
-  await prisma.$transaction(async (tx) => {
+  const found = await prisma.$transaction(async (tx) => {
     // Confere que o material pertence a empresa e bloqueia o registro saldo errado.
     const material = await tx.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } });
-    if (!material) return;
+    if (!material) return false;
 
     // Atualiza o saldo de forma atômica no banco (evita lost update em movimentos concorrentes).
     if (type === "IN") {
       await tx.material.update({ where: { id: materialId }, data: { currentQuantity: { increment: quantity } } });
     } else if (type === "OUT") {
       await tx.$executeRaw`
-        UPDATE \`materiais\`
-        SET \`currentQuantity\` = GREATEST(0, \`currentQuantity\` - ${quantity})
-        WHERE \`id\` = ${materialId} AND \`companyId\` = ${companyId}`;
+        UPDATE "materiais"
+        SET "currentQuantity" = GREATEST(0, "currentQuantity" - ${quantity})
+        WHERE "id" = ${materialId} AND "companyId" = ${companyId}`;
     } else {
       await tx.material.update({ where: { id: materialId }, data: { currentQuantity: quantity } }); // ADJUSTMENT: saldo absoluto
     }
@@ -117,26 +123,31 @@ export async function registerStockMovementAction(formData: FormData) {
     await tx.stockMovement.create({
       data: { materialId, type, quantity, note: note || null },
     });
+    return true;
   });
+  if (!found) return { error: "Material não encontrado." };
 
   revalidateStock();
+  return { success: "Movimentação registrada." };
 }
 
 // --------- Ficha tecnica (BOM): materiais que cada produto consome ---------
 
-export async function setProductMaterialAction(formData: FormData) {
+export async function setProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const productId = String(formData.get("productId") ?? "");
   const materialId = String(formData.get("materialId") ?? "");
   const quantityPerUnit = quantityFromText(String(formData.get("quantityPerUnit") ?? ""));
 
-  if (!productId || !materialId || quantityPerUnit <= 0) return;
+  if (!productId || !materialId || quantityPerUnit <= 0) {
+    return { error: "Informe o material e a quantidade por peça (maior que zero)." };
+  }
 
   const companyId = await requireCompanyId();
   const [product, material] = await Promise.all([
     prisma.product.findFirst({ where: { id: productId, companyId }, select: { id: true } }),
     prisma.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } }),
   ]);
-  if (!product || !material) return;
+  if (!product || !material) return { error: "Produto ou material inválido." };
 
   await prisma.productMaterial.upsert({
     where: { productId_materialId: { productId, materialId } },
@@ -145,11 +156,12 @@ export async function setProductMaterialAction(formData: FormData) {
   });
 
   revalidatePath("/produtos");
+  return { success: "Ficha técnica atualizada." };
 }
 
-export async function removeProductMaterialAction(formData: FormData) {
+export async function removeProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Item da ficha técnica não encontrado." };
 
   const companyId = await requireCompanyId();
   // Garante que a ficha pertence a um produto da empresa.
@@ -157,9 +169,10 @@ export async function removeProductMaterialAction(formData: FormData) {
     where: { id, product: { companyId } },
     select: { id: true },
   });
-  if (!link) return;
+  if (!link) return { error: "Item da ficha técnica não encontrado." };
 
   await prisma.productMaterial.delete({ where: { id } });
 
   revalidatePath("/produtos");
+  return { success: "Item removido da ficha técnica." };
 }

@@ -1,16 +1,17 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useToast } from "@/components/toast";
+import { useActionState } from "react";
+import { useActionFeedback } from "@/components/toast";
+import { emptyFormState, type FormState } from "@/lib/form-state";
 
 type ConfirmDeleteButtonProps = {
-  action: (formData: FormData) => void;
+  action: (prev: FormState, formData: FormData) => Promise<FormState>;
   id: string;
   message?: string;
   title?: string;
   variant?: "icon" | "full";
   label?: string;
-  toastMessage?: string;
 };
 
 export function ConfirmDeleteButton({
@@ -20,18 +21,15 @@ export function ConfirmDeleteButton({
   title = "Excluir",
   variant = "icon",
   label = "Excluir",
-  toastMessage = "Item removido.",
 }: ConfirmDeleteButtonProps) {
-  const { toast } = useToast();
+  const [state, formAction] = useActionState(action, emptyFormState);
+  useActionFeedback(state);
+
   return (
     <form
-      action={action}
+      action={formAction}
       onSubmit={(event) => {
-        if (!window.confirm(message)) {
-          event.preventDefault();
-          return;
-        }
-        toast("success", toastMessage);
+        if (!window.confirm(message)) event.preventDefault();
       }}
     >
       <input type="hidden" name="id" value={id} />

@@ -35,10 +35,7 @@ export function hashPassword(plain: string) {
 }
 
 export function verifyPassword(plain: string, stored: string) {
-  if (!stored.includes(":")) {
-    // Compatibilidade com senhas antigas em texto puro.
-    return stored === plain;
-  }
+  if (!stored.includes(":")) return false; // formato inválido: só aceitamos salt:hash
   const [salt, hash] = stored.split(":");
   const derived = scryptSync(plain, salt, 64);
   const original = Buffer.from(hash, "hex");

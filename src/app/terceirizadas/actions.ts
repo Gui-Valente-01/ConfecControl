@@ -34,15 +34,15 @@ export async function createPartnerAction(_prev: FormState, formData: FormData):
   return { success: `Terceirizada ${name} cadastrada.` };
 }
 
-export async function updatePartnerAction(formData: FormData) {
+export async function updatePartnerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return;
+  if (!id || !name) return { error: "Informe o nome da empresa terceirizada." };
 
   const companyId = await adminCompanyId();
-  if (!companyId) return; // só o Dono edita
+  if (!companyId) return { error: "Apenas o dono pode editar terceirizadas." };
 
-  await prisma.partner.updateMany({
+  const updated = await prisma.partner.updateMany({
     where: { id, companyId },
     data: {
       name,
@@ -53,29 +53,35 @@ export async function updatePartnerAction(formData: FormData) {
       notes: String(formData.get("notes") ?? "").trim() || null,
     },
   });
+  if (updated.count === 0) return { error: "Terceirizada não encontrada." };
 
   revalidatePath("/terceirizadas");
+  return { success: "Terceirizada atualizada." };
 }
 
-export async function togglePartnerActiveAction(formData: FormData) {
+export async function togglePartnerActiveAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const active = String(formData.get("active") ?? "") === "true";
-  if (!id) return;
+  if (!id) return { error: "Terceirizada não encontrada." };
 
   const companyId = await requireCompanyId();
-  await prisma.partner.updateMany({ where: { id, companyId }, data: { active } });
+  const updated = await prisma.partner.updateMany({ where: { id, companyId }, data: { active } });
+  if (updated.count === 0) return { error: "Terceirizada não encontrada." };
 
   revalidatePath("/terceirizadas");
   revalidatePath("/producao");
+  return { success: active ? "Terceirizada reativada." : "Terceirizada desativada." };
 }
 
-export async function deletePartnerAction(formData: FormData) {
+export async function deletePartnerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
-  if (!id) return;
+  if (!id) return { error: "Terceirizada não encontrada." };
 
   const companyId = await requireCompanyId();
-  await prisma.partner.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.partner.deleteMany({ where: { id, companyId } });
+  if (deleted.count === 0) return { error: "Terceirizada não encontrada." };
 
   revalidatePath("/terceirizadas");
   revalidatePath("/producao");
+  return { success: "Terceirizada removida." };
 }

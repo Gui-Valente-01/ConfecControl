@@ -3,23 +3,24 @@
 import { OrderPriority } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { requireCompanyId } from "@/lib/auth";
+import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 
-export async function moveOrderStageAction(formData: FormData) {
+export async function moveOrderStageAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const orderId = String(formData.get("orderId") ?? "");
   const currentStageId = String(formData.get("currentStageId") ?? "");
   const note = String(formData.get("note") ?? "").trim();
-  if (!orderId || !currentStageId) return;
+  if (!orderId || !currentStageId) return { error: "Pedido ou etapa inválidos." };
 
   const companyId = await requireCompanyId();
 
   // Garante que o pedido pertence a empresa do usuário logado.
   const order = await prisma.order.findFirst({ where: { id: orderId, companyId }, select: { id: true } });
-  if (!order) return;
+  if (!order) return { error: "Pedido não encontrado." };
 
   const currentStage = await prisma.productionStage.findFirst({ where: { id: currentStageId, companyId } });
-  if (!currentStage) return;
+  if (!currentStage) return { error: "Etapa atual não encontrada." };
 
   const nextStage = await prisma.productionStage.findFirst({
     where: {
@@ -30,7 +31,7 @@ export async function moveOrderStageAction(formData: FormData) {
     orderBy: { position: "asc" },
   });
 
-  if (!nextStage) return;
+  if (!nextStage) return { error: "O pedido já está na última etapa ativa." };
 
   await prisma.$transaction([
     prisma.order.update({
@@ -53,17 +54,18 @@ export async function moveOrderStageAction(formData: FormData) {
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
+  return { success: `Pedido movido para ${nextStage.name}.` };
 }
 
 const priorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
 
 // Define prioridade, responsável e terceirizada de um pedido na produção.
-export async function setOrderProductionAction(formData: FormData) {
+export async function setOrderProductionAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const orderId = String(formData.get("orderId") ?? "");
   const priorityRaw = String(formData.get("priority") ?? "");
   const assignee = String(formData.get("assignee") ?? "").trim();
   const partnerIdRaw = String(formData.get("partnerId") ?? "").trim();
-  if (!orderId) return;
+  if (!orderId) return { error: "Pedido não encontrado." };
 
   const companyId = await requireCompanyId();
 
@@ -80,9 +82,11 @@ export async function setOrderProductionAction(formData: FormData) {
     data.partnerId = partner?.id ?? null;
   }
 
-  await prisma.order.updateMany({ where: { id: orderId, companyId }, data });
+  const updated = await prisma.order.updateMany({ where: { id: orderId, companyId }, data });
+  if (updated.count === 0) return { error: "Pedido não encontrado." };
 
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
+  return { success: "Dados de produção salvos." };
 }
