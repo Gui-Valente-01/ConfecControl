@@ -14,7 +14,7 @@ export default async function UsuariosPage() {
   });
 
   return (
-    <AppShell eyebrow="Equipe" title="Funcionários" actionLabel="Novo funcionário" user={user}>
+    <AppShell eyebrow="Equipe" title="Acessos de funcionários" actionLabel="Novo funcionário" user={user}>
       <DbUsersManager users={users} currentUserId={user.id} />
     </AppShell>
   );

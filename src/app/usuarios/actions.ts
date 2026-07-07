@@ -65,6 +65,10 @@ export async function updateUserDetailsAction(_prev: UserFormState, formData: Fo
   // Confirma que o funcionario e da empresa e que o e-mail nao pertence a outro.
   const target = await prisma.user.findFirst({ where: { id, companyId: actor.companyId }, select: { id: true } });
   if (!target) return { error: "Funcionário não encontrado." };
+  if (id === actor.id && roleRaw !== "ADMIN") {
+    return { error: "Você não pode remover o seu próprio acesso de Dono." };
+  }
+
   const emailTaken = await prisma.user.findFirst({ where: { email, NOT: { id } }, select: { id: true } });
   if (emailTaken) return { error: "Já existe um funcionário com esse e-mail." };
 
