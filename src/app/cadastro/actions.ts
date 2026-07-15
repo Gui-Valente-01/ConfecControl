@@ -19,6 +19,15 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
 
   try {
     const userId = await prisma.$transaction(async (tx) => {
+      // Lê o plano do token antes de marcá-lo como usado.
+      const token = await tx.signupToken.findUnique({
+        where: { code: accessCode },
+        select: { features: true, usedAt: true, revokedAt: true },
+      });
+      if (!token || token.usedAt || token.revokedAt) {
+        throw new Error("TOKEN_INVALID");
+      }
+
       const claimed = await tx.signupToken.updateMany({
         where: { code: accessCode, usedAt: null, revokedAt: null },
         data: { usedAt: new Date(), usedByEmail: email },
@@ -34,7 +43,7 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
       }
 
       const company = await tx.company.create({
-        data: { name: companyName, email },
+        data: { name: companyName, email, features: token.features },
       });
       await seedCompanyStages(company.id, tx);
 

@@ -3,6 +3,7 @@
 import { randomInt } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { sanitizeFeatures } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 
@@ -40,6 +41,8 @@ export async function createSignupTokenAction(_prev: FormState, formData: FormDa
     return { error: "Informe o nome do cliente ou da empresa." };
   }
 
+  const features = sanitizeFeatures(formData.getAll("features").map(String));
+
   const code = await generateUniqueTokenCode();
   await prisma.signupToken.create({
     data: {
@@ -47,11 +50,26 @@ export async function createSignupTokenAction(_prev: FormState, formData: FormDa
       clientName,
       contactEmail: contactEmail || null,
       createdByEmail: user.email,
+      features,
     },
   });
 
   revalidatePath("/master");
   return { success: `Token ${code} criado para ${clientName}.` };
+}
+
+// Altera o plano (módulos) de uma empresa já existente: upgrade/downgrade.
+export async function updateCompanyFeaturesAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  await requireSuperAdmin();
+  const companyId = String(formData.get("companyId") ?? "");
+  if (!companyId) return { error: "Empresa nao encontrada." };
+
+  const features = sanitizeFeatures(formData.getAll("features").map(String));
+  const updated = await prisma.company.updateMany({ where: { id: companyId }, data: { features } });
+  if (updated.count === 0) return { error: "Empresa nao encontrada." };
+
+  revalidatePath("/master");
+  return { success: "Plano da empresa atualizado." };
 }
 
 export async function revokeSignupTokenAction(_prev: FormState, formData: FormData): Promise<FormState> {

@@ -10,6 +10,7 @@ import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import { canAccessRoute, roleLabels } from "@/lib/roles";
+import { planAllowsRoute } from "@/lib/features";
 
 export { roleLabels, canAccessRoute };
 
@@ -96,6 +97,7 @@ export type SessionUser = {
   role: UserRole;
   companyId: string;
   companyName: string;
+  features: string[];
 };
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -105,7 +107,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: { company: { select: { name: true } } },
+    include: { company: { select: { name: true, features: true } } },
   });
   if (!user || !user.active) return null;
 
@@ -116,6 +118,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     role: user.role,
     companyId: user.companyId,
     companyName: user.company.name,
+    features: user.company.features,
   };
 }
 
@@ -131,10 +134,12 @@ export async function requireRole(roles: UserRole[]): Promise<SessionUser> {
   return user;
 }
 
-// Exige login e que o cargo possa acessar a rota; senao volta para o painel.
+// Exige login, que o cargo possa acessar a rota E que o plano da empresa
+// inclua o módulo; senao volta para o painel.
 export async function requireRouteUser(href: string): Promise<SessionUser> {
   const user = await requireUser();
   if (!canAccessRoute(user.role, href)) redirect("/");
+  if (!planAllowsRoute(user.features, href)) redirect("/");
   return user;
 }
 

@@ -55,6 +55,7 @@ model Company {
   phone     String?
   email     String?
   address   String?
+  features  String[] @default([]) // módulos vendáveis liberados p/ esta empresa (o núcleo é sempre incluso)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -75,6 +76,7 @@ model SignupToken {
   code           String    @unique
   clientName     String?
   contactEmail   String?
+  features       String[]  @default([]) // plano que este token concede à empresa criada
   createdByEmail String
   usedAt         DateTime?
   revokedAt      DateTime?

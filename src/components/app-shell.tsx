@@ -25,6 +25,7 @@ import {
 import { useState } from "react";
 import type { UserRole } from "@prisma/client";
 import { logoutAction } from "@/app/login/actions";
+import { planAllowsRoute } from "@/lib/features";
 import { canAccessRoute, roleLabels } from "@/lib/roles";
 
 const navItems = [
@@ -45,6 +46,7 @@ type ShellUser = {
   name: string;
   role: UserRole;
   companyName: string;
+  features: string[];
 };
 
 type AppShellProps = {
@@ -58,7 +60,9 @@ type AppShellProps = {
 export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const visibleNav = navItems.filter((item) => canAccessRoute(user.role, item.href));
+  const visibleNav = navItems.filter(
+    (item) => canAccessRoute(user.role, item.href) && planAllowsRoute(user.features, item.href),
+  );
 
   return (
     <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
@@ -153,7 +157,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
                     placeholder="Buscar pedido, cliente ou produto"
                   />
                 </form>
-                {canAccessRoute(user.role, "/relatorios") ? (
+                {canAccessRoute(user.role, "/relatorios") && planAllowsRoute(user.features, "/relatorios") ? (
                   <Link
                     href="/relatorios"
                     className="flex size-10 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#1c2420] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Ban, Building2, CheckCircle2, ClipboardList, KeyRound, Plus, Users } from "lucide-react";
-import { createSignupTokenAction, revokeSignupTokenAction } from "@/app/master/actions";
+import { createSignupTokenAction, revokeSignupTokenAction, updateCompanyFeaturesAction } from "@/app/master/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { ToastForm } from "@/components/toast-form";
 import { requireUser, roleLabels } from "@/lib/auth";
+import { featureLabel, sellableFeatures } from "@/lib/features";
 import { formatDateTime, formatLongDate } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -127,6 +128,34 @@ export default async function MasterPage() {
                   className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                 />
               </label>
+
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-medium text-[#405047]">Módulos que este cliente contratou</legend>
+                <p className="text-xs text-[#8a9890]">
+                  Sempre incluso: pedidos, clientes, produtos e configurações. Marque abaixo os módulos pagos.
+                </p>
+                <div className="grid gap-1.5">
+                  {sellableFeatures.map((feature) => (
+                    <label
+                      key={feature.key}
+                      className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#d9e1dd] bg-white px-3 py-2 transition hover:border-[#c7d3ce]"
+                    >
+                      <input
+                        type="checkbox"
+                        name="features"
+                        value={feature.key}
+                        defaultChecked
+                        className="mt-0.5 size-4 accent-[#087f7d]"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-[#1c2420]">{feature.label}</span>
+                        <span className="block text-xs text-[#63736b]">{feature.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               <SubmitButton pendingText="Gerando...">
                 <Plus size={16} aria-hidden="true" />
                 Gerar token
@@ -183,6 +212,17 @@ export default async function MasterPage() {
                           </p>
                         ) : null}
                       </div>
+                      {token.features.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {token.features.map((feature) => (
+                            <span key={feature} className="rounded bg-[#eef4f1] px-1.5 py-0.5 text-[10px] font-semibold text-[#405047]">
+                              {featureLabel(feature)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-[11px] text-[#8a9890]">Somente o núcleo (sem módulos pagos).</p>
+                      )}
                       {canRevoke ? (
                         <ToastForm
                           action={revokeSignupTokenAction}
@@ -239,7 +279,49 @@ export default async function MasterPage() {
                   Última atividade: {lastOrderAt ? formatDateTime(lastOrderAt) : "nenhum pedido criado ainda"}
                 </p>
 
+                {company.features.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {company.features.map((feature) => (
+                      <span key={feature} className="rounded bg-[#e8f6f3] px-1.5 py-0.5 text-[10px] font-semibold text-[#05605e]">
+                        {featureLabel(feature)}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-[11px] text-[#8a9890]">Plano só com o núcleo (sem módulos pagos).</p>
+                )}
+
                 <details className="mt-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-[#087f7d] transition hover:text-[#05605e]">
+                    Editar plano (módulos)
+                  </summary>
+                  <ToastForm action={updateCompanyFeaturesAction} className="mt-3 space-y-2">
+                    <input type="hidden" name="companyId" value={company.id} />
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {sellableFeatures.map((feature) => (
+                        <label
+                          key={feature.key}
+                          className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            name="features"
+                            value={feature.key}
+                            defaultChecked={company.features.includes(feature.key)}
+                            className="size-4 accent-[#087f7d]"
+                          />
+                          {feature.label}
+                        </label>
+                      ))}
+                    </div>
+                    <button className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e]">
+                      <CheckCircle2 size={14} aria-hidden="true" />
+                      Salvar plano
+                    </button>
+                  </ToastForm>
+                </details>
+
+                <details className="mt-2">
                   <summary className="cursor-pointer text-sm font-semibold text-[#087f7d] transition hover:text-[#05605e]">
                     Ver usuários
                   </summary>

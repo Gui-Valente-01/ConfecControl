@@ -39,13 +39,20 @@ type DashboardMaterial = {
   minimumQuantity: number;
 };
 
+type DashboardPlan = {
+  producao: boolean;
+  estoque: boolean;
+  financeiro: boolean;
+};
+
 type DbDashboardProps = {
   orders: DashboardOrder[];
   stages: DashboardStage[];
   materials: DashboardMaterial[];
+  plan: DashboardPlan;
 };
 
-export function DbDashboard({ orders, stages, materials }: DbDashboardProps) {
+export function DbDashboard({ orders, stages, materials, plan }: DbDashboardProps) {
   const now = new Date();
   const openOrders = orders.filter((order) => !["READY", "DELIVERED", "CANCELED"].includes(order.status)).length;
   const lateOrders = orders.filter((order) => isOrderLate(order.deliveryDate, order.status)).length;
@@ -55,16 +62,18 @@ export function DbDashboard({ orders, stages, materials }: DbDashboardProps) {
 
   const alerts = [
     lateOrders > 0 ? { text: `${lateOrders} pedido(s) atrasado(s)`, href: "/pedidos", icon: AlertTriangle } : null,
-    lowStock.length > 0 ? { text: `${lowStock.length} material(is) abaixo do mínimo`, href: "/estoque", icon: Package } : null,
-    pendingPayments > 0 ? { text: `${pendingPayments} pagamento(s) pendente(s)`, href: "/financeiro", icon: CreditCard } : null,
+    plan.estoque && lowStock.length > 0 ? { text: `${lowStock.length} material(is) abaixo do mínimo`, href: "/estoque", icon: Package } : null,
+    plan.financeiro && pendingPayments > 0 ? { text: `${pendingPayments} pagamento(s) pendente(s)`, href: "/financeiro", icon: CreditCard } : null,
   ].filter((a): a is { text: string; href: string; icon: typeof AlertTriangle } => a !== null);
 
   const stats = [
     { label: "Pedidos em aberto", value: String(openOrders), note: "acompanhados no quadro", icon: ClipboardList, tone: "primary" as const },
     { label: "Atrasados", value: String(lateOrders), note: "prioridade alta", icon: AlertTriangle, tone: "danger" as const },
     { label: "Faturamento previsto", value: centsToCurrency(totalRevenue), note: "somando pedidos reais", icon: CheckCircle2, tone: "warning" as const },
-    { label: "Estoque baixo", value: String(lowStock.length), note: "materiais precisam reposição", icon: Package, tone: "info" as const },
-  ];
+    plan.estoque
+      ? { label: "Estoque baixo", value: String(lowStock.length), note: "materiais precisam reposição", icon: Package, tone: "info" as const }
+      : null,
+  ].filter((stat): stat is NonNullable<typeof stat> => stat !== null);
 
   return (
     <>
@@ -93,7 +102,9 @@ export function DbDashboard({ orders, stages, materials }: DbDashboardProps) {
         ))}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.45fr_0.8fr]">
+      {plan.producao || plan.estoque ? (
+      <section className={`grid gap-6 ${plan.producao && plan.estoque ? "xl:grid-cols-[1.45fr_0.8fr]" : ""}`}>
+        {plan.producao ? (
         <SectionCard
           eyebrow="Produção"
           title="Quadro por etapa"
@@ -125,7 +136,9 @@ export function DbDashboard({ orders, stages, materials }: DbDashboardProps) {
             ))}
           </div>
         </SectionCard>
+        ) : null}
 
+        {plan.estoque ? (
         <SectionCard eyebrow="Estoque" title="Materiais baixos">
           {lowStock.length === 0 ? (
             <p className="text-sm text-[#66756d]">Nenhum material abaixo do mínimo.</p>
@@ -148,7 +161,9 @@ export function DbDashboard({ orders, stages, materials }: DbDashboardProps) {
             </div>
           )}
         </SectionCard>
+        ) : null}
       </section>
+      ) : null}
 
       <SectionCard eyebrow="Pedidos" title="Acompanhamento geral" action={<Link href="/pedidos" className="flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]">Ver todos<ArrowRight size={16} aria-hidden="true" /></Link>}>
         {orders.length === 0 ? (
