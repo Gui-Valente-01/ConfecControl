@@ -1,0 +1,92 @@
+"use client";
+
+import { Check, Copy, LinkIcon, Send } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
+import { generateClientInviteAction } from "@/app/clientes/actions";
+import { useActionFeedback } from "@/components/toast";
+import { emptyFormState } from "@/lib/form-state";
+
+type ClientPortalInviteProps = {
+  clientId: string;
+  hasEmail: boolean;
+  portalEnabled: boolean;
+  inviteToken: string | null;
+};
+
+export function ClientPortalInvite({ clientId, hasEmail, portalEnabled, inviteToken }: ClientPortalInviteProps) {
+  const [state, formAction, pending] = useActionState(generateClientInviteAction, emptyFormState);
+  const [copied, setCopied] = useState(false);
+  const [origin, setOrigin] = useState("");
+  useActionFeedback(state);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const link = inviteToken ? `${origin}/portal/entrar?t=${inviteToken}` : "";
+
+  async function copy() {
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard indisponível: o usuário copia manualmente do campo
+    }
+  }
+
+  return (
+    <details className="mt-3 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
+      <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[#087f7d]">
+        <LinkIcon size={13} aria-hidden="true" />
+        Portal do cliente
+      </summary>
+
+      <div className="mt-3 space-y-2">
+        {!hasEmail ? (
+          <p className="text-xs text-[#9f2f42]">Adicione um e-mail a este cliente (em Editar) para liberar o acesso ao portal.</p>
+        ) : (
+          <>
+            <p className="text-xs text-[#63736b]">
+              {portalEnabled && !inviteToken
+                ? "Este cliente já ativou o portal. Gere um novo link só se ele precisar redefinir a senha."
+                : "Gere um link e envie ao cliente (WhatsApp, e-mail). No 1º acesso ele cria a senha."}
+            </p>
+
+            {inviteToken ? (
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={link}
+                  onFocus={(event) => event.currentTarget.select()}
+                  className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-xs text-[#405047] outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={copy}
+                  className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-2.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
+                >
+                  {copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
+                  {copied ? "Copiado" : "Copiar"}
+                </button>
+              </div>
+            ) : null}
+
+            <form action={formAction}>
+              <input type="hidden" name="id" value={clientId} />
+              <button
+                type="submit"
+                disabled={pending}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60"
+              >
+                <Send size={13} aria-hidden="true" />
+                {pending ? "Gerando..." : inviteToken ? "Gerar novo link" : "Gerar link de acesso"}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </details>
+  );
+}

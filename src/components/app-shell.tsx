@@ -9,6 +9,7 @@ import {
   CreditCard,
   Factory,
   Handshake,
+  Inbox,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -33,6 +34,7 @@ const navItems = [
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Produtos", href: "/produtos", icon: Shirt },
   { label: "Pedidos", href: "/pedidos", icon: ClipboardList },
+  { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
   { label: "Produção", href: "/producao", icon: Factory },
   { label: "Estoque", href: "/estoque", icon: Package },
   { label: "Financeiro", href: "/financeiro", icon: CreditCard },
@@ -53,22 +55,56 @@ type AppShellProps = {
   eyebrow: string;
   title: string;
   actionLabel?: string;
+  actionHref?: string;
+  search?:
+    | false
+    | {
+        action?: string;
+        placeholder?: string;
+        ariaLabel?: string;
+        defaultValue?: string;
+        showOnMobile?: boolean;
+      };
   user: ShellUser;
   children: React.ReactNode;
 };
 
-export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
+export function AppShell({
+  eyebrow,
+  title,
+  actionLabel,
+  actionHref,
+  search,
+  user,
+  children,
+}: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const visibleNav = navItems.filter(
     (item) => canAccessRoute(user.role, item.href) && planAllowsRoute(user.features, item.href),
   );
+  const resolvedSearch =
+    search === false
+      ? null
+      : {
+          action: search?.action ?? "/busca",
+          placeholder: search?.placeholder ?? "Buscar pedido, cliente ou produto",
+          ariaLabel: search?.ariaLabel ?? "Buscar pedido, cliente ou produto",
+          defaultValue: search?.defaultValue,
+          showOnMobile: search?.showOnMobile ?? false,
+        };
+  const headerAction =
+    actionLabel && actionHref
+      ? { label: actionLabel, href: actionHref }
+      : pathname !== "/pedidos"
+        ? { label: "Novo pedido", href: "/pedidos" }
+        : null;
 
   return (
     <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
       <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 overflow-y-auto border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white lg:block">
-          <Link href="/" className="flex items-center gap-3">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-[#24342c] bg-[#111a16] px-5 py-5 text-white lg:flex">
+          <Link href="/" className="flex shrink-0 items-center gap-3">
             <div className="flex size-11 items-center justify-center rounded-lg bg-[#087f7d] text-white shadow-sm">
               <Factory size={22} aria-hidden="true" />
             </div>
@@ -78,7 +114,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
             </div>
           </Link>
 
-          <nav className="mt-8 space-y-1" aria-label="Navegação principal">
+          <nav className="mt-6 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1" aria-label="Navegação principal">
             {visibleNav.map((item) => {
               const Icon = item.icon;
               const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -86,7 +122,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
+                  className={`flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
                     active
                       ? "bg-white text-[#111a16] shadow-sm"
                       : "text-[#c8d6cf] hover:bg-white/10 hover:text-white"
@@ -99,7 +135,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
             })}
           </nav>
 
-          <div className="mt-10 rounded-lg border border-white/10 bg-white/[0.06] p-4">
+          <div className="mt-5 shrink-0 rounded-xl border border-white/10 bg-white/[0.06] p-4">
             <p className="text-sm font-semibold">{user.name}</p>
             <p className="mt-0.5 text-xs text-[#9eb1a8]">
               {roleLabels[user.role]} - {user.companyName}
@@ -121,42 +157,48 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-[#d9e1dd] bg-[#f4f6f5]/90 px-4 py-4 backdrop-blur md:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3 lg:hidden">
+          <header className="sticky top-0 z-10 border-b border-[#d9e1dd] bg-[#f4f6f5]/90 px-4 py-3.5 backdrop-blur md:px-8">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 <button
-                  className="flex size-10 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#1c2420] shadow-sm"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#1c2420] shadow-sm lg:hidden"
                   aria-label="Abrir menu"
                   title="Abrir menu"
                   onClick={() => setMobileOpen(true)}
                 >
                   <Menu size={20} aria-hidden="true" />
                 </button>
-                <div>
-                  <p className="font-semibold">ConfecControl</p>
-                  <p className="text-xs text-[#63736b]">{title}</p>
+                <div className="min-w-0">
+                  <p className="hidden text-xs font-semibold uppercase tracking-[0.14em] text-[#63736b] md:block">
+                    {eyebrow}
+                  </p>
+                  <h1 className="truncate text-base font-semibold text-[#1c2420] md:mt-0.5 md:text-2xl">
+                    {title}
+                  </h1>
                 </div>
               </div>
 
-              <div className="hidden md:block">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#63736b]">{eyebrow}</p>
-                <h1 className="mt-0.5 text-2xl font-semibold tracking-normal text-[#1c2420]">{title}</h1>
-              </div>
-
-              <div className="flex flex-1 items-center justify-end gap-2">
-                <form method="get" action="/busca" className="relative hidden min-w-64 max-w-sm flex-1 md:block">
-                  <span className="sr-only">Buscar</span>
-                  <Search
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
-                    size={18}
-                    aria-hidden="true"
-                  />
-                  <input
-                    name="q"
-                    className="h-10 w-full rounded-lg border border-[#d9e1dd] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#8a9890] shadow-sm transition focus:border-[#087f7d] focus:ring-4"
-                    placeholder="Buscar pedido, cliente ou produto"
-                  />
-                </form>
+              <div className="flex min-w-0 items-center justify-end gap-2">
+                {resolvedSearch ? (
+                  <form
+                    method="get"
+                    action={resolvedSearch.action}
+                    className="relative hidden w-48 shrink-0 md:block lg:w-56 xl:w-72"
+                  >
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
+                      size={18}
+                      aria-hidden="true"
+                    />
+                    <input
+                      name="q"
+                      aria-label={resolvedSearch.ariaLabel}
+                      defaultValue={resolvedSearch.defaultValue}
+                      className="h-10 w-full rounded-lg border border-[#d9e1dd] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#63736b] shadow-sm transition focus:border-[#087f7d] focus:ring-4"
+                      placeholder={resolvedSearch.placeholder}
+                    />
+                  </form>
+                ) : null}
                 {canAccessRoute(user.role, "/relatorios") && planAllowsRoute(user.features, "/relatorios") ? (
                   <Link
                     href="/relatorios"
@@ -167,17 +209,36 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
                     <Bell size={18} aria-hidden="true" />
                   </Link>
                 ) : null}
-                {pathname !== "/pedidos" ? (
+                {headerAction ? (
                   <Link
-                    href="/pedidos"
-                    className="flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]"
+                    href={headerAction.href}
+                    aria-label={headerAction.label}
+                    title={headerAction.label}
+                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#05605e] text-sm font-semibold text-white shadow-sm transition hover:bg-[#044d4c] sm:h-10 sm:w-auto sm:gap-2 sm:px-4"
                   >
                     <Plus size={17} aria-hidden="true" />
-                    <span>Novo pedido</span>
+                    <span className="hidden whitespace-nowrap sm:inline">{headerAction.label}</span>
                   </Link>
                 ) : null}
               </div>
             </div>
+
+            {resolvedSearch?.showOnMobile ? (
+              <form method="get" action={resolvedSearch.action} className="relative mt-3 md:hidden">
+                <Search
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
+                  size={18}
+                  aria-hidden="true"
+                />
+                <input
+                  name="q"
+                  aria-label={resolvedSearch.ariaLabel}
+                  defaultValue={resolvedSearch.defaultValue}
+                  className="h-10 w-full rounded-lg border border-[#d9e1dd] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#63736b] shadow-sm transition focus:border-[#087f7d] focus:ring-4"
+                  placeholder={resolvedSearch.placeholder}
+                />
+              </form>
+            ) : null}
           </header>
 
           <div className="space-y-8 px-4 py-6 md:px-8 xl:px-10">{children}</div>
@@ -186,7 +247,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
 
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 bg-[#111a16]/45 lg:hidden" role="presentation">
-          <aside className="h-full w-80 max-w-[88vw] border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white shadow-2xl">
+          <aside className="flex h-full w-80 max-w-[88vw] flex-col overflow-hidden border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
                 <div className="flex size-10 items-center justify-center rounded-lg bg-[#087f7d] text-white">
@@ -206,7 +267,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
-            <nav className="mt-8 space-y-1" aria-label="Navegação mobile">
+            <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Navegação mobile">
               {visibleNav.map((item) => {
                 const Icon = item.icon;
                 const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
@@ -225,7 +286,7 @@ export function AppShell({ eyebrow, title, user, children }: AppShellProps) {
                 );
               })}
             </nav>
-            <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.06] p-3">
+            <div className="mt-5 shrink-0 rounded-xl border border-white/10 bg-white/[0.06] p-3">
               <p className="text-sm font-semibold">{user.name}</p>
               <p className="mt-0.5 text-xs text-[#9eb1a8]">
                 {roleLabels[user.role]} - {user.companyName}

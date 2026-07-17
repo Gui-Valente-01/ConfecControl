@@ -1,6 +1,7 @@
 import { Phone, Users } from "lucide-react";
 import { deleteClientAction, updateClientAction } from "@/app/clientes/actions";
 import { ClientCreateForm } from "@/components/client-create-form";
+import { ClientPortalInvite } from "@/components/client-portal-invite";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { InlineEdit } from "@/components/inline-edit";
 import { MetricCard } from "@/components/metric-card";
@@ -17,6 +18,8 @@ type DbClient = {
   document: string | null;
   address: string | null;
   notes: string | null;
+  portalEnabled: boolean;
+  inviteToken: string | null;
   _count: { orders: number };
   orders: { totalAmountInCents: number }[];
 };
@@ -24,9 +27,10 @@ type DbClient = {
 type DbClientsManagerProps = {
   clients: DbClient[];
   canEdit: boolean;
+  hasPortal: boolean;
 };
 
-export function DbClientsManager({ clients, canEdit }: DbClientsManagerProps) {
+export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManagerProps) {
   const activeClients = clients.filter((client) => client._count.orders > 0).length;
   const newClients = clients.length - activeClients;
   const totalValue = clients.reduce(
@@ -116,6 +120,14 @@ export function DbClientsManager({ clients, canEdit }: DbClientsManagerProps) {
                           { name: "address", label: "Endereço", defaultValue: client.address ?? "" },
                           { name: "notes", label: "Observações", defaultValue: client.notes ?? "", textarea: true },
                         ]}
+                      />
+                    ) : null}
+                    {hasPortal ? (
+                      <ClientPortalInvite
+                        clientId={client.id}
+                        hasEmail={Boolean(client.email)}
+                        portalEnabled={client.portalEnabled}
+                        inviteToken={client.inviteToken}
                       />
                     ) : null}
                   </article>

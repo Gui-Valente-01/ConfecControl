@@ -1,9 +1,35 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+
+// Gera (ou renova) o link de acesso do cliente ao portal. Exige o módulo portal
+// e um e-mail no cliente (usado para os logins seguintes).
+export async function generateClientInviteAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  if (!planHasFeature(user.features, "portal")) {
+    return { error: "Ative o módulo Portal do cliente para convidar clientes." };
+  }
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "Cliente não encontrado." };
+
+  const client = await prisma.client.findFirst({
+    where: { id, companyId: user.companyId },
+    select: { id: true, email: true },
+  });
+  if (!client) return { error: "Cliente não encontrado." };
+  if (!client.email) return { error: "Adicione um e-mail ao cliente antes de gerar o acesso." };
+
+  const token = randomBytes(24).toString("base64url");
+  await prisma.client.update({ where: { id: client.id }, data: { inviteToken: token } });
+
+  revalidatePath("/clientes");
+  return { success: "Link de acesso gerado. Copie e envie ao cliente." };
+}
 
 export async function createClientAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const name = String(formData.get("name") ?? "").trim();

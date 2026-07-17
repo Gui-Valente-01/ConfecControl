@@ -8,7 +8,8 @@ export type FeatureKey =
   | "financeiro"
   | "relatorios"
   | "terceirizadas"
-  | "equipe";
+  | "equipe"
+  | "portal";
 
 export const sellableFeatures: {
   key: FeatureKey;
@@ -22,6 +23,7 @@ export const sellableFeatures: {
   { key: "relatorios", label: "Relatórios", description: "Faturamento, lucro e rankings de clientes e peças.", route: "/relatorios" },
   { key: "terceirizadas", label: "Terceirizadas", description: "Cadastro e envio de pedidos para facções parceiras.", route: "/terceirizadas" },
   { key: "equipe", label: "Vários funcionários", description: "Mais de um login, com cargos e acessos por pessoa.", route: "/usuarios" },
+  { key: "portal", label: "Portal do cliente", description: "O cliente acompanha pedidos e envia solicitações que você aprova.", route: "/solicitacoes" },
 ];
 
 export const featureKeys: FeatureKey[] = sellableFeatures.map((feature) => feature.key);

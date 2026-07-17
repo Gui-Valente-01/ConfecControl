@@ -67,6 +67,7 @@ model Company {
   materials        Material[]
   partners         Partner[]
   signupTokens     SignupToken[]
+  orderRequests    OrderRequest[]
 
   @@map("empresas")
 }
@@ -131,23 +132,53 @@ model User {
 }
 
 model Client {
-  id        String   @id @default(cuid())
-  companyId String
-  name      String
-  document  String?
-  contact   String?
-  phone     String?
-  email     String?
-  address   String?
-  notes     String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  companyId     String
+  name          String
+  document      String?
+  contact       String?
+  phone         String?
+  email         String?
+  address       String?
+  notes         String?  @db.Text
+  // Portal do cliente (login próprio, conectado à confecção por convite).
+  passwordHash  String?
+  inviteToken   String?  @unique
+  portalEnabled Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  orders  Order[]
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orders        Order[]
+  orderRequests OrderRequest[]
 
   @@index([companyId])
   @@map("clientes")
+}
+
+// Solicitação feita pelo cliente no portal; a confecção aceita (vira pedido) ou recusa.
+model OrderRequest {
+  id               String    @id @default(cuid())
+  companyId        String
+  clientId         String
+  kind             String    @default("NEW") // NEW | REORDER
+  referenceOrderId String?
+  description      String    @db.Text
+  quantity         Int?
+  photoUrl         String?
+  status           String    @default("PENDING") // PENDING | ACCEPTED | REJECTED
+  reviewNote       String?
+  reviewedAt       DateTime?
+  createdOrderId   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status])
+  @@index([clientId])
+  @@map("solicitacoes")
 }
 
 model Product {

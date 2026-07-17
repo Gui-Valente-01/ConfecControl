@@ -22,11 +22,12 @@ const roleRoutes: Record<UserRole, string[] | "all"> = {
     "/financeiro",
     "/relatorios",
     "/terceirizadas",
+    "/solicitacoes",
     "/configuracoes",
   ],
   PRODUCTION: ["/", "/pedidos", "/producao", "/estoque"],
   FINANCE: ["/", "/clientes", "/pedidos", "/financeiro", "/relatorios"],
-  SALES: ["/", "/clientes", "/produtos", "/pedidos"],
+  SALES: ["/", "/clientes", "/produtos", "/pedidos", "/solicitacoes"],
 };
 
 export function canAccessRoute(role: UserRole, href: string) {
