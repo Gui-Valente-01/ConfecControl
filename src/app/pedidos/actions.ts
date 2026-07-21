@@ -3,11 +3,11 @@
 import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { Prisma } from "@prisma/client";
+import { OrderPriority, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currencyToCents, dateInputToDate } from "@/lib/format";
-import { requireCompanyId } from "@/lib/auth";
+import { requireCompanyId, requireUser } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +15,30 @@ import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB
+
+const orderPriorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
+
+// Prioridade (preferência) do pedido: só o Dono (ADMIN) ou o Gerente (MANAGER) altera.
+export async function setOrderPriorityAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  if (user.role !== "ADMIN" && user.role !== "MANAGER") {
+    return { error: "Apenas o dono ou o gerente altera a prioridade." };
+  }
+  const id = String(formData.get("id") ?? "");
+  const priorityRaw = String(formData.get("priority") ?? "");
+  if (!id || !orderPriorities.includes(priorityRaw as OrderPriority)) return { error: "Prioridade inválida." };
+
+  const updated = await prisma.order.updateMany({
+    where: { id, companyId: user.companyId },
+    data: { priority: priorityRaw as OrderPriority },
+  });
+  if (updated.count === 0) return { error: "Pedido não encontrado." };
+
+  revalidatePath("/pedidos");
+  revalidatePath("/producao");
+  revalidatePath("/bancada");
+  return { success: "Prioridade atualizada." };
+}
 
 export async function uploadAttachmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const orderId = String(formData.get("orderId") ?? "");

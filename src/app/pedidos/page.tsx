@@ -16,7 +16,8 @@ export default async function PedidosPage() {
     }),
     prisma.order.findMany({
       where: { companyId: user.companyId },
-      orderBy: { createdAt: "desc" },
+      // Mais importantes em cima; dentro da mesma prioridade, prazo mais próximo primeiro.
+      orderBy: [{ priority: "desc" }, { deliveryDate: "asc" }, { createdAt: "desc" }],
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
@@ -24,9 +25,11 @@ export default async function PedidosPage() {
     }),
   ]);
 
+  const canPrioritize = user.role === "ADMIN" || user.role === "MANAGER";
+
   return (
     <AppShell eyebrow="Operação" title="Pedidos" actionLabel="Novo pedido" user={user}>
-      <DbOrdersManager clients={clients} products={products} orders={orders} />
+      <DbOrdersManager clients={clients} products={products} orders={orders} canPrioritize={canPrioritize} />
     </AppShell>
   );
 }

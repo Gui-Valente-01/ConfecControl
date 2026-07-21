@@ -5,7 +5,7 @@ import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { formatDateTime, formatShortDate } from "@/lib/format";
-import { orderStatusLabels } from "@/lib/status";
+import { orderPriorityBadge, orderPriorityLabels, orderStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,8 @@ export default async function BancadaPage() {
     prisma.bancadaTask.groupBy({ by: ["mesaId"], where: { companyId, status: "DONE" }, _count: { _all: true } }),
     prisma.order.findMany({
       where: { companyId, status: { notIn: ["DELIVERED", "CANCELED"] } },
-      orderBy: { createdAt: "desc" },
+      // Mais importantes em cima para o funcionário pegar primeiro.
+      orderBy: [{ priority: "desc" }, { deliveryDate: "asc" }, { createdAt: "desc" }],
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
@@ -166,7 +167,14 @@ export default async function BancadaPage() {
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono text-sm font-semibold text-[#405047]">#{order.number}</span>
-                      <span className="rounded-md bg-[#eef4f1] px-2 py-0.5 text-xs font-semibold text-[#405047]">{orderStatusLabels[order.status]}</span>
+                      <div className="flex items-center gap-1.5">
+                        {order.priority === "URGENT" || order.priority === "HIGH" ? (
+                          <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${orderPriorityBadge[order.priority]}`}>
+                            {orderPriorityLabels[order.priority]}
+                          </span>
+                        ) : null}
+                        <span className="rounded-md bg-[#eef4f1] px-2 py-0.5 text-xs font-semibold text-[#405047]">{orderStatusLabels[order.status]}</span>
+                      </div>
                     </div>
                     <p className="mt-1.5 font-semibold">{order.client.name}</p>
                     <p className="text-sm text-[#66756d]">

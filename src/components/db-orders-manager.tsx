@@ -3,11 +3,12 @@ import { Eye } from "lucide-react";
 import { createOrderAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { OrderForm } from "@/components/order-form";
+import { PrioritySelect } from "@/components/priority-select";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
-import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
-import type { OrderStatus, PaymentStatus } from "@prisma/client";
+import { orderPriorityBadge, orderPriorityLabels, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
+import type { OrderPriority, OrderStatus, PaymentStatus } from "@prisma/client";
 
 type ClientOption = { id: string; name: string };
 type ProductOption = { id: string; name: string; standardPriceInCents: number };
@@ -16,6 +17,7 @@ type DbOrder = {
   number: number;
   deliveryDate: Date | null;
   status: OrderStatus;
+  priority: OrderPriority;
   paymentStatus: PaymentStatus;
   totalAmountInCents: number;
   client: { name: string };
@@ -26,9 +28,10 @@ type DbOrdersManagerProps = {
   clients: ClientOption[];
   products: ProductOption[];
   orders: DbOrder[];
+  canPrioritize: boolean;
 };
 
-export function DbOrdersManager({ clients, products, orders }: DbOrdersManagerProps) {
+export function DbOrdersManager({ clients, products, orders, canPrioritize }: DbOrdersManagerProps) {
   const now = new Date();
 
   return (
@@ -45,10 +48,11 @@ export function DbOrdersManager({ clients, products, orders }: DbOrdersManagerPr
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[880px] border-separate border-spacing-0 text-left text-sm">
+            <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
               <thead>
                 <tr className="text-[#63736b]">
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pedido</th>
+                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prioridade</th>
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Cliente</th>
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Itens</th>
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prazo</th>
@@ -66,7 +70,21 @@ export function DbOrdersManager({ clients, products, orders }: DbOrdersManagerPr
                   return (
                     <tr key={order.id} className="transition hover:bg-[#f8faf9]">
                       <td className="border-b border-[#edf2ef] py-4 font-mono font-semibold text-[#405047]">
-                        <Link href={`/pedidos/${order.id}`} className="hover:underline">#{order.number}</Link>
+                        <span className="flex items-center gap-2">
+                          {order.priority === "URGENT" || order.priority === "HIGH" ? (
+                            <span className={`inline-block h-6 w-1 rounded-full ${order.priority === "URGENT" ? "bg-[#c43f54]" : "bg-[#c88a2b]"}`} aria-hidden="true" />
+                          ) : null}
+                          <Link href={`/pedidos/${order.id}`} className="hover:underline">#{order.number}</Link>
+                        </span>
+                      </td>
+                      <td className="border-b border-[#edf2ef] py-4">
+                        {canPrioritize ? (
+                          <PrioritySelect orderId={order.id} value={order.priority} />
+                        ) : (
+                          <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${orderPriorityBadge[order.priority]}`}>
+                            {orderPriorityLabels[order.priority]}
+                          </span>
+                        )}
                       </td>
                       <td className="border-b border-[#edf2ef] py-4 font-medium">{order.client.name}</td>
                       <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">

@@ -26,6 +26,21 @@ export const orderPriorityLabels: Record<OrderPriority, string> = {
   URGENT: "Urgente",
 };
 
+// Peso para ordenar "mais importantes em cima" (maior = mais no topo).
+export const orderPriorityRank: Record<OrderPriority, number> = {
+  URGENT: 3,
+  HIGH: 2,
+  NORMAL: 1,
+  LOW: 0,
+};
+
+export const orderPriorityBadge: Record<OrderPriority, string> = {
+  URGENT: "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]",
+  HIGH: "border-[#ead49c] bg-[#fff7dd] text-[#7b5a0b]",
+  NORMAL: "border-[#d9e1dd] bg-[#eef4f1] text-[#405047]",
+  LOW: "border-[#e0e6e2] bg-[#f3f6f4] text-[#8a9890]",
+};
+
 // Considera atrasado: tem prazo vencido e ainda não saiu da produção.
 export function isOrderLate(deliveryDate: Date | null, status: OrderStatus, reference = new Date()) {
   if (!deliveryDate) return false;
