@@ -23,9 +23,10 @@ const roleRoutes: Record<UserRole, string[] | "all"> = {
     "/relatorios",
     "/terceirizadas",
     "/solicitacoes",
+    "/bancada",
     "/configuracoes",
   ],
-  PRODUCTION: ["/", "/pedidos", "/producao", "/estoque"],
+  PRODUCTION: ["/", "/pedidos", "/producao", "/estoque", "/bancada"],
   FINANCE: ["/", "/clientes", "/pedidos", "/financeiro", "/relatorios"],
   SALES: ["/", "/clientes", "/produtos", "/pedidos", "/solicitacoes"],
 };

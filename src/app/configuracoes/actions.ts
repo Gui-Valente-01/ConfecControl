@@ -1,9 +1,71 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireCompanyId } from "@/lib/auth";
+import { requireCompanyId, requireUser } from "@/lib/auth";
+import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+
+// --------- Mesas / bancada (só empresas com o módulo bancada) ---------
+
+async function requireBancadaCompany(): Promise<string | null> {
+  const user = await requireUser();
+  if (!planHasFeature(user.features, "bancada")) return null;
+  return user.companyId;
+}
+
+function revalidateMesas() {
+  revalidatePath("/configuracoes");
+  revalidatePath("/bancada");
+}
+
+export async function createMesaAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const companyId = await requireBancadaCompany();
+  if (!companyId) return { error: "Ative o módulo Bancada para cadastrar mesas." };
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Informe o nome da mesa." };
+
+  const last = await prisma.mesa.findFirst({ where: { companyId }, orderBy: { position: "desc" }, select: { position: true } });
+  await prisma.mesa.create({ data: { companyId, name, position: (last?.position ?? 0) + 1 } });
+
+  revalidateMesas();
+  return { success: `Mesa ${name} criada.` };
+}
+
+export async function updateMesaAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const companyId = await requireBancadaCompany();
+  if (!companyId) return { error: "Ative o módulo Bancada para editar mesas." };
+
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const position = Number(formData.get("position") ?? 0);
+  const active = String(formData.get("active") ?? "") === "on";
+  if (!id || !name) return { error: "Informe o nome da mesa." };
+
+  const updated = await prisma.mesa.updateMany({
+    where: { id, companyId },
+    data: { name, position: Number.isFinite(position) ? position : 0, active },
+  });
+  if (updated.count === 0) return { error: "Mesa não encontrada." };
+
+  revalidateMesas();
+  return { success: "Mesa atualizada." };
+}
+
+export async function deleteMesaAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const companyId = await requireBancadaCompany();
+  if (!companyId) return { error: "Ação indisponível." };
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { error: "Mesa não encontrada." };
+
+  const deleted = await prisma.mesa.deleteMany({ where: { id, companyId } });
+  if (deleted.count === 0) return { error: "Mesa não encontrada." };
+
+  revalidateMesas();
+  return { success: "Mesa removida." };
+}
 
 export async function updateCompanyAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const companyId = await requireCompanyId();

@@ -68,6 +68,8 @@ model Company {
   partners         Partner[]
   signupTokens     SignupToken[]
   orderRequests    OrderRequest[]
+  mesas            Mesa[]
+  bancadaTasks     BancadaTask[]
 
   @@map("empresas")
 }
@@ -125,7 +127,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bancadaTasks BancadaTask[]
 
   @@index([companyId])
   @@map("usuarios")
@@ -179,6 +182,50 @@ model OrderRequest {
   @@index([companyId, status])
   @@index([clientId])
   @@map("solicitacoes")
+}
+
+// Mesa/bancada de trabalho (ex.: silk). Cadastro configurável por empresa.
+model Mesa {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  active    Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tasks   BancadaTask[]
+
+  @@index([companyId])
+  @@map("mesas")
+}
+
+// Trabalho de bancada: o funcionário "pega" um pedido numa mesa e depois conclui.
+model BancadaTask {
+  id           String    @id @default(cuid())
+  companyId    String
+  orderId      String
+  mesaId       String?
+  pickedById   String?
+  pickedByName String
+  status       String    @default("PICKED") // PICKED | DONE
+  noteKind     String    @default("NONE") // NONE | SHORTAGE | SURPLUS | INFO
+  note         String?
+  pickedAt     DateTime  @default(now())
+  doneAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  order    Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  mesa     Mesa?   @relation(fields: [mesaId], references: [id], onDelete: SetNull)
+  pickedBy User?   @relation(fields: [pickedById], references: [id], onDelete: SetNull)
+
+  @@index([companyId, status])
+  @@index([orderId])
+  @@index([mesaId])
+  @@map("bancada_tarefas")
 }
 
 model Product {
@@ -249,6 +296,7 @@ model Order {
   payments       Payment[]
   attachments    Attachment[]
   stockMovements StockMovement[]
+  bancadaTasks   BancadaTask[]
 
   @@unique([companyId, number])
   @@index([companyId])
