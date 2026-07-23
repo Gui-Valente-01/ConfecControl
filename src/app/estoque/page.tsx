@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { DbStockManager } from "@/components/db-stock-manager";
 import { requireRouteUser } from "@/lib/auth";
+import { canManageStock } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -40,9 +41,11 @@ export default async function EstoquePage() {
     orderNumber: movement.order?.number ?? null,
   }));
 
+  const canManage = canManageStock(user.role);
+
   return (
-    <AppShell eyebrow="Almoxarifado" title="Estoque" actionLabel="Novo material" user={user}>
-      <DbStockManager materials={mappedMaterials} movements={mappedMovements} canEdit={user.role === "ADMIN"} />
+    <AppShell eyebrow="Almoxarifado" title="Estoque" actionLabel={canManage ? "Novo material" : undefined} user={user}>
+      <DbStockManager materials={mappedMaterials} movements={mappedMovements} canEdit={user.role === "ADMIN"} canManage={canManage} />
     </AppShell>
   );
 }

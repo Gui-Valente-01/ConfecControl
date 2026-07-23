@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { DbProductionBoard } from "@/components/db-production-board";
 import { requireRouteUser } from "@/lib/auth";
+import { canManageOrders, canManageProduction } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 import { OrderPriority, OrderStatus } from "@prisma/client";
 
@@ -56,13 +57,19 @@ export default async function ProducaoPage({ searchParams }: { searchParams: Sea
     }));
 
   return (
-    <AppShell eyebrow="Chão de fábrica" title="Produção" actionLabel="Novo pedido" user={user}>
+    <AppShell
+      eyebrow="Chão de fábrica"
+      title="Produção"
+      actionLabel={canManageOrders(user.role) ? "Novo pedido" : undefined}
+      user={user}
+    >
       <DbProductionBoard
         stages={filteredStages}
         stageOptions={stages.map((stage) => ({ id: stage.id, name: stage.name }))}
         partners={partners}
         employees={employees.map((e) => ({ name: e.name, sector: e.sector }))}
         filters={{ stage: stageFilter, status: statusFilter, priority: priorityFilter }}
+        canManage={canManageProduction(user.role)}
       />
     </AppShell>
   );

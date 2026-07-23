@@ -2,12 +2,21 @@
 
 import { OrderPriority } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { requireCompanyId } from "@/lib/auth";
+import { requireCompanyId, requireUser } from "@/lib/auth";
+import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 
+// Mover etapa / definir responsável é só do Dono e do Gerente (Produção é só leitura).
+async function ensureCanManageProduction(): Promise<FormState | null> {
+  const user = await requireUser();
+  return canManageProduction(user.role) ? null : { error: "Você não tem permissão para alterar a produção." };
+}
+
 export async function moveOrderStageAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageProduction();
+  if (denied) return denied;
   const orderId = String(formData.get("orderId") ?? "");
   const currentStageId = String(formData.get("currentStageId") ?? "");
   const note = String(formData.get("note") ?? "").trim();
@@ -61,6 +70,8 @@ const priorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
 
 // Define prioridade, responsável e terceirizada de um pedido na produção.
 export async function setOrderProductionAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageProduction();
+  if (denied) return denied;
   const orderId = String(formData.get("orderId") ?? "");
   const priorityRaw = String(formData.get("priority") ?? "");
   const assignee = String(formData.get("assignee") ?? "").trim();

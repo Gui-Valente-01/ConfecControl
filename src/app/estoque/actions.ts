@@ -2,9 +2,16 @@
 
 import { StockMovementType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { canManageStock } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+
+// Estoque: cadastrar/lançar/editar é só do Dono e do Gerente (Produção é só leitura).
+async function ensureCanManageStock(): Promise<FormState | null> {
+  const user = await requireUser();
+  return canManageStock(user.role) ? null : { error: "Você não tem permissão para alterar o estoque." };
+}
 
 function quantityFromText(value: string) {
   const parsed = Number(value.replace(",", "."));
@@ -18,6 +25,8 @@ function revalidateStock() {
 }
 
 export async function createMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageStock();
+  if (denied) return denied;
   const name = String(formData.get("name") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
   const unit = String(formData.get("unit") ?? "").trim();
@@ -77,6 +86,8 @@ export async function updateMaterialAction(_prev: FormState, formData: FormData)
 }
 
 export async function deleteMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageStock();
+  if (denied) return denied;
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Material não encontrado." };
 
@@ -91,6 +102,8 @@ export async function deleteMaterialAction(_prev: FormState, formData: FormData)
 const movementTypes: StockMovementType[] = ["IN", "OUT", "ADJUSTMENT"];
 
 export async function registerStockMovementAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageStock();
+  if (denied) return denied;
   const materialId = String(formData.get("materialId") ?? "");
   const typeRaw = String(formData.get("type") ?? "");
   const quantity = quantityFromText(String(formData.get("quantity") ?? ""));
@@ -134,6 +147,8 @@ export async function registerStockMovementAction(_prev: FormState, formData: Fo
 // --------- Ficha tecnica (BOM): materiais que cada produto consome ---------
 
 export async function setProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageStock();
+  if (denied) return denied;
   const productId = String(formData.get("productId") ?? "");
   const materialId = String(formData.get("materialId") ?? "");
   const quantityPerUnit = quantityFromText(String(formData.get("quantityPerUnit") ?? ""));
@@ -160,6 +175,8 @@ export async function setProductMaterialAction(_prev: FormState, formData: FormD
 }
 
 export async function removeProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageStock();
+  if (denied) return denied;
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Item da ficha técnica não encontrado." };
 

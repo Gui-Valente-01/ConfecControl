@@ -35,6 +35,7 @@ type DbStockManagerProps = {
   materials: DbMaterial[];
   movements: DbMovement[];
   canEdit: boolean;
+  canManage: boolean;
 };
 
 const movementLabels: Record<StockMovementType, string> = {
@@ -43,7 +44,7 @@ const movementLabels: Record<StockMovementType, string> = {
   ADJUSTMENT: "Ajuste",
 };
 
-export function DbStockManager({ materials, movements, canEdit }: DbStockManagerProps) {
+export function DbStockManager({ materials, movements, canEdit, canManage }: DbStockManagerProps) {
   const lowItems = materials.filter((item) => item.currentQuantity <= item.minimumQuantity);
   const supplierCount = new Set(materials.map((item) => item.supplier).filter(Boolean)).size;
 
@@ -65,7 +66,7 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
         </div>
       ) : null}
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+      <section className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_360px]" : ""}`}>
         <SectionCard eyebrow="Almoxarifado" title="Materiais">
           {materials.length === 0 ? (
             <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
@@ -90,12 +91,14 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
                           <p className="mt-1 text-sm text-[#66756d]">{item.category || "Material"} - {item.supplier || "Fornecedor não informado"}</p>
                         </div>
                       </div>
-                      <ConfirmDeleteButton
-                        action={deleteMaterialAction}
-                        id={item.id}
-                        title="Remover material"
-                        message={`Excluir o material ${item.name}?`}
-                      />
+                      {canManage ? (
+                        <ConfirmDeleteButton
+                          action={deleteMaterialAction}
+                          id={item.id}
+                          title="Remover material"
+                          message={`Excluir o material ${item.name}?`}
+                        />
+                      ) : null}
                     </div>
                     <div className="mt-4 flex items-center justify-between text-sm">
                       <span className="text-[#63736b]">Atual / mínimo</span>
@@ -122,29 +125,31 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
                       />
                     ) : null}
 
-                    <ToastForm action={registerStockMovementAction} className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-3">
-                      <input type="hidden" name="materialId" value={item.id} />
-                      <label className="w-24">
-                        <span className="text-xs text-[#63736b]">Tipo</span>
-                        <select name="type" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
-                          <option value="IN">Entrada</option>
-                          <option value="OUT">Saída</option>
-                          <option value="ADJUSTMENT">Ajuste</option>
-                        </select>
-                      </label>
-                      <label className="w-20">
-                        <span className="text-xs text-[#63736b]">Qtd.</span>
-                        <input name="quantity" type="number" min="0" step="0.01" required className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="0" />
-                      </label>
-                      <label className="min-w-28 flex-1">
-                        <span className="text-xs text-[#63736b]">Observação</span>
-                        <input name="note" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="opcional" />
-                      </label>
-                      <button className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e]" title="Registrar movimentação">
-                        <Plus size={14} aria-hidden="true" />
-                        Lançar
-                      </button>
-                    </ToastForm>
+                    {canManage ? (
+                      <ToastForm action={registerStockMovementAction} className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-3">
+                        <input type="hidden" name="materialId" value={item.id} />
+                        <label className="w-24">
+                          <span className="text-xs text-[#63736b]">Tipo</span>
+                          <select name="type" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
+                            <option value="IN">Entrada</option>
+                            <option value="OUT">Saída</option>
+                            <option value="ADJUSTMENT">Ajuste</option>
+                          </select>
+                        </label>
+                        <label className="w-20">
+                          <span className="text-xs text-[#63736b]">Qtd.</span>
+                          <input name="quantity" type="number" min="0" step="0.01" required className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="0" />
+                        </label>
+                        <label className="min-w-28 flex-1">
+                          <span className="text-xs text-[#63736b]">Observação</span>
+                          <input name="note" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="opcional" />
+                        </label>
+                        <button className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e]" title="Registrar movimentação">
+                          <Plus size={14} aria-hidden="true" />
+                          Lançar
+                        </button>
+                      </ToastForm>
+                    ) : null}
                   </article>
                 );
               })}
@@ -152,9 +157,11 @@ export function DbStockManager({ materials, movements, canEdit }: DbStockManager
           )}
         </SectionCard>
 
-        <SectionCard eyebrow="Novo material" title="Cadastrar estoque">
-          <MaterialCreateForm />
-        </SectionCard>
+        {canManage ? (
+          <SectionCard eyebrow="Novo material" title="Cadastrar estoque">
+            <MaterialCreateForm />
+          </SectionCard>
+        ) : null}
       </section>
 
       <SectionCard eyebrow="Movimentações" title="Histórico de estoque">

@@ -29,13 +29,15 @@ type DbOrdersManagerProps = {
   products: ProductOption[];
   orders: DbOrder[];
   canPrioritize: boolean;
+  canManage: boolean;
+  showFinance: boolean;
 };
 
-export function DbOrdersManager({ clients, products, orders, canPrioritize }: DbOrdersManagerProps) {
+export function DbOrdersManager({ clients, products, orders, canPrioritize, canManage, showFinance }: DbOrdersManagerProps) {
   const now = new Date();
 
   return (
-    <section className="grid gap-6 xl:grid-cols-[1fr_380px]">
+    <section className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_380px]" : ""}`}>
       <SectionCard
         eyebrow="Fila de pedidos"
         title="Pedidos cadastrados"
@@ -57,8 +59,8 @@ export function DbOrdersManager({ clients, products, orders, canPrioritize }: Db
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Itens</th>
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prazo</th>
                   <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Status</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pagamento</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th>
+                  {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pagamento</th> : null}
+                  {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th> : null}
                   <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Ações</th>
                 </tr>
               </thead>
@@ -95,10 +97,14 @@ export function DbOrdersManager({ clients, products, orders, canPrioritize }: Db
                         <StatusBadge tone={late ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge>
                       </td>
                       <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">{orderStatusLabels[order.status]}</td>
-                      <td className="border-b border-[#edf2ef] py-4">
-                        <StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge>
-                      </td>
-                      <td className="border-b border-[#edf2ef] py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
+                      {showFinance ? (
+                        <td className="border-b border-[#edf2ef] py-4">
+                          <StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge>
+                        </td>
+                      ) : null}
+                      {showFinance ? (
+                        <td className="border-b border-[#edf2ef] py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
+                      ) : null}
                       <td className="border-b border-[#edf2ef] py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Link
@@ -108,12 +114,14 @@ export function DbOrdersManager({ clients, products, orders, canPrioritize }: Db
                           >
                             <Eye size={16} aria-hidden="true" />
                           </Link>
-                          <ConfirmDeleteButton
-                            action={deleteOrderAction}
-                            id={order.id}
-                            title="Remover pedido"
-                            message={`Excluir o pedido #${order.number}? Esta ação não pode ser desfeita.`}
-                          />
+                          {canManage ? (
+                            <ConfirmDeleteButton
+                              action={deleteOrderAction}
+                              id={order.id}
+                              title="Remover pedido"
+                              message={`Excluir o pedido #${order.number}? Esta ação não pode ser desfeita.`}
+                            />
+                          ) : null}
                         </div>
                       </td>
                     </tr>
@@ -125,15 +133,17 @@ export function DbOrdersManager({ clients, products, orders, canPrioritize }: Db
         )}
       </SectionCard>
 
-      <SectionCard eyebrow="Criação" title="Novo pedido">
-        {clients.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
-            Cadastre um cliente antes de criar pedidos.
-          </div>
-        ) : (
-          <OrderForm clients={clients} products={products} action={createOrderAction} submitLabel="Salvar pedido" />
-        )}
-      </SectionCard>
+      {canManage ? (
+        <SectionCard eyebrow="Criação" title="Novo pedido">
+          {clients.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
+              Cadastre um cliente antes de criar pedidos.
+            </div>
+          ) : (
+            <OrderForm clients={clients} products={products} action={createOrderAction} submitLabel="Salvar pedido" />
+          )}
+        </SectionCard>
+      ) : null}
     </section>
   );
 }

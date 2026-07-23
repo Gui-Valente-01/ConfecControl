@@ -36,6 +36,7 @@ type DbProductionBoardProps = {
   partners: PartnerOption[];
   employees: EmployeeOption[];
   filters: { stage: string; status: string; priority: string };
+  canManage: boolean;
 };
 
 function priorityTone(priority: OrderPriority) {
@@ -54,7 +55,7 @@ function priorityColor(priority: OrderPriority) {
 const selectClass =
   "mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 shadow-sm transition focus:border-[#087f7d] focus:ring-4";
 
-export function DbProductionBoard({ stages, stageOptions, partners, employees, filters }: DbProductionBoardProps) {
+export function DbProductionBoard({ stages, stageOptions, partners, employees, filters, canManage }: DbProductionBoardProps) {
   const lastStageId = stageOptions[stageOptions.length - 1]?.id;
   const hasFilters = Boolean(filters.stage || filters.status || filters.priority);
 
@@ -127,21 +128,23 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                   const late = isOrderLate(order.deliveryDate, order.status);
                   return (
                     <article key={order.id} className="relative rounded-lg border border-[#d9e1dd] bg-white shadow-sm transition hover:border-[#c7d3ce]">
-                      <ToastForm action={moveOrderStageAction} className="absolute right-2 top-2 z-10">
-                        <input type="hidden" name="orderId" value={order.id} />
-                        <input type="hidden" name="currentStageId" value={stage.id} />
-                        <button
-                          type="submit"
-                          title="Avançar etapa"
-                          aria-label="Avançar etapa"
-                          disabled={stage.id === lastStageId}
-                          className="flex size-8 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#087f7d] transition hover:bg-[#e8f6f3] disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <ArrowRight size={15} aria-hidden="true" />
-                        </button>
-                      </ToastForm>
+                      {canManage ? (
+                        <ToastForm action={moveOrderStageAction} className="absolute right-2 top-2 z-10">
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <input type="hidden" name="currentStageId" value={stage.id} />
+                          <button
+                            type="submit"
+                            title="Avançar etapa"
+                            aria-label="Avançar etapa"
+                            disabled={stage.id === lastStageId}
+                            className="flex size-8 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#087f7d] transition hover:bg-[#e8f6f3] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <ArrowRight size={15} aria-hidden="true" />
+                          </button>
+                        </ToastForm>
+                      ) : null}
                       <details className="group">
-                        <summary className="flex cursor-pointer list-none items-center gap-2 p-3 pr-12 transition hover:bg-[#f8faf9]">
+                        <summary className={`flex cursor-pointer list-none items-center gap-2 p-3 transition hover:bg-[#f8faf9] ${canManage ? "pr-12" : "pr-3"}`}>
                           <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: priorityColor(order.priority) }} aria-hidden="true" />
                           <span className="shrink-0 font-mono text-xs font-semibold text-[#63736b]">#{order.number}</span>
                           <span className="truncate text-sm font-semibold">{order.client.name}</span>
@@ -176,49 +179,53 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                             {firstItem?.quantity ?? 0} unidades
                           </div>
 
-                          <ToastForm action={setOrderProductionAction} className="space-y-2">
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <select name="priority" defaultValue={order.priority} className={selectClass}>
-                              {(Object.keys(orderPriorityLabels) as OrderPriority[]).map((priority) => (
-                                <option key={priority} value={priority}>{orderPriorityLabels[priority]}</option>
-                              ))}
-                            </select>
-                            <select name="assignee" defaultValue={order.assignee ?? ""} className={selectClass}>
-                              <option value="">Sem responsável</option>
-                              {order.assignee && !employees.some((e) => e.name === order.assignee) ? (
-                                <option value={order.assignee}>{order.assignee}</option>
-                              ) : null}
-                              {employees.map((employee) => (
-                                <option key={employee.name} value={employee.name}>
-                                  {employee.name}{employee.sector ? ` (${employee.sector})` : ""}
-                                </option>
-                              ))}
-                            </select>
-                            <select name="partnerId" defaultValue={order.partnerId ?? ""} className={selectClass}>
-                              <option value="">Sem terceirizada</option>
-                              {partners.map((partner) => (
-                                <option key={partner.id} value={partner.id}>{partner.name}</option>
-                              ))}
-                            </select>
-                            <button className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">Salvar</button>
-                          </ToastForm>
+                          {canManage ? (
+                            <ToastForm action={setOrderProductionAction} className="space-y-2">
+                              <input type="hidden" name="orderId" value={order.id} />
+                              <select name="priority" defaultValue={order.priority} className={selectClass}>
+                                {(Object.keys(orderPriorityLabels) as OrderPriority[]).map((priority) => (
+                                  <option key={priority} value={priority}>{orderPriorityLabels[priority]}</option>
+                                ))}
+                              </select>
+                              <select name="assignee" defaultValue={order.assignee ?? ""} className={selectClass}>
+                                <option value="">Sem responsável</option>
+                                {order.assignee && !employees.some((e) => e.name === order.assignee) ? (
+                                  <option value={order.assignee}>{order.assignee}</option>
+                                ) : null}
+                                {employees.map((employee) => (
+                                  <option key={employee.name} value={employee.name}>
+                                    {employee.name}{employee.sector ? ` (${employee.sector})` : ""}
+                                  </option>
+                                ))}
+                              </select>
+                              <select name="partnerId" defaultValue={order.partnerId ?? ""} className={selectClass}>
+                                <option value="">Sem terceirizada</option>
+                                {partners.map((partner) => (
+                                  <option key={partner.id} value={partner.id}>{partner.name}</option>
+                                ))}
+                              </select>
+                              <button className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">Salvar</button>
+                            </ToastForm>
+                          ) : null}
 
-                          <ToastForm action={moveOrderStageAction} className="space-y-2">
-                            <input type="hidden" name="orderId" value={order.id} />
-                            <input type="hidden" name="currentStageId" value={stage.id} />
-                            <input
-                              name="note"
-                              placeholder="Observação da etapa (opcional)"
-                              className="h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
-                            />
-                            <button
-                              className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-50"
-                              disabled={stage.id === lastStageId}
-                            >
-                              Avançar
-                              <ArrowRight size={15} aria-hidden="true" />
-                            </button>
-                          </ToastForm>
+                          {canManage ? (
+                            <ToastForm action={moveOrderStageAction} className="space-y-2">
+                              <input type="hidden" name="orderId" value={order.id} />
+                              <input type="hidden" name="currentStageId" value={stage.id} />
+                              <input
+                                name="note"
+                                placeholder="Observação da etapa (opcional)"
+                                className="h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                              />
+                              <button
+                                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-50"
+                                disabled={stage.id === lastStageId}
+                              >
+                                Avançar
+                                <ArrowRight size={15} aria-hidden="true" />
+                              </button>
+                            </ToastForm>
+                          ) : null}
                         </div>
                       </details>
                     </article>

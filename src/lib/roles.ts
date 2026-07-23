@@ -36,3 +36,26 @@ export function canAccessRoute(role: UserRole, href: string) {
   if (allowed === "all") return true;
   return allowed.includes(href);
 }
+
+// ---------- Capacidades por cargo ----------
+// Produção é SOMENTE LEITURA nas telas de gestão (acompanha o andamento) e não vê
+// valores financeiros. O trabalho interativo dele acontece na Bancada.
+
+export function canSeeFinance(role: UserRole) {
+  return role !== "PRODUCTION";
+}
+
+// Criar/editar/excluir pedidos e anexos.
+export function canManageOrders(role: UserRole) {
+  return role !== "PRODUCTION";
+}
+
+// Cadastrar material, lançar movimentação, editar/excluir estoque e ficha técnica.
+export function canManageStock(role: UserRole) {
+  return role === "ADMIN" || role === "MANAGER";
+}
+
+// Mover etapas e definir responsável/terceirizada no quadro de produção.
+export function canManageProduction(role: UserRole) {
+  return role === "ADMIN" || role === "MANAGER";
+}

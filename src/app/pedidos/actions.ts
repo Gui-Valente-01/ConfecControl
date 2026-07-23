@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { currencyToCents, dateInputToDate } from "@/lib/format";
 import { requireCompanyId, requireUser } from "@/lib/auth";
+import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { prisma } from "@/lib/prisma";
@@ -17,6 +18,12 @@ import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStora
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const orderPriorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
+
+// Bloqueia cargos sem permissão de gerir pedidos (ex.: Produção é só leitura).
+async function ensureCanManageOrders(): Promise<FormState | null> {
+  const user = await requireUser();
+  return canManageOrders(user.role) ? null : { error: "Você não tem permissão para esta ação." };
+}
 
 // Prioridade (preferência) do pedido: só o Dono (ADMIN) ou o Gerente (MANAGER) altera.
 export async function setOrderPriorityAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -41,6 +48,8 @@ export async function setOrderPriorityAction(_prev: FormState, formData: FormDat
 }
 
 export async function uploadAttachmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageOrders();
+  if (denied) return denied;
   const orderId = String(formData.get("orderId") ?? "");
   const file = formData.get("file");
   if (!orderId || !(file instanceof File) || file.size === 0) return { error: "Selecione um arquivo para enviar." };
@@ -67,6 +76,8 @@ export async function uploadAttachmentAction(_prev: FormState, formData: FormDat
 }
 
 export async function deleteAttachmentAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageOrders();
+  if (denied) return denied;
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Anexo não encontrado." };
 
@@ -95,6 +106,8 @@ export async function deleteAttachmentAction(_prev: FormState, formData: FormDat
 }
 
 export async function createOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageOrders();
+  if (denied) return denied;
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
@@ -265,6 +278,8 @@ async function reverseStockForOrder(tx: Prisma.TransactionClient, orderId: strin
 }
 
 export async function updateOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageOrders();
+  if (denied) return denied;
   const id = String(formData.get("id") ?? "");
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
@@ -354,6 +369,8 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
 }
 
 export async function deleteOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const denied = await ensureCanManageOrders();
+  if (denied) return denied;
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Pedido não encontrado." };
 

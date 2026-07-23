@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { OrderForm } from "@/components/order-form";
 import { SectionCard } from "@/components/section-card";
 import { updateOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
+import { canManageOrders } from "@/lib/roles";
 import { dateToInputValue } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
@@ -14,6 +15,9 @@ export const dynamic = "force-dynamic";
 export default async function EditOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireRouteUser("/pedidos");
   const { id } = await params;
+
+  // Produção (só leitura) não edita pedidos: volta para o detalhe.
+  if (!canManageOrders(user.role)) redirect(`/pedidos/${id}`);
 
   const [order, clients, products] = await Promise.all([
     prisma.order.findFirst({

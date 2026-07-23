@@ -8,6 +8,7 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { deleteAttachmentAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
+import { canManageOrders, canSeeFinance } from "@/lib/roles";
 import { centsToCurrency, formatDateTime, formatLongDate } from "@/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
@@ -39,6 +40,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   if (!order) notFound();
 
+  const canManage = canManageOrders(user.role);
+  const showFinance = canSeeFinance(user.role);
   const balanceInCents = Math.max(0, order.totalAmountInCents - order.paidAmountInCents);
   const late = order.deliveryDate && order.deliveryDate < new Date() && !["READY", "DELIVERED"].includes(order.status);
 
@@ -78,20 +81,24 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <Printer size={16} aria-hidden="true" />
             Imprimir / PDF
           </a>
-          <Link
-            href={`/pedidos/${order.id}/editar`}
-            className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e]"
-          >
-            <Pencil size={16} aria-hidden="true" />
-            Editar
-          </Link>
-          <ConfirmDeleteButton
-            action={deleteOrderAction}
-            id={order.id}
-            variant="full"
-            label="Excluir"
-            message={`Excluir o pedido #${order.number}? Esta ação não pode ser desfeita.`}
-          />
+          {canManage ? (
+            <>
+              <Link
+                href={`/pedidos/${order.id}/editar`}
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e]"
+              >
+                <Pencil size={16} aria-hidden="true" />
+                Editar
+              </Link>
+              <ConfirmDeleteButton
+                action={deleteOrderAction}
+                id={order.id}
+                variant="full"
+                label="Excluir"
+                message={`Excluir o pedido #${order.number}? Esta ação não pode ser desfeita.`}
+              />
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -102,11 +109,13 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <p className="mt-1"><StatusBadge tone="dark">{orderStatusLabels[order.status]}</StatusBadge></p>
             {order.currentStage ? <p className="mt-1 text-xs text-[#8a9890]">Etapa: {order.currentStage.name}</p> : null}
           </div>
-          <div>
-            <p className="text-xs font-medium text-[#63736b]">Pagamento</p>
-            <p className="mt-1"><StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge></p>
-            {order.paymentMethod ? <p className="mt-1 text-xs text-[#8a9890]">{order.paymentMethod}</p> : null}
-          </div>
+          {showFinance ? (
+            <div>
+              <p className="text-xs font-medium text-[#63736b]">Pagamento</p>
+              <p className="mt-1"><StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge></p>
+              {order.paymentMethod ? <p className="mt-1 text-xs text-[#8a9890]">{order.paymentMethod}</p> : null}
+            </div>
+          ) : null}
           <div>
             <p className="text-xs font-medium text-[#63736b]">Data do pedido</p>
             <p className="mt-1 text-sm font-medium">{formatLongDate(order.orderDate)}</p>
@@ -119,20 +128,22 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-[#63736b]">Total</p>
-            <p className="mt-1 text-2xl font-semibold">{centsToCurrency(order.totalAmountInCents)}</p>
+        {showFinance ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+              <p className="text-xs font-medium text-[#63736b]">Total</p>
+              <p className="mt-1 text-2xl font-semibold">{centsToCurrency(order.totalAmountInCents)}</p>
+            </div>
+            <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+              <p className="text-xs font-medium text-[#63736b]">Pago</p>
+              <p className="mt-1 text-2xl font-semibold text-[#05605e]">{centsToCurrency(order.paidAmountInCents)}</p>
+            </div>
+            <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
+              <p className="text-xs font-medium text-[#63736b]">Saldo</p>
+              <p className="mt-1 text-2xl font-semibold text-[#9f2f42]">{centsToCurrency(balanceInCents)}</p>
+            </div>
           </div>
-          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-[#63736b]">Pago</p>
-            <p className="mt-1 text-2xl font-semibold text-[#05605e]">{centsToCurrency(order.paidAmountInCents)}</p>
-          </div>
-          <div className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium text-[#63736b]">Saldo</p>
-            <p className="mt-1 text-2xl font-semibold text-[#9f2f42]">{centsToCurrency(balanceInCents)}</p>
-          </div>
-        </div>
+        ) : null}
 
         {order.client.phone || order.client.contact ? (
           <p className="mt-4 text-sm text-[#66756d]">
@@ -168,8 +179,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Descrição</th>
                 <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Tam./Cor</th>
                 <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Qtd.</th>
-                <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Preço un.</th>
-                <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th>
+                {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Preço un.</th> : null}
+                {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -181,8 +192,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   </td>
                   <td className="border-b border-[#edf2ef] py-3 text-[#66756d]">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
                   <td className="border-b border-[#edf2ef] py-3 text-right">{item.quantity}</td>
-                  <td className="border-b border-[#edf2ef] py-3 text-right">{centsToCurrency(item.unitPriceInCents)}</td>
-                  <td className="border-b border-[#edf2ef] py-3 text-right font-semibold">{centsToCurrency(item.totalPriceInCents)}</td>
+                  {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right">{centsToCurrency(item.unitPriceInCents)}</td> : null}
+                  {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right font-semibold">{centsToCurrency(item.totalPriceInCents)}</td> : null}
                 </tr>
               ))}
             </tbody>
@@ -190,27 +201,29 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </SectionCard>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <SectionCard eyebrow="Financeiro" title="Pagamentos">
-          {order.payments.length === 0 ? (
-            <p className="text-sm text-[#66756d]">Nenhum pagamento registrado.</p>
-          ) : (
-            <ul className="space-y-3">
-              {order.payments.map((payment) => (
-                <li key={payment.id} className="flex items-center justify-between rounded-lg border border-[#d9e1dd] bg-white px-4 py-3 shadow-sm">
-                  <div>
-                    <p className="font-semibold">{centsToCurrency(payment.amountInCents)}</p>
-                    <p className="text-xs text-[#8a9890]">
-                      {payment.method ?? "Sem forma definida"}
-                      {payment.paidAt ? ` - pago em ${formatLongDate(payment.paidAt)}` : ""}
-                    </p>
-                  </div>
-                  <StatusBadge tone={payment.status === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[payment.status]}</StatusBadge>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionCard>
+      <div className={`grid gap-6 ${showFinance ? "lg:grid-cols-2" : ""}`}>
+        {showFinance ? (
+          <SectionCard eyebrow="Financeiro" title="Pagamentos">
+            {order.payments.length === 0 ? (
+              <p className="text-sm text-[#66756d]">Nenhum pagamento registrado.</p>
+            ) : (
+              <ul className="space-y-3">
+                {order.payments.map((payment) => (
+                  <li key={payment.id} className="flex items-center justify-between rounded-lg border border-[#d9e1dd] bg-white px-4 py-3 shadow-sm">
+                    <div>
+                      <p className="font-semibold">{centsToCurrency(payment.amountInCents)}</p>
+                      <p className="text-xs text-[#8a9890]">
+                        {payment.method ?? "Sem forma definida"}
+                        {payment.paidAt ? ` - pago em ${formatLongDate(payment.paidAt)}` : ""}
+                      </p>
+                    </div>
+                    <StatusBadge tone={payment.status === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[payment.status]}</StatusBadge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SectionCard>
+        ) : null}
 
         <SectionCard eyebrow="Produção" title="Histórico de etapas">
           <ul className="space-y-3">
@@ -247,10 +260,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       ) : null}
 
       <SectionCard eyebrow="Arquivos" title="Anexos (arte, molde, foto)">
-        <AttachmentUploadForm orderId={order.id} />
+        {canManage ? <AttachmentUploadForm orderId={order.id} /> : null}
 
         {order.attachments.length === 0 ? (
-          <p className="mt-4 text-sm text-[#8a9890]">Nenhum anexo. Envie a arte, o molde ou uma foto de referência (até 8 MB).</p>
+          <p className={`text-sm text-[#8a9890] ${canManage ? "mt-4" : ""}`}>Nenhum anexo neste pedido.</p>
         ) : (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {order.attachments.map((attachment) => {
@@ -268,14 +281,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     )}
                     <span className="block truncate text-sm font-medium text-[#405047]" title={attachment.name}>{attachment.name}</span>
                   </a>
-                  <div className="mt-2 flex justify-end">
-                    <ConfirmDeleteButton
-                      action={deleteAttachmentAction}
-                      id={attachment.id}
-                      title="Remover anexo"
-                      message={`Remover o anexo ${attachment.name}?`}
-                    />
-                  </div>
+                  {canManage ? (
+                    <div className="mt-2 flex justify-end">
+                      <ConfirmDeleteButton
+                        action={deleteAttachmentAction}
+                        id={attachment.id}
+                        title="Remover anexo"
+                        message={`Remover o anexo ${attachment.name}?`}
+                      />
+                    </div>
+                  ) : null}
                 </li>
               );
             })}

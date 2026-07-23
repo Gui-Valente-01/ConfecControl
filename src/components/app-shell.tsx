@@ -28,7 +28,7 @@ import { useState } from "react";
 import type { UserRole } from "@prisma/client";
 import { logoutAction } from "@/app/login/actions";
 import { planAllowsRoute } from "@/lib/features";
-import { canAccessRoute, roleLabels } from "@/lib/roles";
+import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -98,7 +98,7 @@ export function AppShell({
   const headerAction =
     actionLabel && actionHref
       ? { label: actionLabel, href: actionHref }
-      : pathname !== "/pedidos"
+      : canManageOrders(user.role) && pathname !== "/pedidos"
         ? { label: "Novo pedido", href: "/pedidos" }
         : null;
 

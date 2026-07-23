@@ -50,9 +50,10 @@ type DbDashboardProps = {
   stages: DashboardStage[];
   materials: DashboardMaterial[];
   plan: DashboardPlan;
+  showFinance: boolean;
 };
 
-export function DbDashboard({ orders, stages, materials, plan }: DbDashboardProps) {
+export function DbDashboard({ orders, stages, materials, plan, showFinance }: DbDashboardProps) {
   const now = new Date();
   const openOrders = orders.filter((order) => !["READY", "DELIVERED", "CANCELED"].includes(order.status)).length;
   const lateOrders = orders.filter((order) => isOrderLate(order.deliveryDate, order.status)).length;
@@ -69,7 +70,9 @@ export function DbDashboard({ orders, stages, materials, plan }: DbDashboardProp
   const stats = [
     { label: "Pedidos em aberto", value: String(openOrders), note: "acompanhados no quadro", icon: ClipboardList, tone: "primary" as const },
     { label: "Atrasados", value: String(lateOrders), note: "prioridade alta", icon: AlertTriangle, tone: "danger" as const },
-    { label: "Faturamento previsto", value: centsToCurrency(totalRevenue), note: "somando pedidos reais", icon: CheckCircle2, tone: "warning" as const },
+    showFinance
+      ? { label: "Faturamento previsto", value: centsToCurrency(totalRevenue), note: "somando pedidos reais", icon: CheckCircle2, tone: "warning" as const }
+      : null,
     plan.estoque
       ? { label: "Estoque baixo", value: String(lowStock.length), note: "materiais precisam reposição", icon: Package, tone: "info" as const }
       : null,

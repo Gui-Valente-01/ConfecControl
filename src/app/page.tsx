@@ -3,6 +3,7 @@ import { DbDashboard } from "@/components/db-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
 import { getSessionUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
+import { canSeeFinance } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -44,15 +45,16 @@ export default async function Home() {
     minimumQuantity: Number(material.minimumQuantity),
   }));
 
+  const showFinance = canSeeFinance(user.role);
   const plan = {
     producao: planHasFeature(user.features, "producao"),
     estoque: planHasFeature(user.features, "estoque"),
-    financeiro: planHasFeature(user.features, "financeiro"),
+    financeiro: planHasFeature(user.features, "financeiro") && showFinance,
   };
 
   return (
     <AppShell eyebrow="Hoje" title="Painel da produção" user={user}>
-      <DbDashboard orders={orders} stages={stages} materials={mappedMaterials} plan={plan} />
+      <DbDashboard orders={orders} stages={stages} materials={mappedMaterials} plan={plan} showFinance={showFinance} />
     </AppShell>
   );
 }
