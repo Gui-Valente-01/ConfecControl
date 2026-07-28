@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   BarChart3,
+  BookOpen,
   ClipboardList,
   CreditCard,
   Factory,
@@ -149,6 +150,16 @@ export function AppShell({
               <UserRound size={16} aria-hidden="true" />
               Minha conta
             </Link>
+            {/* Arquivo estático fora do roteador do Next: precisa de <a>, não de <Link>. */}
+            <a
+              href="/manual"
+              target="_blank"
+              rel="noopener"
+              className="mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf] transition hover:bg-white/10 hover:text-white"
+            >
+              <BookOpen size={16} aria-hidden="true" />
+              Manual de uso
+            </a>
             <form action={logoutAction} className="mt-2">
               <button className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf] transition hover:bg-white/10 hover:text-white">
                 <LogOut size={16} aria-hidden="true" />
@@ -301,6 +312,15 @@ export function AppShell({
                 <UserRound size={16} aria-hidden="true" />
                 Minha conta
               </Link>
+              <a
+                href="/manual"
+                target="_blank"
+                rel="noopener"
+                className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf]"
+              >
+                <BookOpen size={16} aria-hidden="true" />
+                Manual de uso
+              </a>
               <form action={logoutAction} className="mt-2">
                 <button className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf]">
                   <LogOut size={16} aria-hidden="true" />

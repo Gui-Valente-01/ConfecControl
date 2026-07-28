@@ -22,6 +22,8 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // Protege tudo, exceto /login, /cadastro, /portal, assets do Next e arquivos estaticos.
-  matcher: ["/((?!login|cadastro|portal|_next/static|_next/image|favicon.ico|.*\\.).*)"],
+  // Protege tudo, exceto /login, /cadastro, /portal, /manual, assets do Next e
+  // arquivos estaticos. O /manual fica aberto de proposito: e o material que a
+  // pessoa consulta justamente quando ainda nao consegue entrar no sistema.
+  matcher: ["/((?!login|cadastro|portal|manual|_next/static|_next/image|favicon.ico|.*\\.).*)"],
 };

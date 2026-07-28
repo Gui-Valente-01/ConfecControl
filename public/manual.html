@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConfecControl — Manual do usuário</title>
+<style>
+  :root {
+    --paper:#f6f8f5; --card:#ffffff; --card-2:#eef3ec; --line:#dce4db; --line-2:#c9d4c7;
+    --ink:#16211b; --ink-soft:#56635a; --ink-faint:#8a988e;
+    --teal:#0b7f78; --teal-deep:#05605e; --teal-wash:#e7f2ef;
+    --amber:#a06a1c; --amber-wash:#faf0dd;
+    --rose:#bd483f; --rose-wash:#fbeae8;
+    --sans:"Segoe UI Variable","Segoe UI",-apple-system,BlinkMacSystemFont,system-ui,Roboto,Helvetica,Arial,sans-serif;
+    --mono:"Cascadia Code","Cascadia Mono",Consolas,ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --paper:#0e1713; --card:#152119; --card-2:#1b2b22; --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.18);
+    --ink:#e9f0ea; --ink-soft:#a4b5aa; --ink-faint:#7e8e85;
+    --teal:#34b8ab; --teal-deep:#34b8ab; --teal-wash:rgba(52,184,171,.12);
+    --amber:#dda255; --amber-wash:rgba(221,162,85,.12); --rose:#e37066; --rose-wash:rgba(227,112,102,.13); } }
+  :root[data-theme="light"] { --paper:#f6f8f5; --card:#fff; --card-2:#eef3ec; --line:#dce4db; --line-2:#c9d4c7;
+    --ink:#16211b; --ink-soft:#56635a; --ink-faint:#8a988e; --teal:#0b7f78; --teal-deep:#05605e; --teal-wash:#e7f2ef;
+    --amber:#a06a1c; --amber-wash:#faf0dd; --rose:#bd483f; --rose-wash:#fbeae8; }
+  :root[data-theme="dark"] { --paper:#0e1713; --card:#152119; --card-2:#1b2b22; --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.18);
+    --ink:#e9f0ea; --ink-soft:#a4b5aa; --ink-faint:#7e8e85; --teal:#34b8ab; --teal-deep:#34b8ab; --teal-wash:rgba(52,184,171,.12);
+    --amber:#dda255; --amber-wash:rgba(221,162,85,.12); --rose:#e37066; --rose-wash:rgba(227,112,102,.13); }
+
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); line-height:1.65; -webkit-font-smoothing:antialiased; }
+
+  .wrap { max-width:1180px; margin:0 auto; padding:clamp(1.2rem,4vw,3rem) clamp(1rem,4vw,2rem) 5rem; }
+  .layout { display:grid; grid-template-columns:230px 1fr; gap:clamp(1.5rem,4vw,3.5rem); align-items:start; }
+
+  /* capa */
+  header.cover { border-bottom:1px solid var(--line); padding-bottom:2rem; margin-bottom:2.4rem; }
+  .brand { display:flex; align-items:center; gap:.85rem; font-weight:700; font-size:1.05rem; letter-spacing:-.01em; }
+  .brand .g { width:2.4rem; height:2.4rem; border-radius:.6rem; background:var(--teal); color:#fff; display:grid; place-items:center; }
+  .brand .g svg { width:1.3rem; height:1.3rem; }
+  header.cover h1 { margin:1.5rem 0 .6rem; font-size:clamp(2rem,5vw,3.2rem); letter-spacing:-.035em; line-height:1.02; text-wrap:balance; }
+  header.cover .sub { margin:0; color:var(--ink-soft); font-size:1.1rem; max-width:58ch; }
+  .chips { display:flex; flex-wrap:wrap; gap:.45rem; margin-top:1.4rem; }
+  .chip { font-family:var(--mono); font-size:.72rem; letter-spacing:.04em; padding:.3rem .65rem; border-radius:99px; border:1px solid var(--line-2); color:var(--ink-soft); background:var(--card); }
+
+  /* indice */
+  nav.toc { position:sticky; top:1.2rem; font-size:.9rem; }
+  nav.toc .cap { font-family:var(--mono); font-size:.66rem; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin:1.1rem 0 .5rem; }
+  nav.toc .cap:first-child { margin-top:0; }
+  nav.toc a { display:block; text-decoration:none; color:var(--ink-soft); padding:.28rem .5rem; border-radius:.35rem; }
+  nav.toc a:hover { color:var(--ink); background:var(--card); }
+  nav.toc a:focus-visible { outline:2px solid var(--teal); outline-offset:1px; }
+
+  main { min-width:0; }
+  section.pg { scroll-margin-top:1.2rem; padding:2rem 0 2.2rem; border-top:1px solid var(--line); }
+  section.pg:first-of-type { border-top:0; padding-top:0; }
+
+  .kick { font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--teal-deep); font-weight:700; display:flex; align-items:center; gap:.7ch; flex-wrap:wrap; }
+  .kick .where { color:var(--ink-faint); background:var(--card-2); border:1px solid var(--line); padding:.1rem .45rem; border-radius:.3rem; font-weight:600; }
+  .kick .plan { color:var(--amber); background:var(--amber-wash); border:1px solid var(--line); padding:.1rem .45rem; border-radius:.3rem; font-weight:600; }
+  section.pg h2 { margin:.6rem 0 0; font-size:clamp(1.45rem,2.6vw,2rem); letter-spacing:-.025em; line-height:1.12; text-wrap:balance; }
+  section.pg > .para { margin:.7rem 0 0; color:var(--ink-soft); max-width:66ch; }
+
+  h3 { margin:1.6rem 0 .5rem; font-size:1rem; letter-spacing:-.01em; display:flex; align-items:center; gap:.55ch; }
+  h3::before { content:""; width:.6rem; height:.6rem; border-radius:2px; background:var(--teal); flex:none; }
+
+  ol.pass { margin:0; padding:0; list-style:none; counter-reset:p; display:flex; flex-direction:column; gap:.5rem; max-width:70ch; }
+  ol.pass li { counter-increment:p; position:relative; padding-left:2.2rem; }
+  ol.pass li::before { content:counter(p); position:absolute; left:0; top:0; width:1.5rem; height:1.5rem; border-radius:50%;
+    background:var(--teal-wash); color:var(--teal-deep); font-family:var(--mono); font-weight:700; font-size:.78rem; display:grid; place-items:center; }
+  ul.dots { margin:0; padding-left:1.15rem; max-width:70ch; display:flex; flex-direction:column; gap:.3rem; }
+  ul.dots li::marker { color:var(--teal); }
+
+  .ui { font-family:var(--mono); font-size:.85em; background:var(--card-2); border:1px solid var(--line); padding:.05rem .4rem; border-radius:.3rem; white-space:nowrap; }
+
+  .tip { margin-top:1.1rem; background:var(--teal-wash); border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:.5rem; padding:.85rem 1rem; font-size:.93rem; max-width:70ch; }
+  .tip b { color:var(--teal-deep); }
+  .tip.warn { background:var(--amber-wash); border-left-color:var(--amber); } .tip.warn b { color:var(--amber); }
+  .tip.stop { background:var(--rose-wash); border-left-color:var(--rose); } .tip.stop b { color:var(--rose); }
+
+  .calc { font-family:var(--mono); font-size:.82rem; background:var(--card-2); border:1px solid var(--line); border-radius:.5rem;
+    padding:.85rem 1rem; margin-top:1rem; overflow-x:auto; white-space:pre; line-height:1.6; max-width:100%; }
+
+  .tw { overflow-x:auto; border:1px solid var(--line); border-radius:.6rem; margin-top:1rem; }
+  table { border-collapse:collapse; width:100%; font-size:.9rem; min-width:520px; }
+  th,td { text-align:left; padding:.62rem .8rem; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th { background:var(--card-2); font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); }
+  tbody tr:last-child td { border-bottom:0; }
+
+  footer { margin-top:3.5rem; border-top:1px solid var(--line); padding-top:1.3rem; font-family:var(--mono); font-size:.74rem; color:var(--ink-faint); letter-spacing:.04em; }
+
+  @media (max-width:900px) {
+    .layout { grid-template-columns:1fr; }
+    nav.toc { position:static; border:1px solid var(--line); border-radius:.6rem; padding:1rem 1.2rem; background:var(--card); margin-bottom:1.4rem; }
+    nav.toc .cols { columns:2; column-gap:1.4rem; }
+  }
+  @media (max-width:520px) { nav.toc .cols { columns:1; } }
+</style>
+
+<div class="wrap">
+  <header class="cover">
+    <div class="brand">
+      <span class="g" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M4 20V9l5 3V9l5 3V9l5 3v8"/></svg></span>
+      ConfecControl
+    </div>
+    <h1>Manual do usuário</h1>
+    <p class="sub">Tudo que sua confecção precisa saber para usar o sistema: o que cada tela faz, como mexer nela e o que fazer no dia a dia. Não precisa saber de computador — se você usa WhatsApp, você usa o ConfecControl.</p>
+    <div class="chips">
+      <span class="chip">para o dono e a equipe</span>
+      <span class="chip">funciona no celular</span>
+      <span class="chip">cada um vê só o que precisa</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Índice">
+      <div class="cols">
+        <p class="cap">Começar</p>
+        <a href="#entrar">Entrar no sistema</a>
+        <a href="#celular">Instalar no celular</a>
+        <a href="#painel">Painel do dia</a>
+        <a href="#busca">Busca</a>
+
+        <p class="cap">Cadastros</p>
+        <a href="#clientes">Clientes</a>
+        <a href="#produtos">Produtos e peças</a>
+        <a href="#servicos">Serviços</a>
+        <a href="#estoque">Estoque</a>
+
+        <p class="cap">O dia a dia</p>
+        <a href="#pedidos">Pedidos</a>
+        <a href="#producao">Produção</a>
+        <a href="#bancada">Bancada</a>
+        <a href="#historico">Histórico da bancada</a>
+
+        <p class="cap">Dinheiro</p>
+        <a href="#financeiro">Financeiro</a>
+        <a href="#relatorios">Relatórios</a>
+
+        <p class="cap">Seu cliente</p>
+        <a href="#portal">Portal do cliente</a>
+        <a href="#solicitacoes">Solicitações</a>
+
+        <p class="cap">Administração</p>
+        <a href="#funcionarios">Funcionários</a>
+        <a href="#terceirizadas">Terceirizadas</a>
+        <a href="#configuracoes">Configurações</a>
+        <a href="#conta">Minha conta</a>
+
+        <p class="cap">Fim</p>
+        <a href="#rotina">Rotina sugerida</a>
+        <a href="#duvidas">Dúvidas comuns</a>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ENTRAR -->
+      <section class="pg" id="entrar">
+        <p class="kick">Começar</p>
+        <h2>Entrar no sistema</h2>
+        <p class="para">Cada pessoa da confecção tem o próprio acesso. Ninguém compartilha senha.</p>
+        <h3>Como entrar</h3>
+        <ol class="pass">
+          <li>Abra o endereço do sistema no navegador.</li>
+          <li>Digite seu <b>e-mail</b> e sua <b>senha</b>.</li>
+          <li>Clique em <span class="ui">Entrar no painel</span>.</li>
+        </ol>
+        <div class="tip"><b>Esqueceu a senha?</b> Peça ao dono da confecção para criar uma nova para você, na tela de Funcionários. Se você é o dono e perdeu o acesso, fale com o suporte.</div>
+        <div class="tip warn"><b>Você não vai ver todas as telas deste manual.</b> Isso é normal e proposital: o sistema mostra só o que o seu cargo precisa, e só os módulos que a sua confecção contratou. Quem faz costura não vê o financeiro.</div>
+      </section>
+
+      <!-- CELULAR -->
+      <section class="pg" id="celular">
+        <p class="kick">Começar</p>
+        <h2>Instalar no celular</h2>
+        <p class="para">O ConfecControl vira um aplicativo no celular, sem precisar baixar de loja nenhuma. É assim que a equipe usa no chão de fábrica.</p>
+        <ol class="pass">
+          <li>Abra o sistema no navegador do celular.</li>
+          <li>Toque no menu do navegador (os três pontinhos).</li>
+          <li>Escolha <span class="ui">Adicionar à tela inicial</span>.</li>
+          <li>Pronto: vai aparecer um ícone junto com seus outros aplicativos.</li>
+        </ol>
+        <div class="tip"><b>Para quem serve:</b> quem corta, costura e estampa vai usar mais o celular do que o computador. A tela da <a href="#bancada">Bancada</a> foi feita pensando nisso.</div>
+      </section>
+
+      <!-- PAINEL -->
+      <section class="pg" id="painel">
+        <p class="kick">Começar <span class="where">Painel</span></p>
+        <h2>Painel do dia</h2>
+        <p class="para">A primeira tela ao entrar. Ela responde uma pergunta só: <b>o que precisa da minha atenção hoje?</b></p>
+
+        <h3>O que tem nela</h3>
+        <ul class="dots">
+          <li><b>Faixa vermelha no topo:</b> pedidos atrasados, material acabando e pagamentos em aberto. Cada aviso é um atalho — clique e vá direto ao problema.</li>
+          <li><b>Quatro números:</b> pedidos em aberto, atrasados, faturamento previsto e materiais em falta.</li>
+          <li><b>Quadro de produção:</b> um resumo de onde está cada pedido.</li>
+          <li><b>Últimos pedidos:</b> a lista com prazo, etapa e valor.</li>
+        </ul>
+        <div class="tip"><b>Use assim:</b> abra o painel logo cedo e resolva primeiro o que está na faixa vermelha. Se ela estiver limpa, seu dia começou bem.</div>
+      </section>
+
+      <!-- BUSCA -->
+      <section class="pg" id="busca">
+        <p class="kick">Começar <span class="where">topo de qualquer tela</span></p>
+        <h2>Busca</h2>
+        <p class="para">A barra no alto procura em pedidos, clientes e produtos ao mesmo tempo.</p>
+        <ul class="dots">
+          <li>Digite o <b>nome do cliente</b> e ache todos os pedidos dele.</li>
+          <li>Digite o <b>número do pedido</b> e vá direto nele.</li>
+          <li>Filtre por tipo se vier resultado demais.</li>
+        </ul>
+        <div class="tip"><b>No atendimento por telefone:</b> é o caminho mais rápido. O cliente liga, você digita o nome dele e já tem a resposta na tela.</div>
+      </section>
+
+      <!-- CLIENTES -->
+      <section class="pg" id="clientes">
+        <p class="kick">Cadastros <span class="where">Clientes</span></p>
+        <h2>Clientes</h2>
+        <p class="para">Sua carteira de clientes, com o histórico de cada um.</p>
+
+        <h3>Cadastrar um cliente</h3>
+        <ol class="pass">
+          <li>No formulário <span class="ui">Adicionar cliente</span>, preencha empresa, contato e WhatsApp.</li>
+          <li>E-mail, CPF/CNPJ e endereço são opcionais — preencha se tiver.</li>
+          <li>Clique em <span class="ui">Salvar cliente</span>.</li>
+        </ol>
+
+        <h3>Ver tudo de um cliente</h3>
+        <ol class="pass">
+          <li>Clique no <b>nome</b> do cliente na lista.</li>
+          <li>Abre a ficha completa dele: pedidos <b>abertos</b>, <b>concluídos</b> e <b>atrasados</b>, separados.</li>
+          <li>Mais abaixo, o <b>histórico de pagamentos</b>: o que ele já pagou e quando.</li>
+        </ol>
+        <div class="tip"><b>Serve para decidir:</b> antes de dar desconto ou prazo maior, olhe quanto aquele cliente já comprou. O número está no cartão dele, sem precisar abrir nada.</div>
+      </section>
+
+      <!-- PRODUTOS -->
+      <section class="pg" id="produtos">
+        <p class="kick">Cadastros <span class="where">Produtos</span></p>
+        <h2>Produtos e peças</h2>
+        <p class="para">O catálogo do que a sua confecção faz. É aqui que o sistema aprende quanto custa cada peça — e por isso é a tela mais importante de configurar bem.</p>
+
+        <h3>Cadastrar uma peça</h3>
+        <ol class="pass">
+          <li>Escolha o <b>tipo</b>:
+            <ul class="dots" style="margin-top:.35rem">
+              <li><b>Peça própria</b> — você faz a peça inteira, com o seu material.</li>
+              <li><b>Serviço na peça do cliente</b> — o cliente traz a camiseta e você só estampa ou borda.</li>
+            </ul>
+          </li>
+          <li>Preencha nome, categoria e tecido.</li>
+          <li><b>Valor padrão:</b> quanto você cobra por peça.</li>
+          <li><b>Outros custos por peça:</b> o que não é material nem serviço cadastrado — por exemplo, a facção que costura para você.</li>
+          <li>Clique em <span class="ui">Salvar peça</span>.</li>
+        </ol>
+
+        <h3>Ficha técnica: o que a peça gasta de material</h3>
+        <ol class="pass">
+          <li>No cartão da peça, escolha um <b>material</b> e quanto ele gasta <b>por unidade</b> (ex.: 0,3 kg de malha por camiseta).</li>
+          <li>Clique em <span class="ui">Vincular</span> e repita para cada material.</li>
+        </ol>
+        <div class="tip warn"><b>Isso é o que faz o estoque baixar sozinho.</b> Sem a ficha preenchida, você vende 100 camisetas e o estoque de malha continua igual. Vale o trabalho de preencher uma vez.</div>
+
+        <h3>Ficha de serviços: a mão de obra</h3>
+        <ol class="pass">
+          <li>No bloco <b>Serviços</b>, escolha o serviço que entra naquela peça.</li>
+          <li>Deixe o valor <b>em branco</b> para usar o preço padrão, ou digite outro se naquela peça for diferente.</li>
+          <li>Clique em <span class="ui">Vincular</span>.</li>
+        </ol>
+
+        <h3>O custo aparece sozinho</h3>
+        <p class="para">Com material e serviço preenchidos, o sistema mostra a conta completa:</p>
+        <div class="calc">Materiais                        R$ 11,50
+Serviços (mão de obra)           R$  9,70
+Outros custos                    R$  2,00
+─────────────────────────────────────────
+Custo por peça                   R$ 23,20
+Lucro por peça          R$ 26,70   (54%)</div>
+        <div class="tip"><b>Se aparecer aviso amarelo</b> dizendo que falta preço em algum material, vá no <a href="#estoque">Estoque</a> e preencha. Enquanto faltar, o custo está incompleto e o lucro parece maior do que é.</div>
+      </section>
+
+      <!-- SERVICOS -->
+      <section class="pg" id="servicos">
+        <p class="kick">Cadastros <span class="where">Produtos → Serviços</span></p>
+        <h2>Serviços</h2>
+        <p class="para">A lista do que a sua confecção faz de mão de obra: silk, bordado, costura, corte. Cadastre uma vez e use em todas as peças.</p>
+        <ol class="pass">
+          <li>No bloco <b>Serviços</b>, digite o nome (ex.: <b>Silk 1 cor</b>).</li>
+          <li>Digite o <b>valor por peça</b> (ex.: 2,00).</li>
+          <li>Clique em <span class="ui">Adicionar</span>.</li>
+        </ol>
+        <div class="tip"><b>O valor aqui é só a sugestão.</b> Ao usar o serviço numa peça você pode colocar outro valor — silk numa camiseta pode custar diferente de silk num boné.</div>
+      </section>
+
+      <!-- ESTOQUE -->
+      <section class="pg" id="estoque">
+        <p class="kick">Cadastros <span class="where">Estoque</span> <span class="plan">módulo</span></p>
+        <h2>Estoque</h2>
+        <p class="para">Controle de tecido, linha, tinta e aviamentos.</p>
+
+        <h3>Cadastrar um material</h3>
+        <ol class="pass">
+          <li>Preencha nome, categoria e <b>unidade</b> (kg, metro, unidade, cone...).</li>
+          <li><b>Quantidade atual:</b> quanto você tem hoje.</li>
+          <li><b>Estoque mínimo:</b> quando chegar nesse número, o sistema te avisa.</li>
+          <li><b>Preço por unidade:</b> quanto custa 1 kg, 1 metro, 1 unidade.</li>
+          <li>Clique em <span class="ui">Salvar material</span>.</li>
+        </ol>
+
+        <h3>Lançar entrada e saída</h3>
+        <ol class="pass">
+          <li>No cartão do material, escolha <b>Entrada</b> (compra), <b>Saída</b> ou <b>Ajuste</b>.</li>
+          <li>Digite a quantidade e, se quiser, uma observação.</li>
+          <li>Clique em <span class="ui">Lançar</span>.</li>
+        </ol>
+        <div class="tip"><b>Você quase não precisa lançar saída.</b> Se a ficha técnica da peça estiver preenchida, cada pedido já desconta o material sozinho. Na prática você só lança as compras.</div>
+        <div class="tip warn"><b>O preço é o que dá sentido ao resto.</b> Sem ele o sistema sabe quanto você tem, mas não quanto vale — e aí não consegue calcular seu lucro de verdade.</div>
+      </section>
+
+      <!-- PEDIDOS -->
+      <section class="pg" id="pedidos">
+        <p class="kick">O dia a dia <span class="where">Pedidos</span></p>
+        <h2>Pedidos</h2>
+        <p class="para">O coração do sistema. Todo trabalho começa aqui.</p>
+
+        <h3>Criar um pedido</h3>
+        <ol class="pass">
+          <li>Escolha o <b>cliente</b>.</li>
+          <li>Clique em <span class="ui">Adicionar item</span> e escolha a peça do catálogo (o preço vem preenchido sozinho).</li>
+          <li>Informe tamanho, cor, quantidade e preço.</li>
+          <li>Defina o <b>prazo de entrega</b> e a <b>forma de pagamento</b>.</li>
+          <li>Se o cliente pagou entrada, digite em <b>Entrada / valor pago</b>.</li>
+          <li>Confira <b>Total, Pago e Saldo</b> no rodapé e clique em <span class="ui">Salvar pedido</span>.</li>
+        </ol>
+
+        <h3>Prioridade</h3>
+        <p class="para">Na lista, cada pedido tem um seletor de prioridade: <b>Urgente, Alta, Normal, Baixa</b>. Os urgentes sobem para o topo automaticamente — é assim que a equipe sabe o que fazer primeiro.</p>
+
+        <h3>Dentro de um pedido</h3>
+        <ul class="dots">
+          <li><b>Resumo:</b> etapa, prazo, e Total / Pago / <b>Saldo</b>.</li>
+          <li><span class="ui">Avisar cliente</span> — monta a mensagem pronta para o WhatsApp.</li>
+          <li><span class="ui">Imprimir / PDF</span> — a ficha que vai para a oficina ou para a facção.</li>
+          <li><span class="ui">Editar</span> e <span class="ui">Excluir</span>.</li>
+          <li><b>Anexos:</b> guarde a arte, o molde ou a foto de referência no próprio pedido.</li>
+        </ul>
+        <div class="tip"><b>Prazo vencido aparece em vermelho</b> como "Atrasado", e o pedido entra na contagem do painel.</div>
+      </section>
+
+      <!-- PRODUCAO -->
+      <section class="pg" id="producao">
+        <p class="kick">O dia a dia <span class="where">Produção</span> <span class="plan">módulo</span></p>
+        <h2>Produção</h2>
+        <p class="para">O quadro visual da fábrica. É o mural de post-it da parede, só que digital e visível de qualquer lugar.</p>
+        <ul class="dots">
+          <li>Cada <b>coluna</b> é uma etapa: Recebido, Corte, Costura, Bordado, Acabamento, Pronto, Entregue.</li>
+          <li>Cada <b>cartão</b> é um pedido. A cor da borda mostra a prioridade.</li>
+          <li>Use a <b>seta do cartão</b> para avançar o pedido de etapa.</li>
+          <li>Os <b>filtros</b> do topo ajudam a focar (por etapa, situação ou prioridade).</li>
+        </ul>
+        <div class="tip"><b>As etapas são suas.</b> Se a sua confecção não faz bordado, tire essa coluna em <a href="#configuracoes">Configurações</a>. O quadro se adapta ao seu processo, não o contrário.</div>
+      </section>
+
+      <!-- BANCADA -->
+      <section class="pg" id="bancada">
+        <p class="kick">O dia a dia <span class="where">Bancada</span> <span class="plan">módulo</span></p>
+        <h2>Bancada</h2>
+        <p class="para">A tela de quem está produzindo. Feita para usar no celular, em pé, no meio da fábrica.</p>
+
+        <h3>Pegar um trabalho</h3>
+        <ol class="pass">
+          <li>Em <b>Escolher pedido</b>, veja a fila (os urgentes vêm primeiro).</li>
+          <li>Escolha a sua <b>mesa</b> (ex.: Silk 1).</li>
+          <li>Clique em <span class="ui">Pegar</span>.</li>
+        </ol>
+
+        <h3>Concluir</h3>
+        <ol class="pass">
+          <li>O pedido aparece em <b>Na bancada agora</b>, com seu nome e o horário.</li>
+          <li>Se faltou ou sobrou peça, escolha a observação e descreva.</li>
+          <li>Clique em <span class="ui">Concluído</span>.</li>
+        </ol>
+        <div class="tip"><b>O que acontece ao concluir:</b> o pedido <b>avança sozinho para a próxima etapa</b> do quadro de Produção e aparece em "Concluídos recentemente". Você não precisa avisar ninguém — todo mundo já vê.</div>
+        <div class="tip warn"><b>Pegou por engano?</b> Use <span class="ui">Liberar pedido</span> para devolvê-lo à fila sem concluir.</div>
+      </section>
+
+      <!-- HISTORICO -->
+      <section class="pg" id="historico">
+        <p class="kick">O dia a dia <span class="where">Bancada → Ver histórico</span> <span class="plan">só dono e gerente</span></p>
+        <h2>Histórico da bancada</h2>
+        <p class="para">O acompanhamento de quem produziu o quê. Serve para enxergar a produção da equipe sem ficar perguntando de um em um.</p>
+        <ul class="dots">
+          <li><b>Produção por funcionário:</b> quantos trabalhos cada pessoa concluiu.</li>
+          <li><b>Produção por mesa:</b> quanto cada estação rendeu, e quem responde por ela.</li>
+          <li><b>Histórico detalhado:</b> data, pedido, etapa, mesa, funcionário e as observações de falta ou sobra.</li>
+          <li><b>Período:</b> 7 dias, 30 dias ou tudo.</li>
+        </ul>
+        <div class="tip"><b>A equipe não vê esta tela.</b> Só o dono e o gerente — é informação de gestão, não do chão de fábrica.</div>
+      </section>
+
+      <!-- FINANCEIRO -->
+      <section class="pg" id="financeiro">
+        <p class="kick">Dinheiro <span class="where">Financeiro</span> <span class="plan">módulo</span></p>
+        <h2>Financeiro</h2>
+        <p class="para">Quem pagou, quem deve e de qual pedido — sem planilha.</p>
+        <h3>Os quatro números</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Número</th><th>O que é</th></tr></thead>
+            <tbody>
+              <tr><td><b>Previsto</b></td><td>A soma de todos os pedidos</td></tr>
+              <tr><td><b>Recebido</b></td><td>O que já entrou no caixa</td></tr>
+              <tr><td><b>A receber</b></td><td>O que ainda vão te pagar</td></tr>
+              <tr><td><b>Atrasado</b></td><td>Passou do prazo — é a sua lista de cobrança</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Dar baixa num pagamento</h3>
+        <ol class="pass">
+          <li>Ache o pedido na tabela.</li>
+          <li>Compare <b>Recebido</b> e <b>Total</b>.</li>
+          <li>Quando o cliente quitar, clique em <span class="ui">Pago</span>.</li>
+        </ol>
+        <div class="tip stop"><b>Quem não vê esta tela:</b> o cargo Produção. Quem está na costura não enxerga valores nem quanto a empresa fatura.</div>
+      </section>
+
+      <!-- RELATORIOS -->
+      <section class="pg" id="relatorios">
+        <p class="kick">Dinheiro <span class="where">Relatórios</span> <span class="plan">módulo</span></p>
+        <h2>Relatórios</h2>
+        <p class="para">Onde o sistema deixa de ser cadastro e vira decisão.</p>
+        <ol class="pass">
+          <li>Escolha o período (ou use <span class="ui">Mês atual</span>) e clique em <span class="ui">Aplicar</span>.</li>
+          <li>Leia faturamento, recebido, <b>lucro estimado</b> e <b>margem</b>.</li>
+          <li>Use <span class="ui">Exportar CSV</span> para abrir no Excel ou mandar para o contador.</li>
+        </ol>
+        <h3>O que dá para descobrir</h3>
+        <ul class="dots">
+          <li><b>Qual peça vende mais</b> e qual cliente compra mais.</li>
+          <li><b>Custo por serviço:</b> para onde vai sua mão de obra — silk, bordado ou costura.</li>
+          <li><b>Serviço x peça própria:</b> você ganha mais prestando serviço ou fazendo sua própria peça?</li>
+          <li><b>Produção por responsável</b> e pedidos parados em cada etapa.</li>
+        </ul>
+        <div class="tip warn"><b>Os números valem o que os cadastros valem.</b> Se o preço do material ou o valor do serviço estiverem desatualizados, a margem vai estar errada. Reveja de vez em quando.</div>
+      </section>
+
+      <!-- PORTAL -->
+      <section class="pg" id="portal">
+        <p class="kick">Seu cliente <span class="where">Portal</span> <span class="plan">módulo</span></p>
+        <h2>Portal do cliente</h2>
+        <p class="para">Uma área onde <b>o seu cliente</b> acompanha o pedido dele sozinho — e para de ligar perguntando.</p>
+        <ol class="pass">
+          <li>Em <a href="#clientes">Clientes</a>, clique em <span class="ui">Portal do cliente</span> no cartão dele.</li>
+          <li>Envie o acesso para ele.</li>
+          <li>Ele entra e vê o andamento dos próprios pedidos.</li>
+        </ol>
+        <div class="tip"><b>Ele só vê o que é dele.</b> Um cliente nunca enxerga pedido, preço ou dado de outro cliente.</div>
+      </section>
+
+      <!-- SOLICITACOES -->
+      <section class="pg" id="solicitacoes">
+        <p class="kick">Seu cliente <span class="where">Solicitações</span> <span class="plan">módulo</span></p>
+        <h2>Solicitações</h2>
+        <p class="para">A caixa de entrada dos pedidos que o cliente manda pelo portal — inclusive com foto.</p>
+        <ol class="pass">
+          <li>Leia a solicitação: pode ser <b>reposição</b> de um pedido antigo ou <b>peça nova</b>.</li>
+          <li>Clique em <span class="ui">Aceitar</span> — vira pedido automaticamente, sem redigitar nada.</li>
+          <li>Ou <span class="ui">Recusar</span>, explicando o motivo.</li>
+        </ol>
+        <div class="tip"><b>Fim do pedido perdido no WhatsApp.</b> Chega organizado, com quantidade e imagem, e vira pedido com um clique.</div>
+      </section>
+
+      <!-- FUNCIONARIOS -->
+      <section class="pg" id="funcionarios">
+        <p class="kick">Administração <span class="where">Funcionários</span> <span class="plan">só o dono</span></p>
+        <h2>Funcionários e acessos</h2>
+        <p class="para">Onde o dono cria o login de cada pessoa e define o que ela enxerga.</p>
+        <ol class="pass">
+          <li>Clique em <span class="ui">Adicionar funcionário</span>.</li>
+          <li>Preencha nome, e-mail e uma <b>senha inicial</b>.</li>
+          <li>Escolha o <b>cargo</b> — o sistema explica o que aquele cargo vê.</li>
+          <li>Clique em <span class="ui">Criar acesso seguro</span> e passe a senha por um canal seguro.</li>
+        </ol>
+
+        <h3>O que cada cargo enxerga</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Cargo</th><th>Acesso</th></tr></thead>
+            <tbody>
+              <tr><td><b>Dono</b></td><td>Tudo, incluindo esta tela</td></tr>
+              <tr><td><b>Gerente</b></td><td>Tudo, menos criar funcionários</td></tr>
+              <tr><td><b>Produção</b></td><td>Painel, pedidos, produção, estoque e bancada. <b>Não vê valores.</b></td></tr>
+              <tr><td><b>Financeiro</b></td><td>Painel, clientes, pedidos, financeiro e relatórios</td></tr>
+              <tr><td><b>Vendas</b></td><td>Painel, clientes, produtos, pedidos e solicitações</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip"><b>Funcionário saiu?</b> Use <span class="ui">Gerenciar acesso</span> para desativá-lo. O histórico do trabalho dele continua no sistema.</div>
+      </section>
+
+      <!-- TERCEIRIZADAS -->
+      <section class="pg" id="terceirizadas">
+        <p class="kick">Administração <span class="where">Terceirizadas</span> <span class="plan">módulo</span></p>
+        <h2>Terceirizadas</h2>
+        <p class="para">O cadastro das facções e parceiros que fazem parte do seu serviço.</p>
+        <ol class="pass">
+          <li>Cadastre nome da empresa, serviço prestado e contato.</li>
+          <li>No pedido, indique para qual terceirizada ele foi.</li>
+        </ol>
+        <div class="tip"><b>Serve para não perder peça.</b> Você sabe exatamente o que está em qual parceiro e há quanto tempo.</div>
+      </section>
+
+      <!-- CONFIGURACOES -->
+      <section class="pg" id="configuracoes">
+        <p class="kick">Administração <span class="where">Configurações</span></p>
+        <h2>Configurações</h2>
+        <p class="para">Onde o sistema se molda ao jeito que a sua confecção trabalha.</p>
+
+        <h3>Dados da confecção</h3>
+        <p class="para">Nome, CNPJ, WhatsApp e endereço. Aparecem na ficha impressa do pedido.</p>
+
+        <h3>Etapas da produção</h3>
+        <ol class="pass">
+          <li>Crie, renomeie ou reordene as etapas do quadro.</li>
+          <li>Desmarque <b>Ativa</b> para esconder uma etapa que você não usa.</li>
+        </ol>
+
+        <h3>Mesas de trabalho</h3>
+        <ol class="pass">
+          <li>Cadastre as estações (Silk 1, Silk 2, Bordado...).</li>
+          <li>Escolha o <b>responsável</b> por cada mesa.</li>
+          <li>Clique em <span class="ui">Salvar</span>.</li>
+        </ol>
+        <div class="tip"><b>O responsável não tranca a mesa.</b> Qualquer funcionário continua podendo trabalhar nela — o responsável é quem você procura quando aquela estação atrasa.</div>
+      </section>
+
+      <!-- CONTA -->
+      <section class="pg" id="conta">
+        <p class="kick">Administração <span class="where">Minha conta</span></p>
+        <h2>Minha conta</h2>
+        <p class="para">Seus dados e sua senha.</p>
+        <ol class="pass">
+          <li>Confira nome, e-mail, cargo e empresa.</li>
+          <li>Para trocar a senha: digite a atual, a nova, confirme e salve.</li>
+        </ol>
+        <div class="tip warn"><b>Recebeu uma senha do seu chefe?</b> Troque no primeiro acesso. A senha é sua e não deve ser compartilhada.</div>
+      </section>
+
+      <!-- ROTINA -->
+      <section class="pg" id="rotina">
+        <p class="kick">Fim</p>
+        <h2>Rotina sugerida</h2>
+        <ol class="pass">
+          <li><b>De manhã:</b> abra o <a href="#painel">Painel</a> e resolva o que está na faixa vermelha.</li>
+          <li><b>Ao vender:</b> lance o <a href="#pedidos">pedido</a> com prazo e entrada. Imprima a ficha para a oficina.</li>
+          <li><b>Durante o dia:</b> a equipe usa a <a href="#bancada">Bancada</a>. O quadro de Produção se atualiza sozinho.</li>
+          <li><b>Ao receber dinheiro:</b> dê baixa no <a href="#financeiro">Financeiro</a>.</li>
+          <li><b>Ao comprar material:</b> lance a entrada no <a href="#estoque">Estoque</a>.</li>
+          <li><b>Fim do mês:</b> confira lucro e margem em <a href="#relatorios">Relatórios</a>.</li>
+        </ol>
+      </section>
+
+      <!-- DUVIDAS -->
+      <section class="pg" id="duvidas">
+        <p class="kick">Fim</p>
+        <h2>Dúvidas comuns</h2>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
+            <tbody>
+              <tr><td>Não vejo uma tela que está neste manual</td><td>Ou o seu cargo não tem acesso, ou a sua confecção não contratou aquele módulo. Fale com o dono.</td></tr>
+              <tr><td>Vendi peças e o estoque não baixou</td><td>A ficha técnica daquela peça está vazia. Preencha em <a href="#produtos">Produtos</a>.</td></tr>
+              <tr><td>O lucro no relatório parece alto demais</td><td>Falta preço em algum material ou o valor dos serviços não foi cadastrado.</td></tr>
+              <tr><td>O pedido sumiu da fila da bancada</td><td>Ele foi concluído e avançou de etapa. Procure no quadro de <a href="#producao">Produção</a>.</td></tr>
+              <tr><td>Esqueci minha senha</td><td>Peça ao dono para criar uma nova em <a href="#funcionarios">Funcionários</a>.</td></tr>
+              <tr><td>Quero mudar as etapas da produção</td><td><a href="#configuracoes">Configurações</a> → Etapas da produção.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>ConfecControl · Manual do usuário · pedidos, produção, estoque e financeiro em um só lugar</footer>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>
