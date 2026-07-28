@@ -1,11 +1,19 @@
-import { CheckCircle2, Hand, LayoutGrid, PackageCheck, Shirt, UserRound } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Hand, History, LayoutGrid, PackageCheck, Shirt, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { formatDateTime, formatShortDate } from "@/lib/format";
-import { orderPriorityBadge, orderPriorityLabels, orderStatusLabels } from "@/lib/status";
+import { canSeeBancadaHistory } from "@/lib/roles";
+import {
+  bancadaNoteBadge,
+  bancadaNoteLabels,
+  orderPriorityBadge,
+  orderPriorityLabels,
+  orderStatusLabels,
+} from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +27,7 @@ export default async function BancadaPage() {
   const user = await requireRouteUser("/bancada");
   const companyId = user.companyId;
 
-  const [mesas, activeTasks, doneByMesa, openOrders] = await Promise.all([
+  const [mesas, activeTasks, doneByMesa, recentDone, doneStages, openOrders] = await Promise.all([
     prisma.mesa.findMany({ where: { companyId, active: true }, orderBy: { position: "asc" }, select: { id: true, name: true } }),
     prisma.bancadaTask.findMany({
       where: { companyId, status: "PICKED" },
@@ -30,20 +38,38 @@ export default async function BancadaPage() {
       },
     }),
     prisma.bancadaTask.groupBy({ by: ["mesaId"], where: { companyId, status: "DONE" }, _count: { _all: true } }),
+    prisma.bancadaTask.findMany({
+      where: { companyId, status: "DONE" },
+      orderBy: { doneAt: "desc" },
+      take: 6,
+      include: {
+        mesa: { select: { name: true } },
+        order: { select: { number: true, client: { select: { name: true } }, items: { select: { description: true }, take: 1 } } },
+      },
+    }),
+    prisma.bancadaTask.findMany({ where: { companyId, status: "DONE" }, select: { orderId: true, stageName: true } }),
     prisma.order.findMany({
-      where: { companyId, status: { notIn: ["DELIVERED", "CANCELED"] } },
+      // Pronto/Entregue/Cancelado não precisam mais de trabalho de bancada.
+      where: { companyId, status: { notIn: ["READY", "DELIVERED", "CANCELED"] } },
       // Mais importantes em cima para o funcionário pegar primeiro.
       orderBy: [{ priority: "desc" }, { deliveryDate: "asc" }, { createdAt: "desc" }],
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
         attachments: { select: { url: true, type: true } },
+        currentStage: { select: { name: true } },
       },
     }),
   ]);
 
+  // O pedido sai da fila enquanto alguém está com ele e continua fora depois de
+  // concluído na etapa em que está — senão ele voltaria para "pegar trabalho"
+  // como se nada tivesse sido feito. Ao mudar de etapa, volta a ficar disponível.
   const activeOrderIds = new Set(activeTasks.map((task) => task.orderId));
-  const available = openOrders.filter((order) => !activeOrderIds.has(order.id));
+  const doneKeys = new Set(doneStages.map((task) => `${task.orderId}::${task.stageName ?? ""}`));
+  const available = openOrders.filter(
+    (order) => !activeOrderIds.has(order.id) && !doneKeys.has(`${order.id}::${order.currentStage?.name ?? ""}`),
+  );
 
   const mesaNameById = new Map(mesas.map((mesa) => [mesa.id, mesa.name]));
   const doneCounts = doneByMesa
@@ -51,12 +77,8 @@ export default async function BancadaPage() {
     .sort((a, b) => b.count - a.count);
   const totalDone = doneCounts.reduce((sum, row) => sum + row.count, 0);
 
-  const noteOptions = [
-    ["NONE", "Sem observação"],
-    ["SHORTAGE", "Faltando peça"],
-    ["SURPLUS", "Sobrando peça"],
-    ["INFO", "Observação"],
-  ];
+  const noteOptions = Object.entries(bancadaNoteLabels);
+  const canSeeHistory = canSeeBancadaHistory(user.role);
 
   return (
     <AppShell eyebrow="Chão de fábrica" title="Bancada" user={user} search={false}>
@@ -124,6 +146,50 @@ export default async function BancadaPage() {
           </div>
         )}
       </SectionCard>
+
+      {/* Concluídos recentes: o trabalho feito fica visível, não some da tela */}
+      {recentDone.length > 0 ? (
+        <SectionCard
+          eyebrow="Finalizados"
+          title="Concluídos recentemente"
+          action={
+            canSeeHistory ? (
+              <Link
+                href="/bancada/historico"
+                className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#d9e1dd] bg-white px-3 text-sm font-semibold text-[#405047] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+              >
+                <History size={15} aria-hidden="true" />
+                Ver histórico
+              </Link>
+            ) : null
+          }
+        >
+          <ul className="divide-y divide-[#eef2ef]">
+            {recentDone.map((task) => (
+              <li key={task.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 first:pt-0 last:pb-0">
+                <CheckCircle2 size={16} className="shrink-0 text-[#05605e]" aria-hidden="true" />
+                <span className="font-mono text-xs font-semibold text-[#63736b]">#{task.order.number}</span>
+                <span className="text-sm font-semibold">{task.order.client.name}</span>
+                <span className="min-w-0 flex-1 truncate text-sm text-[#66756d]">
+                  {task.order.items[0]?.description ?? "Pedido"}
+                </span>
+                {task.stageName ? (
+                  <span className="rounded-md bg-[#eef4f1] px-2 py-0.5 text-xs font-semibold text-[#405047]">{task.stageName}</span>
+                ) : null}
+                {bancadaNoteBadge[task.noteKind] ? (
+                  <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${bancadaNoteBadge[task.noteKind]}`}>
+                    {bancadaNoteLabels[task.noteKind]}
+                  </span>
+                ) : null}
+                <span className="text-xs text-[#8a9890]">
+                  {task.mesa?.name ?? "Sem mesa"} · {task.pickedByName}
+                  {task.doneAt ? ` · ${formatDateTime(task.doneAt)}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ) : null}
 
       {/* Contagem por mesa */}
       {totalDone > 0 ? (
