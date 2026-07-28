@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
-import { centsToCurrency } from "@/lib/format";
+import { centsToCurrency, currencyToCents } from "@/lib/format";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 
 type ClientOption = { id: string; name: string };
@@ -130,6 +130,12 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
       }, 0),
     [items],
   );
+
+  // A entrada é controlada para o saldo acompanhar o que está sendo digitado.
+  // Usa o mesmo currencyToCents do servidor, então a conta na tela é a que será salva.
+  const [paid, setPaid] = useState(defaults?.paidReais ?? "");
+  const paidInCents = Math.max(0, currencyToCents(paid));
+  const balanceInCents = totalInCents - paidInCents;
 
   const itemsJson = JSON.stringify(
     items
@@ -286,7 +292,9 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
         <span className="text-sm font-medium text-[#405047]">Entrada / valor pago (R$)</span>
         <input
           name="paid"
-          defaultValue={defaults?.paidReais ?? ""}
+          value={paid}
+          onChange={(event) => setPaid(event.target.value)}
+          inputMode="decimal"
           className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
           placeholder="1.000,00"
         />
@@ -301,9 +309,33 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
         />
       </label>
 
-      <div className="flex items-center justify-between rounded-lg bg-[#eef4f1] px-3 py-2 text-sm">
-        <span className="font-medium text-[#405047]">Total do pedido</span>
-        <span className="font-semibold">{centsToCurrency(totalInCents)}</span>
+      <div className="rounded-lg bg-[#eef4f1] px-3 py-2.5 text-sm">
+        <div className="flex items-center justify-between">
+          <span className="font-medium text-[#405047]">Total do pedido</span>
+          <span className="font-semibold tabular-nums">{centsToCurrency(totalInCents)}</span>
+        </div>
+        {paidInCents > 0 ? (
+          <div className="mt-1 flex items-center justify-between text-[#66756d]">
+            <span>Entrada paga</span>
+            <span className="tabular-nums">- {centsToCurrency(paidInCents)}</span>
+          </div>
+        ) : null}
+        <div className="mt-1.5 flex items-center justify-between border-t border-[#d5e0da] pt-1.5">
+          <span className="font-medium text-[#405047]">
+            {balanceInCents < 0 ? "Troco / pago a mais" : "Saldo a receber"}
+          </span>
+          <span className={`font-semibold tabular-nums ${balanceInCents > 0 ? "text-[#9f2f42]" : "text-[#05605e]"}`}>
+            {centsToCurrency(Math.abs(balanceInCents))}
+          </span>
+        </div>
+        {balanceInCents === 0 && totalInCents > 0 ? (
+          <p className="mt-1.5 text-xs font-medium text-[#05605e]">Pedido quitado na entrada.</p>
+        ) : null}
+        {balanceInCents < 0 ? (
+          <p className="mt-1.5 text-xs font-medium text-[#7b5a0b]">
+            A entrada está maior que o total do pedido. Confira os valores.
+          </p>
+        ) : null}
       </div>
 
       {state.error ? (
