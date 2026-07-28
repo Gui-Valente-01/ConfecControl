@@ -30,6 +30,35 @@ export const sellableFeatures: {
 
 export const featureKeys: FeatureKey[] = sellableFeatures.map((feature) => feature.key);
 
+// Combinações prontas por tipo de confecção. São só atalhos: depois de aplicar
+// um plano dá para marcar/desmarcar qualquer módulo à mão, porque cada cliente
+// acaba pedindo um ajuste próprio.
+export const featurePresets: {
+  key: string;
+  label: string;
+  who: string;
+  features: FeatureKey[];
+}[] = [
+  {
+    key: "essencial",
+    label: "Essencial",
+    who: "Ateliê, costureira autônoma, sob medida",
+    features: ["financeiro"],
+  },
+  {
+    key: "producao",
+    label: "Produção",
+    who: "Serigrafia, estamparia, facção",
+    features: ["producao", "bancada", "estoque", "financeiro", "equipe"],
+  },
+  {
+    key: "completo",
+    label: "Completo",
+    who: "Marca própria, uniformes, quem terceiriza",
+    features: [...featureKeys],
+  },
+];
+
 const routeToFeature: Record<string, FeatureKey> = Object.fromEntries(
   sellableFeatures.map((feature) => [feature.route, feature.key]),
 ) as Record<string, FeatureKey>;
