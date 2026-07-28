@@ -59,3 +59,9 @@ export function canManageStock(role: UserRole) {
 export function canManageProduction(role: UserRole) {
   return role === "ADMIN" || role === "MANAGER";
 }
+
+// Histórico de produção por mesa e por funcionário: é controle de gestão,
+// então o próprio chão de fábrica não enxerga o desempenho dos colegas.
+export function canSeeBancadaHistory(role: UserRole) {
+  return role === "ADMIN" || role === "MANAGER";
+}
