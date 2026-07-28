@@ -18,7 +18,7 @@ export default async function FinanceiroPage() {
           number: true,
           paidAmountInCents: true,
           deliveryDate: true,
-          client: { select: { name: true } },
+          client: { select: { name: true, phone: true } },
         },
       },
     },

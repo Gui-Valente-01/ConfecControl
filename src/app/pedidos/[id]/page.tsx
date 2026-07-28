@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { AttachmentUploadForm } from "@/components/attachment-upload-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { SectionCard } from "@/components/section-card";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { StatusBadge } from "@/components/status-badge";
 import { deleteAttachmentAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
@@ -46,12 +47,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const late = order.deliveryDate && order.deliveryDate < new Date() && !["READY", "DELIVERED"].includes(order.status);
 
   // Link de WhatsApp com mensagem pronta de status (telefone do cliente).
-  const phoneDigits = (order.client.phone ?? "").replace(/\D/g, "");
-  const whatsappPhone = phoneDigits ? (phoneDigits.length <= 11 ? `55${phoneDigits}` : phoneDigits) : "";
-  const whatsappMessage = encodeURIComponent(
+  const whatsappLink = whatsappUrl(
+    order.client.phone,
     `Olá ${order.client.name}! Sobre o seu pedido #${order.number}: situação atual "${orderStatusLabels[order.status]}". Qualquer dúvida estamos à disposição.`,
   );
-  const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${whatsappMessage}` : null;
 
   return (
     <AppShell eyebrow="Operação" title={`Pedido #${order.number}`} actionLabel="Novo pedido" user={user}>
@@ -61,9 +60,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           Voltar para pedidos
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          {whatsappUrl ? (
+          {whatsappLink ? (
             <a
-              href={whatsappUrl}
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#25d366] px-4 text-sm font-semibold text-white"
