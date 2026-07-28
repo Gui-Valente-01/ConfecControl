@@ -41,6 +41,21 @@ export const orderPriorityBadge: Record<OrderPriority, string> = {
   LOW: "border-[#e0e6e2] bg-[#f3f6f4] text-[#8a9890]",
 };
 
+// Observação que o funcionário registra ao concluir um trabalho na bancada.
+export const bancadaNoteLabels: Record<string, string> = {
+  NONE: "Sem observação",
+  SHORTAGE: "Faltando peça",
+  SURPLUS: "Sobrando peça",
+  INFO: "Observação",
+};
+
+// Só as que merecem destaque; "NONE" não vira etiqueta.
+export const bancadaNoteBadge: Record<string, string> = {
+  SHORTAGE: "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]",
+  SURPLUS: "border-[#ead49c] bg-[#fff7dd] text-[#7b5a0b]",
+  INFO: "border-[#d9e1dd] bg-[#eef4f1] text-[#405047]",
+};
+
 // Considera atrasado: tem prazo vencido e ainda não saiu da produção.
 export function isOrderLate(deliveryDate: Date | null, status: OrderStatus, reference = new Date()) {
   if (!deliveryDate) return false;

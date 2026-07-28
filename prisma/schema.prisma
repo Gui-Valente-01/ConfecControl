@@ -41,6 +41,12 @@ enum StockMovementType {
   ADJUSTMENT
 }
 
+// Diferencia peça própria de serviço prestado na peça do cliente.
+enum ProductKind {
+  PRODUCT
+  SERVICE
+}
+
 enum OrderPriority {
   LOW
   NORMAL
@@ -65,6 +71,7 @@ model Company {
   orders           Order[]
   productionStages ProductionStage[]
   materials        Material[]
+  services         Service[]
   partners         Partner[]
   signupTokens     SignupToken[]
   orderRequests    OrderRequest[]
@@ -129,6 +136,7 @@ model User {
 
   company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bancadaTasks BancadaTask[]
+  mesas        Mesa[]        @relation("mesaResponsible")
 
   @@index([companyId])
   @@map("usuarios")
@@ -191,13 +199,18 @@ model Mesa {
   name      String
   active    Boolean  @default(true)
   position  Int      @default(0)
+  // Funcionário responsável pela mesa. Não impede outros de usá-la:
+  // serve para saber a quem cobrar quando algo trava naquela estação.
+  responsibleUserId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tasks   BancadaTask[]
+  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  responsible User?         @relation("mesaResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  tasks       BancadaTask[]
 
   @@index([companyId])
+  @@index([responsibleUserId])
   @@map("mesas")
 }
 
@@ -210,6 +223,9 @@ model BancadaTask {
   pickedById   String?
   pickedByName String
   status       String    @default("PICKED") // PICKED | DONE
+  // Nome da etapa em que o trabalho foi feito, copiado no momento de pegar.
+  // É um retrato do passado: nao muda se a etapa for renomeada ou removida depois.
+  stageName    String?
   noteKind     String    @default("NONE") // NONE | SHORTAGE | SURPLUS | INFO
   note         String?
   pickedAt     DateTime  @default(now())
@@ -223,6 +239,7 @@ model BancadaTask {
   pickedBy User?   @relation(fields: [pickedById], references: [id], onDelete: SetNull)
 
   @@index([companyId, status])
+  @@index([companyId, status, doneAt])
   @@index([orderId])
   @@index([mesaId])
   @@map("bancada_tarefas")
@@ -238,6 +255,9 @@ model Product {
   fabric                String?
   standardPriceInCents  Int      @default(0)
   costInCents           Int      @default(0)
+  // PRODUCT = a confecção faz a peça inteira (material + serviços).
+  // SERVICE = o cliente traz a peça e a confecção só presta o serviço.
+  kind                  ProductKind @default(PRODUCT)
   averageProductionDays Int?
   imageUrl              String?
   createdAt             DateTime @default(now())
@@ -245,10 +265,49 @@ model Product {
 
   company Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   items   OrderItem[]
-  bom     ProductMaterial[]
+  bom      ProductMaterial[]
+  services ProductService[]
 
   @@index([companyId])
   @@map("produtos")
+}
+
+// Catálogo de serviços da confecção (silk, costura, bordado, corte...).
+// Cada um tem um custo padrão por peça, que serve de sugestão ao vincular.
+model Service {
+  id                  String   @id @default(cuid())
+  companyId           String
+  name                String
+  defaultPriceInCents Int      @default(0)
+  active              Boolean  @default(true)
+  position            Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  company  Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  products ProductService[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@map("servicos")
+}
+
+// Quais serviços entram numa peça e quanto custa cada um nela.
+// É a "ficha de serviços": o par da ficha técnica de materiais.
+model ProductService {
+  id           String   @id @default(cuid())
+  productId    String
+  serviceId    String
+  priceInCents Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, serviceId])
+  @@index([productId])
+  @@index([serviceId])
+  @@map("produto_servicos")
 }
 
 model ProductMaterial {
@@ -372,6 +431,9 @@ model Material {
   unit           String
   currentQuantity Decimal  @default(0) @db.Decimal(12, 2)
   minimumQuantity Decimal  @default(0) @db.Decimal(12, 2)
+  // Quanto custa 1 unidade de medida do material (1 kg, 1 m, 1 un...).
+  // É o que permite a ficha técnica calcular o custo real de cada peça.
+  costPerUnitInCents Int   @default(0)
   supplier       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

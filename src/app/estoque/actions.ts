@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageStock } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
+import { currencyToCents } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 // Estoque: cadastrar/lançar/editar é só do Dono e do Gerente (Produção é só leitura).
@@ -32,6 +33,7 @@ export async function createMaterialAction(_prev: FormState, formData: FormData)
   const unit = String(formData.get("unit") ?? "").trim();
   const current = quantityFromText(String(formData.get("current") ?? ""));
   const min = quantityFromText(String(formData.get("min") ?? ""));
+  const costPerUnitInCents = Math.max(0, currencyToCents(String(formData.get("cost") ?? "")));
   const supplier = String(formData.get("supplier") ?? "").trim();
 
   if (!name) return { error: "Informe o nome do material." };
@@ -46,6 +48,7 @@ export async function createMaterialAction(_prev: FormState, formData: FormData)
       unit: unit || "unidades",
       currentQuantity: current,
       minimumQuantity: min,
+      costPerUnitInCents,
       supplier: supplier || null,
     },
   });
@@ -76,6 +79,7 @@ export async function updateMaterialAction(_prev: FormState, formData: FormData)
       category: String(formData.get("category") ?? "").trim() || null,
       unit: String(formData.get("unit") ?? "").trim() || "unidades",
       minimumQuantity: quantityFromText(String(formData.get("min") ?? "")),
+      costPerUnitInCents: Math.max(0, currencyToCents(String(formData.get("cost") ?? ""))),
       supplier: String(formData.get("supplier") ?? "").trim() || null,
     },
   });

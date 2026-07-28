@@ -43,9 +43,20 @@ export async function updateMesaAction(_prev: FormState, formData: FormData): Pr
   const active = String(formData.get("active") ?? "") === "on";
   if (!id || !name) return { error: "Informe o nome da mesa." };
 
+  // Só aceita responsável que seja funcionário ativo da própria empresa.
+  const responsibleRaw = String(formData.get("responsibleUserId") ?? "").trim();
+  let responsibleUserId: string | null = null;
+  if (responsibleRaw) {
+    const member = await prisma.user.findFirst({
+      where: { id: responsibleRaw, companyId, active: true },
+      select: { id: true },
+    });
+    responsibleUserId = member?.id ?? null;
+  }
+
   const updated = await prisma.mesa.updateMany({
     where: { id, companyId },
-    data: { name, position: Number.isFinite(position) ? position : 0, active },
+    data: { name, position: Number.isFinite(position) ? position : 0, active, responsibleUserId },
   });
   if (updated.count === 0) return { error: "Mesa não encontrada." };
 

@@ -7,6 +7,7 @@ import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { stageNameToOrderStatus } from "@/lib/status";
 
 const noteKinds = ["NONE", "SHORTAGE", "SURPLUS", "INFO"];
 
@@ -27,7 +28,10 @@ export async function pickOrderAction(_prev: FormState, formData: FormData): Pro
   if (!mesaId) return { error: "Escolha a mesa antes de pegar o pedido." };
 
   const [order, mesa, activeTask] = await Promise.all([
-    prisma.order.findFirst({ where: { id: orderId, companyId: user.companyId }, select: { id: true, number: true } }),
+    prisma.order.findFirst({
+      where: { id: orderId, companyId: user.companyId },
+      select: { id: true, number: true, currentStage: { select: { name: true } } },
+    }),
     prisma.mesa.findFirst({ where: { id: mesaId, companyId: user.companyId, active: true }, select: { id: true } }),
     prisma.bancadaTask.findFirst({ where: { orderId, companyId: user.companyId, status: "PICKED" }, select: { pickedByName: true } }),
   ]);
@@ -43,6 +47,8 @@ export async function pickOrderAction(_prev: FormState, formData: FormData): Pro
       pickedById: user.id,
       pickedByName: user.name,
       status: "PICKED",
+      // Guarda a etapa trabalhada agora; concluir move o pedido para a seguinte.
+      stageName: order.currentStage?.name ?? null,
     },
   });
 
@@ -50,7 +56,9 @@ export async function pickOrderAction(_prev: FormState, formData: FormData): Pro
   return { success: `Você pegou o pedido #${order.number}.` };
 }
 
-// Conclui o trabalho na bancada e (opcional) registra falta/sobra.
+// Conclui o trabalho na bancada, registra falta/sobra e empurra o pedido para a
+// proxima etapa do quadro: e assim que a producao anda. Sem isso o pedido caia
+// de volta na fila de "pegar trabalho" como se nada tivesse sido feito.
 export async function completeTaskAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const user = await requireBancadaUser();
   const id = String(formData.get("id") ?? "");
@@ -60,14 +68,55 @@ export async function completeTaskAction(_prev: FormState, formData: FormData): 
 
   const noteKind = noteKinds.includes(noteKindRaw) ? noteKindRaw : "NONE";
 
-  const updated = await prisma.bancadaTask.updateMany({
+  const task = await prisma.bancadaTask.findFirst({
     where: { id, companyId: user.companyId, status: "PICKED" },
-    data: { status: "DONE", doneAt: new Date(), noteKind, note: note || null },
+    select: {
+      id: true,
+      orderId: true,
+      order: { select: { number: true, currentStage: { select: { id: true, position: true } } } },
+    },
   });
-  if (updated.count === 0) return { error: "Tarefa não encontrada ou já concluída." };
+  if (!task) return { error: "Tarefa não encontrada ou já concluída." };
 
+  const currentStage = task.order.currentStage;
+  const nextStage = currentStage
+    ? await prisma.productionStage.findFirst({
+        where: { companyId: user.companyId, active: true, position: { gt: currentStage.position } },
+        orderBy: { position: "asc" },
+        select: { id: true, name: true },
+      })
+    : null;
+
+  const doneData = { status: "DONE", doneAt: new Date(), noteKind, note: note || null };
+
+  // Ultima etapa (ou pedido sem etapa): so conclui, nao tem para onde mover.
+  if (!currentStage || !nextStage) {
+    await prisma.bancadaTask.update({ where: { id: task.id }, data: doneData });
+    revalidatePath("/bancada");
+    return { success: `Pedido #${task.order.number} concluído.` };
+  }
+
+  await prisma.$transaction([
+    prisma.bancadaTask.update({ where: { id: task.id }, data: doneData }),
+    prisma.order.update({
+      where: { id: task.orderId },
+      data: { currentStageId: nextStage.id, status: stageNameToOrderStatus(nextStage.name) },
+    }),
+    prisma.productionHistory.create({
+      data: {
+        orderId: task.orderId,
+        fromStageId: currentStage.id,
+        toStageId: nextStage.id,
+        note: note ? `Concluído na bancada por ${user.name} - ${note}` : `Concluído na bancada por ${user.name}`,
+      },
+    }),
+  ]);
+
+  revalidatePath("/");
+  revalidatePath("/pedidos");
+  revalidatePath("/producao");
   revalidatePath("/bancada");
-  return { success: "Trabalho concluído." };
+  return { success: `Pedido #${task.order.number} concluído e movido para ${nextStage.name}.` };
 }
 
 // Libera o pedido (desfaz o "peguei"), caso tenha pego por engano.

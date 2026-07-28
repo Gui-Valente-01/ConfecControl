@@ -1,5 +1,6 @@
 "use server";
 
+import type { ProductKind } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
@@ -9,6 +10,11 @@ import { prisma } from "@/lib/prisma";
 function daysFromText(value: string) {
   const parsed = Number(value.replace(/\D/g, ""));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+// Peça própria (PRODUCT) ou serviço na peça do cliente (SERVICE).
+function productKindFromForm(value: FormDataEntryValue | null): ProductKind {
+  return String(value ?? "") === "SERVICE" ? "SERVICE" : "PRODUCT";
 }
 
 export async function createProductAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -32,6 +38,7 @@ export async function createProductAction(_prev: FormState, formData: FormData):
       standardPriceInCents: currencyToCents(price),
       costInCents: currencyToCents(cost),
       averageProductionDays: daysFromText(time),
+      kind: productKindFromForm(formData.get("kind")),
     },
   });
 
@@ -56,6 +63,7 @@ export async function updateProductAction(_prev: FormState, formData: FormData):
       standardPriceInCents: currencyToCents(String(formData.get("price") ?? "")),
       costInCents: currencyToCents(String(formData.get("cost") ?? "")),
       averageProductionDays: daysFromText(String(formData.get("time") ?? "")),
+      kind: productKindFromForm(formData.get("kind")),
     },
   });
   if (updated.count === 0) return { error: "Peça não encontrada." };

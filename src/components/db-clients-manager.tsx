@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Phone, Users } from "lucide-react";
 import { deleteClientAction, updateClientAction } from "@/app/clientes/actions";
 import { ClientCreateForm } from "@/components/client-create-form";
@@ -77,7 +78,11 @@ export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManag
                           <Users size={20} aria-hidden="true" />
                         </div>
                         <div>
-                          <h3 className="font-semibold">{client.name}</h3>
+                          <h3 className="font-semibold">
+                            <Link href={`/clientes/${client.id}`} className="hover:text-[#05605e] hover:underline">
+                              {client.name}
+                            </Link>
+                          </h3>
                           <p className="mt-1 text-sm text-[#66756d]">{client.contact || "Contato não informado"}</p>
                         </div>
                       </div>

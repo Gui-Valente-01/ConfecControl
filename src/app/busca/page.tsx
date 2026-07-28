@@ -123,7 +123,7 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
               <ul className="space-y-2">
                 {clients.map((client) => (
                   <li key={client.id}>
-                    <Link href="/clientes" className="flex items-center justify-between gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm hover:bg-[#eef4f1]">
+                    <Link href={`/clientes/${client.id}`} className="flex items-center justify-between gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm hover:bg-[#eef4f1]">
                       <span className="flex items-center gap-2">
                         <Users size={15} className="text-[#63736b]" aria-hidden="true" />
                         {client.name}

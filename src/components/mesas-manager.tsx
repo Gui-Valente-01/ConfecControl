@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, UserRound } from "lucide-react";
 import { useActionState } from "react";
 import { createMesaAction, deleteMesaAction, updateMesaAction } from "@/app/configuracoes/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
@@ -17,16 +17,20 @@ type Mesa = {
   position: number;
   active: boolean;
   inUse: boolean;
+  responsibleUserId: string | null;
 };
 
-export function MesasManager({ mesas }: { mesas: Mesa[] }) {
+type TeamMember = { id: string; name: string };
+
+export function MesasManager({ mesas, team }: { mesas: Mesa[]; team: TeamMember[] }) {
   const [state, formAction] = useActionState(createMesaAction, emptyFormState);
   useActionFeedback(state);
 
   return (
     <SectionCard eyebrow="Bancada" title="Mesas de trabalho">
       <p className="text-sm text-[#66756d]">
-        Cadastre as mesas (ex.: Silk 1, Silk 2, Bordado). O funcionário escolhe a mesa ao pegar o pedido.
+        Cadastre as mesas (ex.: Silk 1, Silk 2, Bordado) e defina quem responde por cada uma. O funcionário escolhe a
+        mesa ao pegar o pedido; o responsável é quem você procura quando aquela estação trava.
       </p>
 
       <div className="mt-4 space-y-2">
@@ -56,6 +60,20 @@ export function MesasManager({ mesas }: { mesas: Mesa[] }) {
                   defaultValue={mesa.position}
                   className="h-9 w-16 rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                 />
+              </label>
+              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+                <UserRound size={13} aria-hidden="true" />
+                <span className="sr-only">Responsável pela mesa {mesa.name}</span>
+                <select
+                  name="responsibleUserId"
+                  defaultValue={mesa.responsibleUserId ?? ""}
+                  className="h-9 min-w-36 rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                >
+                  <option value="">Sem responsável</option>
+                  {team.map((member) => (
+                    <option key={member.id} value={member.id}>{member.name}</option>
+                  ))}
+                </select>
               </label>
               <label className="flex items-center gap-1 text-xs text-[#63736b]">
                 <input type="checkbox" name="active" defaultChecked={mesa.active} className="size-4" />
