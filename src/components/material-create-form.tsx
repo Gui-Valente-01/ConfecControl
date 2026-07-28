@@ -13,6 +13,7 @@ const fields: [string, string, string][] = [
   ["unit", "Unidade", "Ex.: unidades"],
   ["current", "Quantidade atual", "120"],
   ["min", "Estoque mínimo", "300"],
+  ["cost", "Preço por unidade (R$)", "28,50"],
   ["supplier", "Fornecedor", "Ex.: Aviamentos SP"],
 ];
 

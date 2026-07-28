@@ -7,7 +7,7 @@ import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ToastForm } from "@/components/toast-form";
-import { formatDateTime } from "@/lib/format";
+import { centsToCurrency, centsToInput, formatDateTime } from "@/lib/format";
 import type { StockMovementType } from "@prisma/client";
 
 type DbMaterial = {
@@ -17,6 +17,7 @@ type DbMaterial = {
   unit: string;
   currentQuantity: number;
   minimumQuantity: number;
+  costPerUnitInCents: number;
   supplier: string | null;
 };
 
@@ -107,8 +108,16 @@ export function DbStockManager({ materials, movements, canEdit, canManage }: DbS
                     <div className="mt-2 h-2 rounded-full bg-[#edf2ef]">
                       <div className={`h-2 rounded-full ${low ? "bg-[#c43f54]" : "bg-[#087f7d]"}`} style={{ width: `${percent}%` }} />
                     </div>
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                       <StatusBadge tone={low ? "warn" : "good"}>{low ? "Repor estoque" : "Estoque ok"}</StatusBadge>
+                      {item.costPerUnitInCents > 0 ? (
+                        <span className="text-sm text-[#66756d]">
+                          <strong className="font-semibold text-[#1c2420] tabular-nums">{centsToCurrency(item.costPerUnitInCents)}</strong>
+                          <span className="text-xs"> / {item.unit}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-[#9aa8a0]">sem preço cadastrado</span>
+                      )}
                     </div>
 
                     {canEdit ? (
@@ -120,6 +129,7 @@ export function DbStockManager({ materials, movements, canEdit, canManage }: DbS
                           { name: "category", label: "Categoria", defaultValue: item.category ?? "" },
                           { name: "unit", label: "Unidade", defaultValue: item.unit },
                           { name: "min", label: "Estoque mínimo", defaultValue: String(item.minimumQuantity) },
+                          { name: "cost", label: `Preço por ${item.unit} (R$)`, defaultValue: centsToInput(item.costPerUnitInCents) },
                           { name: "supplier", label: "Fornecedor", defaultValue: item.supplier ?? "" },
                         ]}
                       />
