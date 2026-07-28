@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, CalendarRange, Clock, CreditCard, Download, Package, TrendingUp, Trophy, Users } from "lucide-react";
+import { AlertTriangle, BarChart3, CalendarRange, Clock, CreditCard, Download, Package, TrendingUp, Trophy, Users, Wrench } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
@@ -42,7 +42,17 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       where: { companyId },
       select: { number: true, deliveryDate: true, status: true, assignee: true, client: { select: { name: true } } },
     }),
-    prisma.product.findMany({ where: { companyId }, select: { id: true, name: true, costInCents: true } }),
+    prisma.product.findMany({
+      where: { companyId },
+      select: {
+        id: true,
+        name: true,
+        costInCents: true,
+        kind: true,
+        bom: { select: { quantityPerUnit: true, material: { select: { costPerUnitInCents: true } } } },
+        services: { select: { priceInCents: true, service: { select: { name: true } } } },
+      },
+    }),
     prisma.payment.findMany({
       where: { order: { companyId }, status: { in: ["PENDING", "PARTIAL", "OVERDUE"] } },
       orderBy: { dueDate: "asc" },
@@ -59,7 +69,20 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     }),
   ]);
 
-  const productCost = new Map(products.map((p) => [p.id, p.costInCents]));
+  // Custo por peça = materiais da ficha + serviços (mão de obra) + outros custos.
+  // Sem ficha preenchida, sobra só o valor digitado no produto.
+  const productCost = new Map(
+    products.map((p) => {
+      const materialCost = p.bom.reduce(
+        (sum, entry) => sum + Math.round(Number(entry.quantityPerUnit) * entry.material.costPerUnitInCents),
+        0,
+      );
+      const laborCost = p.services.reduce((sum, entry) => sum + entry.priceInCents, 0);
+      return [p.id, materialCost + laborCost + p.costInCents];
+    }),
+  );
+  const productKind = new Map(products.map((p) => [p.id, p.kind]));
+  const productServices = new Map(products.map((p) => [p.id, p.services]));
   const productName = new Map(products.map((p) => [p.id, p.name]));
 
   // Faturamento no período
@@ -72,6 +95,30 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const itemsRevenue = rangeItems.reduce((sum, item) => sum + item.totalPriceInCents, 0);
   const totalCost = rangeItems.reduce((sum, item) => sum + (item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0), 0);
   const estimatedProfit = itemsRevenue - totalCost;
+
+  // Quanto cada serviço custou no período: valor do serviço x peças produzidas.
+  const serviceTotals = new Map<string, { cost: number; units: number }>();
+  // Faturamento separado: serviço na peça do cliente x peça feita pela confecção.
+  const byKind = { SERVICE: { revenue: 0, units: 0 }, PRODUCT: { revenue: 0, units: 0 } };
+
+  for (const item of rangeItems) {
+    if (!item.productId) continue;
+    const kind = productKind.get(item.productId) ?? "PRODUCT";
+    byKind[kind].revenue += item.totalPriceInCents;
+    byKind[kind].units += item.quantity;
+
+    for (const entry of productServices.get(item.productId) ?? []) {
+      const current = serviceTotals.get(entry.service.name) ?? { cost: 0, units: 0 };
+      current.cost += entry.priceInCents * item.quantity;
+      current.units += item.quantity;
+      serviceTotals.set(entry.service.name, current);
+    }
+  }
+
+  const serviceRows = [...serviceTotals.entries()]
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.cost - a.cost);
+  const laborTotal = serviceRows.reduce((sum, row) => sum + row.cost, 0);
   const margin = itemsRevenue > 0 ? Math.round((estimatedProfit / itemsRevenue) * 100) : 0;
   const itemsWithoutCost = rangeItems.filter((item) => !item.productId || (productCost.get(item.productId) ?? 0) === 0).length;
 
@@ -178,6 +225,64 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
           </p>
         ) : null}
       </SectionCard>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <SectionCard
+          eyebrow="Mão de obra"
+          title="Custo por serviço"
+          action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(laborTotal)}</span>}
+        >
+          {serviceRows.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
+              Nenhum serviço vinculado às peças vendidas no período. Monte a ficha de serviços em Produtos.
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {serviceRows.map((row) => {
+                const share = laborTotal > 0 ? Math.round((row.cost / laborTotal) * 100) : 0;
+                return (
+                  <li key={row.name}>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Wrench size={14} className="shrink-0 text-[#05605e]" aria-hidden="true" />
+                        <span className="truncate text-sm font-medium text-[#405047]">{row.name}</span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {centsToCurrency(row.cost)}
+                        <span className="ml-1 font-normal text-[#8a9890]">· {row.units} un.</span>
+                      </span>
+                    </div>
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eef2ef]">
+                      <div className="h-full rounded-full bg-[#087f7d]" style={{ width: `${share}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </SectionCard>
+
+        <SectionCard eyebrow="Origem" title="Serviço x peça própria">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {([
+              ["Peça própria", byKind.PRODUCT, "A confecção fez a peça inteira"],
+              ["Serviço no cliente", byKind.SERVICE, "O cliente trouxe a peça"],
+            ] as const).map(([label, data, hint]) => {
+              const share = itemsRevenue > 0 ? Math.round((data.revenue / itemsRevenue) * 100) : 0;
+              return (
+                <article key={label} className="rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-4">
+                  <p className="text-sm font-medium text-[#405047]">{label}</p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums">{centsToCurrency(data.revenue)}</p>
+                  <p className="mt-1 text-sm text-[#66756d]">
+                    {share}% do faturamento · {data.units} un.
+                  </p>
+                  <p className="mt-2 text-xs text-[#8a9890]">{hint}</p>
+                </article>
+              );
+            })}
+          </div>
+        </SectionCard>
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
         <SectionCard eyebrow="Vendas" title="Produtos mais vendidos">
