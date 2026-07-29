@@ -19,16 +19,21 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
   // Produção (só leitura) não edita pedidos: volta para o detalhe.
   if (!canManageOrders(user.role)) redirect(`/pedidos/${id}`);
 
-  const [order, clients, products] = await Promise.all([
+  const [order, clients, products, serviceSuggestions] = await Promise.all([
     prisma.order.findFirst({
       where: { id, companyId: user.companyId },
-      include: { items: true },
+      include: { items: true, services: { orderBy: { createdAt: "asc" } } },
     }),
     prisma.client.findMany({ where: { companyId: user.companyId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.product.findMany({
       where: { companyId: user.companyId },
       orderBy: { name: "asc" },
       select: { id: true, name: true, standardPriceInCents: true },
+    }),
+    prisma.service.findMany({
+      where: { companyId: user.companyId, active: true },
+      orderBy: { position: "asc" },
+      select: { name: true, defaultPriceInCents: true },
     }),
   ]);
 
@@ -48,6 +53,10 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
       quantity: item.quantity,
       unitPriceInCents: item.unitPriceInCents,
     })),
+    services: order.services.map((service) => ({
+      name: service.name,
+      priceInCents: service.priceInCents,
+    })),
   };
 
   return (
@@ -61,6 +70,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
         <OrderForm
           clients={clients}
           products={products}
+          serviceSuggestions={serviceSuggestions}
           action={updateOrderAction}
           submitLabel="Salvar alterações"
           orderId={order.id}

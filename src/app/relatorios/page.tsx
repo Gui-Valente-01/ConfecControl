@@ -36,6 +36,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         paidAmountInCents: true,
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true, productId: true, totalPriceInCents: true } },
+        services: { select: { name: true, priceInCents: true } },
       },
     }),
     prisma.order.findMany({
@@ -50,7 +51,6 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         costInCents: true,
         kind: true,
         bom: { select: { quantityPerUnit: true, material: { select: { costPerUnitInCents: true } } } },
-        services: { select: { priceInCents: true, service: { select: { name: true } } } },
       },
     }),
     prisma.payment.findMany({
@@ -69,20 +69,17 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     }),
   ]);
 
-  // Custo por peça = materiais da ficha + serviços (mão de obra) + outros custos.
-  // Sem ficha preenchida, sobra só o valor digitado no produto.
+  // Custo por peça = materiais da ficha + outros custos digitados no produto.
   const productCost = new Map(
     products.map((p) => {
       const materialCost = p.bom.reduce(
         (sum, entry) => sum + Math.round(Number(entry.quantityPerUnit) * entry.material.costPerUnitInCents),
         0,
       );
-      const laborCost = p.services.reduce((sum, entry) => sum + entry.priceInCents, 0);
-      return [p.id, materialCost + laborCost + p.costInCents];
+      return [p.id, materialCost + p.costInCents];
     }),
   );
   const productKind = new Map(products.map((p) => [p.id, p.kind]));
-  const productServices = new Map(products.map((p) => [p.id, p.services]));
   const productName = new Map(products.map((p) => [p.id, p.name]));
 
   // Faturamento no período
@@ -96,29 +93,30 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const totalCost = rangeItems.reduce((sum, item) => sum + (item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0), 0);
   const estimatedProfit = itemsRevenue - totalCost;
 
-  // Quanto cada serviço custou no período: valor do serviço x peças produzidas.
-  const serviceTotals = new Map<string, { cost: number; units: number }>();
   // Faturamento separado: serviço na peça do cliente x peça feita pela confecção.
   const byKind = { SERVICE: { revenue: 0, units: 0 }, PRODUCT: { revenue: 0, units: 0 } };
-
   for (const item of rangeItems) {
     if (!item.productId) continue;
     const kind = productKind.get(item.productId) ?? "PRODUCT";
     byKind[kind].revenue += item.totalPriceInCents;
     byKind[kind].units += item.quantity;
-
-    for (const entry of productServices.get(item.productId) ?? []) {
-      const current = serviceTotals.get(entry.service.name) ?? { cost: 0, units: 0 };
-      current.cost += entry.priceInCents * item.quantity;
-      current.units += item.quantity;
-      serviceTotals.set(entry.service.name, current);
-    }
   }
 
+  // Quanto cada serviço rendeu: vem do que foi cobrado em cada pedido, então é
+  // o valor real e não uma estimativa de tabela.
+  const serviceTotals = new Map<string, { revenue: number; count: number }>();
+  for (const order of rangeOrders) {
+    for (const service of order.services) {
+      const current = serviceTotals.get(service.name) ?? { revenue: 0, count: 0 };
+      current.revenue += service.priceInCents;
+      current.count += 1;
+      serviceTotals.set(service.name, current);
+    }
+  }
   const serviceRows = [...serviceTotals.entries()]
     .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.cost - a.cost);
-  const laborTotal = serviceRows.reduce((sum, row) => sum + row.cost, 0);
+    .sort((a, b) => b.revenue - a.revenue);
+  const servicesRevenue = serviceRows.reduce((sum, row) => sum + row.revenue, 0);
   const margin = itemsRevenue > 0 ? Math.round((estimatedProfit / itemsRevenue) * 100) : 0;
   const itemsWithoutCost = rangeItems.filter((item) => !item.productId || (productCost.get(item.productId) ?? 0) === 0).length;
 
@@ -228,18 +226,18 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
 
       <section className="grid gap-6 lg:grid-cols-2">
         <SectionCard
-          eyebrow="Mão de obra"
-          title="Custo por serviço"
-          action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(laborTotal)}</span>}
+          eyebrow="Serviços"
+          title="Faturamento por serviço"
+          action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(servicesRevenue)}</span>}
         >
           {serviceRows.length === 0 ? (
             <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
-              Nenhum serviço vinculado às peças vendidas no período. Monte a ficha de serviços em Produtos.
+              Nenhum serviço cobrado no período. Os serviços são digitados ao criar o pedido.
             </p>
           ) : (
             <ul className="space-y-3">
               {serviceRows.map((row) => {
-                const share = laborTotal > 0 ? Math.round((row.cost / laborTotal) * 100) : 0;
+                const share = servicesRevenue > 0 ? Math.round((row.revenue / servicesRevenue) * 100) : 0;
                 return (
                   <li key={row.name}>
                     <div className="flex items-baseline justify-between gap-3">
@@ -248,8 +246,8 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
                         <span className="truncate text-sm font-medium text-[#405047]">{row.name}</span>
                       </span>
                       <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {centsToCurrency(row.cost)}
-                        <span className="ml-1 font-normal text-[#8a9890]">· {row.units} un.</span>
+                        {centsToCurrency(row.revenue)}
+                        <span className="ml-1 font-normal text-[#8a9890]">· {row.count}x</span>
                       </span>
                     </div>
                     <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eef2ef]">

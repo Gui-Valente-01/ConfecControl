@@ -29,6 +29,20 @@ type EditableItem = {
   unitPrice: string; // em reais
 };
 
+export type OrderFormService = {
+  name: string;
+  priceInCents: number;
+};
+
+type EditableService = {
+  key: string;
+  name: string;
+  price: string; // em reais
+};
+
+// Serviços já cadastrados: servem só de sugestão ao digitar o nome.
+type ServiceSuggestion = { name: string; defaultPriceInCents: number };
+
 type OrderFormDefaults = {
   clientId?: string;
   deliveryDate?: string; // yyyy-mm-dd
@@ -36,11 +50,13 @@ type OrderFormDefaults = {
   paidReais?: string;
   internalNotes?: string;
   items?: OrderFormItem[];
+  services?: OrderFormService[];
 };
 
 type OrderFormProps = {
   clients: ClientOption[];
   products: ProductOption[];
+  serviceSuggestions?: ServiceSuggestion[];
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   submitLabel: string;
   orderId?: string;
@@ -76,7 +92,21 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-export function OrderForm({ clients, products, action, submitLabel, orderId, defaults }: OrderFormProps) {
+let serviceSeq = 0;
+function newService(partial?: Partial<EditableService>): EditableService {
+  serviceSeq += 1;
+  return { key: `srv-${serviceSeq}`, name: "", price: "", ...partial };
+}
+
+export function OrderForm({
+  clients,
+  products,
+  serviceSuggestions = [],
+  action,
+  submitLabel,
+  orderId,
+  defaults,
+}: OrderFormProps) {
   const [state, formAction] = useActionState(action, emptyFormState);
   useActionFeedback(state);
 
@@ -121,7 +151,37 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
   const removeItem = (key: string) =>
     setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.key !== key) : prev));
 
-  const totalInCents = useMemo(
+  const [services, setServices] = useState<EditableService[]>(() =>
+    defaults?.services?.length
+      ? defaults.services.map((service) =>
+          newService({ name: service.name, price: (service.priceInCents / 100).toString() }),
+        )
+      : [],
+  );
+
+  const updateService = (key: string, patch: Partial<EditableService>) =>
+    setServices((prev) => prev.map((service) => (service.key === key ? { ...service, ...patch } : service)));
+
+  const addService = () => setServices((prev) => [...prev, newService()]);
+  const removeService = (key: string) => setServices((prev) => prev.filter((service) => service.key !== key));
+
+  // Ao digitar um nome que já existe no catálogo, sugere o valor de sempre —
+  // sem travar: o dono pode digitar outro, que é o motivo de o campo ser livre.
+  const onServiceName = (key: string, name: string) => {
+    const known = serviceSuggestions.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
+    setServices((prev) =>
+      prev.map((service) => {
+        if (service.key !== key) return service;
+        const next = { ...service, name };
+        if (known && !service.price.trim() && known.defaultPriceInCents > 0) {
+          next.price = (known.defaultPriceInCents / 100).toString();
+        }
+        return next;
+      }),
+    );
+  };
+
+  const itemsInCents = useMemo(
     () =>
       items.reduce((sum, item) => {
         const qty = Math.max(0, Math.floor(Number(item.quantity) || 0));
@@ -130,6 +190,14 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
       }, 0),
     [items],
   );
+
+  const servicesInCents = useMemo(
+    () => services.reduce((sum, service) => sum + Math.max(0, currencyToCents(service.price)), 0),
+    [services],
+  );
+
+  // Serviço é receita: entra no total que o cliente paga.
+  const totalInCents = itemsInCents + servicesInCents;
 
   // A entrada é controlada para o saldo acompanhar o que está sendo digitado.
   // Usa o mesmo currencyToCents do servidor, então a conta na tela é a que será salva.
@@ -150,10 +218,22 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
       .filter((item) => item.quantity > 0 && (item.productId || item.description)),
   );
 
+  const servicesJson = JSON.stringify(
+    services
+      .map((service) => ({ name: service.name.trim(), price: service.price }))
+      .filter((service) => service.name.length > 0),
+  );
+
   return (
     <form className="space-y-4" action={formAction}>
       {orderId ? <input type="hidden" name="id" value={orderId} /> : null}
       <input type="hidden" name="items" value={itemsJson} />
+      <input type="hidden" name="services" value={servicesJson} />
+      <datalist id="servicos-sugeridos">
+        {serviceSuggestions.map((service) => (
+          <option key={service.name} value={service.name} />
+        ))}
+      </datalist>
 
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Cliente</span>
@@ -267,6 +347,60 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
         ))}
       </div>
 
+      {/* Serviços cobrados neste pedido: dois campos, digitados na hora. */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-[#405047]">Serviços cobrados</span>
+          <button
+            type="button"
+            onClick={addService}
+            className="inline-flex items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 py-1.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
+          >
+            <Plus size={13} aria-hidden="true" />
+            Adicionar serviço
+          </button>
+        </div>
+
+        {services.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] px-3 py-2.5 text-xs text-[#66756d]">
+            Silk, bordado, corte... Some no total do pedido. Deixe vazio se este pedido não tem serviço.
+          </p>
+        ) : (
+          services.map((service) => (
+            <div key={service.key} className="flex flex-wrap items-end gap-2">
+              <label className="min-w-36 flex-1">
+                <span className="text-xs font-medium text-[#63736b]">Serviço</span>
+                <input
+                  list="servicos-sugeridos"
+                  value={service.name}
+                  onChange={(e) => onServiceName(service.key, e.target.value)}
+                  placeholder="Ex.: Silk 3 cores"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                />
+              </label>
+              <label className="w-28">
+                <span className="text-xs font-medium text-[#63736b]">Valor (R$)</span>
+                <input
+                  value={service.price}
+                  onChange={(e) => updateService(service.key, { price: e.target.value })}
+                  placeholder="400,00"
+                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => removeService(service.key)}
+                title="Remover serviço"
+                aria-label="Remover serviço"
+                className="mb-0.5 inline-flex size-9 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#9f2f42] transition hover:bg-[#fff0f2]"
+              >
+                <Trash2 size={14} aria-hidden="true" />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="text-sm font-medium text-[#405047]">Prazo de entrega</span>
@@ -310,7 +444,19 @@ export function OrderForm({ clients, products, action, submitLabel, orderId, def
       </label>
 
       <div className="rounded-lg bg-[#eef4f1] px-3 py-2.5 text-sm">
-        <div className="flex items-center justify-between">
+        {servicesInCents > 0 ? (
+          <>
+            <div className="flex items-center justify-between text-[#66756d]">
+              <span>Peças</span>
+              <span className="tabular-nums">{centsToCurrency(itemsInCents)}</span>
+            </div>
+            <div className="flex items-center justify-between text-[#66756d]">
+              <span>Serviços</span>
+              <span className="tabular-nums">{centsToCurrency(servicesInCents)}</span>
+            </div>
+          </>
+        ) : null}
+        <div className={`flex items-center justify-between ${servicesInCents > 0 ? "mt-1 border-t border-[#d5e0da] pt-1" : ""}`}>
           <span className="font-medium text-[#405047]">Total do pedido</span>
           <span className="font-semibold tabular-nums">{centsToCurrency(totalInCents)}</span>
         </div>

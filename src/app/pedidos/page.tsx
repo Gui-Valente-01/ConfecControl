@@ -8,12 +8,17 @@ export const dynamic = "force-dynamic";
 
 export default async function PedidosPage() {
   const user = await requireRouteUser("/pedidos");
-  const [clients, products, orders] = await Promise.all([
+  const [clients, products, serviceSuggestions, orders] = await Promise.all([
     prisma.client.findMany({ where: { companyId: user.companyId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.product.findMany({
       where: { companyId: user.companyId },
       orderBy: { name: "asc" },
       select: { id: true, name: true, standardPriceInCents: true },
+    }),
+    prisma.service.findMany({
+      where: { companyId: user.companyId, active: true },
+      orderBy: { position: "asc" },
+      select: { name: true, defaultPriceInCents: true },
     }),
     prisma.order.findMany({
       where: { companyId: user.companyId },
@@ -34,6 +39,7 @@ export default async function PedidosPage() {
     <AppShell eyebrow="Operação" title="Pedidos" actionLabel={canManage ? "Novo pedido" : undefined} user={user}>
       <DbOrdersManager
         clients={clients}
+        serviceSuggestions={serviceSuggestions}
         products={products}
         orders={orders}
         canPrioritize={canPrioritize}
