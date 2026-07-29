@@ -1,7 +1,6 @@
-import { Layers, Plus, Shirt, Trash2, Wrench } from "lucide-react";
+import { Layers, Plus, Shirt, Trash2 } from "lucide-react";
 import { deleteProductAction, updateProductAction } from "@/app/produtos/actions";
 import { removeProductMaterialAction, setProductMaterialAction } from "@/app/estoque/actions";
-import { linkProductServiceAction, unlinkProductServiceAction } from "@/app/servicos/actions";
 import { InlineEdit } from "@/components/inline-edit";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { ProductCreateForm } from "@/components/product-create-form";
@@ -22,12 +21,6 @@ function bomLineCost(entry: BomEntry) {
   return Math.round(entry.quantityPerUnit * entry.material.costPerUnitInCents);
 }
 
-type ServiceEntry = {
-  id: string;
-  priceInCents: number;
-  service: { name: string };
-};
-
 type DbProduct = {
   id: string;
   name: string;
@@ -38,13 +31,7 @@ type DbProduct = {
   averageProductionDays: number | null;
   kind: "PRODUCT" | "SERVICE";
   bom: BomEntry[];
-  services: ServiceEntry[];
 };
-
-// Mão de obra total da peça: soma de todos os serviços vinculados a ela.
-function servicesCost(product: DbProduct) {
-  return product.services.reduce((sum, entry) => sum + entry.priceInCents, 0);
-}
 
 type MaterialOption = { id: string; name: string; unit: string };
 type ServiceOption = { id: string; name: string; defaultPriceInCents: number };
@@ -167,11 +154,10 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
                   )}
 
                   {/* Custo real da peça: materiais da ficha + serviços + outros custos */}
-                  {product.bom.length > 0 || product.services.length > 0 ? (
+                  {product.bom.length > 0 ? (
                     (() => {
                       const materialCost = product.bom.reduce((sum, entry) => sum + bomLineCost(entry), 0);
-                      const laborCost = servicesCost(product);
-                      const totalCost = materialCost + laborCost + product.costInCents;
+                      const totalCost = materialCost + product.costInCents;
                       const profit = product.standardPriceInCents - totalCost;
                       const margin = product.standardPriceInCents > 0 ? Math.round((profit / product.standardPriceInCents) * 100) : 0;
                       const semPreco = product.bom.filter((e) => e.material.costPerUnitInCents <= 0);
@@ -180,10 +166,6 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
                           <div className="flex items-center justify-between text-[#66756d]">
                             <span>{product.kind === "SERVICE" ? "Materiais (tinta, linha...)" : "Materiais"}</span>
                             <span className="tabular-nums">{centsToCurrency(materialCost)}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[#66756d]">
-                            <span>Serviços (mão de obra)</span>
-                            <span className="tabular-nums">{centsToCurrency(laborCost)}</span>
                           </div>
                           <div className="flex items-center justify-between text-[#66756d]">
                             <span>Outros custos</span>
@@ -236,64 +218,6 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
                   )}
                 </div>
 
-                {/* Ficha de serviços: mão de obra por etapa (silk, costura, bordado...) */}
-                <div className="mt-3 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#405047]">
-                    <Wrench size={15} aria-hidden="true" />
-                    Serviços (valor por peça)
-                  </div>
-
-                  {product.services.length === 0 ? (
-                    <p className="mt-2 text-xs text-[#8a9890]">
-                      Nenhum serviço vinculado. Some silk, costura, bordado e o que mais entrar nesta peça.
-                    </p>
-                  ) : (
-                    <ul className="mt-2 space-y-1.5">
-                      {product.services.map((entry) => (
-                        <li key={entry.id} className="flex items-center justify-between gap-2 text-sm">
-                          <span className="min-w-0 truncate">{entry.service.name}</span>
-                          <span className="flex shrink-0 items-center gap-2">
-                            <span className="font-medium tabular-nums">{centsToCurrency(entry.priceInCents)}</span>
-                            <ToastForm action={unlinkProductServiceAction}>
-                              <input type="hidden" name="id" value={entry.id} />
-                              <button className="text-[#9f2f42]" title="Remover serviço da peça" aria-label="Remover serviço da peça">
-                                <Trash2 size={13} aria-hidden="true" />
-                              </button>
-                            </ToastForm>
-                          </span>
-                        </li>
-                      ))}
-                      <li className="flex items-center justify-between gap-2 border-t border-[#e7ece9] pt-1.5 text-sm font-semibold">
-                        <span>Mão de obra</span>
-                        <span className="tabular-nums">{centsToCurrency(servicesCost(product))}</span>
-                      </li>
-                    </ul>
-                  )}
-
-                  {services.length > 0 ? (
-                    <ToastForm action={linkProductServiceAction} className="mt-3 flex flex-wrap items-end gap-2">
-                      <input type="hidden" name="productId" value={product.id} />
-                      <label className="min-w-32 flex-1">
-                        <span className="text-xs text-[#63736b]">Serviço</span>
-                        <select name="serviceId" required className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
-                          {services.map((service) => (
-                            <option key={service.id} value={service.id}>{service.name}</option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="w-24">
-                        <span className="text-xs text-[#63736b]">Valor (R$)</span>
-                        <input name="price" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="padrão" />
-                      </label>
-                      <button className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e]">
-                        <Plus size={14} aria-hidden="true" />
-                        Vincular
-                      </button>
-                    </ToastForm>
-                  ) : (
-                    <p className="mt-2 text-xs text-[#8a9890]">Cadastre os serviços ao lado para montar o custo de mão de obra.</p>
-                  )}
-                </div>
               </article>
             ))}
           </div>

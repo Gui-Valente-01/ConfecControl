@@ -16,10 +16,6 @@ export default async function ProdutosPage() {
           orderBy: { createdAt: "asc" },
           include: { material: { select: { name: true, unit: true, costPerUnitInCents: true } } },
         },
-        services: {
-          orderBy: { createdAt: "asc" },
-          include: { service: { select: { name: true } } },
-        },
       },
     }),
     prisma.material.findMany({
@@ -48,11 +44,6 @@ export default async function ProdutosPage() {
       materialId: entry.materialId,
       quantityPerUnit: Number(entry.quantityPerUnit),
       material: entry.material,
-    })),
-    services: product.services.map((entry) => ({
-      id: entry.id,
-      priceInCents: entry.priceInCents,
-      service: entry.service,
     })),
   }));
 

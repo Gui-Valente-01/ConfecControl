@@ -10,7 +10,7 @@ import { currencyToCents, dateInputToDate } from "@/lib/format";
 import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
-import { parseItems, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
+import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
@@ -114,6 +114,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   const paidAmountInCents = currencyToCents(String(formData.get("paid") ?? ""));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
+  const services = parseServices(String(formData.get("services") ?? "[]"));
 
   if (!clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
@@ -135,7 +136,10 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
     description: item.description || (item.productId ? productName.get(item.productId) ?? "Item do pedido" : "Item do pedido"),
   }));
 
-  const totalAmountInCents = normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0);
+  // Serviço é receita: entra no total que o cliente paga.
+  const servicesTotalInCents = services.reduce((sum, service) => sum + service.priceInCents, 0);
+  const totalAmountInCents =
+    normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0) + servicesTotalInCents;
   const paymentStatus = resolvePaymentStatus(paidAmountInCents, totalAmountInCents);
 
   const firstStage = await prisma.productionStage.findFirst({
@@ -179,6 +183,12 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
                 quantity: item.quantity,
                 unitPriceInCents: item.unitPriceInCents,
                 totalPriceInCents: item.totalPriceInCents,
+              })),
+            },
+            services: {
+              create: services.map((service) => ({
+                name: service.name,
+                priceInCents: service.priceInCents,
               })),
             },
             payments: {
@@ -287,6 +297,7 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
   const paidAmountInCents = currencyToCents(String(formData.get("paid") ?? ""));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
+  const services = parseServices(String(formData.get("services") ?? "[]"));
 
   if (!id || !clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
@@ -312,11 +323,15 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
     description: item.description || (item.productId ? productName.get(item.productId) ?? "Item do pedido" : "Item do pedido"),
   }));
 
-  const totalAmountInCents = normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0);
+  // Serviço é receita: entra no total que o cliente paga.
+  const servicesTotalInCents = services.reduce((sum, service) => sum + service.priceInCents, 0);
+  const totalAmountInCents =
+    normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0) + servicesTotalInCents;
   const paymentStatus = resolvePaymentStatus(paidAmountInCents, totalAmountInCents);
 
   await prisma.$transaction(async (tx) => {
     await tx.orderItem.deleteMany({ where: { orderId: id } });
+    await tx.orderService.deleteMany({ where: { orderId: id } });
     await tx.order.update({
       where: { id },
       data: {
@@ -336,6 +351,12 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
             quantity: item.quantity,
             unitPriceInCents: item.unitPriceInCents,
             totalPriceInCents: item.totalPriceInCents,
+          })),
+        },
+        services: {
+          create: services.map((service) => ({
+            name: service.name,
+            priceInCents: service.priceInCents,
           })),
         },
       },

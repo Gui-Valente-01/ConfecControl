@@ -27,13 +27,14 @@ type DbOrder = {
 type DbOrdersManagerProps = {
   clients: ClientOption[];
   products: ProductOption[];
+  serviceSuggestions: { name: string; defaultPriceInCents: number }[];
   orders: DbOrder[];
   canPrioritize: boolean;
   canManage: boolean;
   showFinance: boolean;
 };
 
-export function DbOrdersManager({ clients, products, orders, canPrioritize, canManage, showFinance }: DbOrdersManagerProps) {
+export function DbOrdersManager({ clients, products, serviceSuggestions, orders, canPrioritize, canManage, showFinance }: DbOrdersManagerProps) {
   const now = new Date();
 
   return (
@@ -140,7 +141,13 @@ export function DbOrdersManager({ clients, products, orders, canPrioritize, canM
               Cadastre um cliente antes de criar pedidos.
             </div>
           ) : (
-            <OrderForm clients={clients} products={products} action={createOrderAction} submitLabel="Salvar pedido" />
+            <OrderForm
+              clients={clients}
+              products={products}
+              serviceSuggestions={serviceSuggestions}
+              action={createOrderAction}
+              submitLabel="Salvar pedido"
+            />
           )}
         </SectionCard>
       ) : null}

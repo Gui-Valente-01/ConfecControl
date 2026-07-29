@@ -19,6 +19,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
       currentStage: { select: { name: true } },
       partner: { select: { name: true, service: true } },
       items: true,
+      services: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -75,6 +76,15 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
               <td className="py-2 text-right">{item.quantity}</td>
               <td className="py-2 text-right">{centsToCurrency(item.unitPriceInCents)}</td>
               <td className="py-2 text-right">{centsToCurrency(item.totalPriceInCents)}</td>
+            </tr>
+          ))}
+          {order.services.map((service) => (
+            <tr key={service.id} className="border-b border-[#d9e1dd]">
+              <td className="py-2">{service.name} <span className="text-[#66756d]">(serviço)</span></td>
+              <td className="py-2">-</td>
+              <td className="py-2 text-right">-</td>
+              <td className="py-2 text-right">-</td>
+              <td className="py-2 text-right">{centsToCurrency(service.priceInCents)}</td>
             </tr>
           ))}
         </tbody>

@@ -53,6 +53,41 @@ export function parseItems(raw: string): ParsedItem[] {
     .filter((item) => item.quantity > 0 && (item.productId || item.description));
 }
 
+// Serviços cobrados no pedido (silk, bordado, corte...). São digitados na hora,
+// com nome e valor livres, porque o mesmo serviço raramente sai pelo mesmo preço
+// em dois pedidos. Entram como receita: somam no total que o cliente paga.
+
+export type RawService = {
+  name?: string;
+  price?: number | string;
+};
+
+export type ParsedService = {
+  name: string;
+  priceInCents: number;
+};
+
+export function parseServices(raw: string): ParsedService[] {
+  let parsed: RawService[] = [];
+  try {
+    parsed = JSON.parse(raw) as RawService[];
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+
+  return parsed
+    .map((service) => ({
+      name: String(service.name ?? "").trim(),
+      priceInCents:
+        typeof service.price === "number"
+          ? Math.round(service.price * 100)
+          : currencyToCents(String(service.price ?? "")),
+    }))
+    // Linha em branco é descartada; serviço de cortesia (valor 0) é mantido.
+    .filter((service) => service.name.length > 0 && service.priceInCents >= 0);
+}
+
 export function resolvePaymentStatus(paid: number, total: number): PaymentStatus {
   if (paid <= 0) return "PENDING";
   if (paid >= total) return "PAID";

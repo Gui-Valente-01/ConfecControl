@@ -5,6 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { AttachmentUploadForm } from "@/components/attachment-upload-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { SectionCard } from "@/components/section-card";
+import { whatsappUrl } from "@/lib/whatsapp";
 import { StatusBadge } from "@/components/status-badge";
 import { deleteAttachmentAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
@@ -26,6 +27,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       currentStage: { select: { name: true } },
       partner: { select: { name: true, service: true, phone: true } },
       items: { include: { product: { select: { name: true } } } },
+      services: { orderBy: { createdAt: "asc" } },
       attachments: { orderBy: { createdAt: "desc" } },
       payments: { orderBy: { createdAt: "asc" } },
       history: {
@@ -46,12 +48,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const late = order.deliveryDate && order.deliveryDate < new Date() && !["READY", "DELIVERED"].includes(order.status);
 
   // Link de WhatsApp com mensagem pronta de status (telefone do cliente).
-  const phoneDigits = (order.client.phone ?? "").replace(/\D/g, "");
-  const whatsappPhone = phoneDigits ? (phoneDigits.length <= 11 ? `55${phoneDigits}` : phoneDigits) : "";
-  const whatsappMessage = encodeURIComponent(
+  const whatsappLink = whatsappUrl(
+    order.client.phone,
     `Olá ${order.client.name}! Sobre o seu pedido #${order.number}: situação atual "${orderStatusLabels[order.status]}". Qualquer dúvida estamos à disposição.`,
   );
-  const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}?text=${whatsappMessage}` : null;
 
   return (
     <AppShell eyebrow="Operação" title={`Pedido #${order.number}`} actionLabel="Novo pedido" user={user}>
@@ -61,9 +61,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           Voltar para pedidos
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          {whatsappUrl ? (
+          {whatsappLink ? (
             <a
-              href={whatsappUrl}
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#25d366] px-4 text-sm font-semibold text-white"
@@ -171,7 +171,10 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         </div>
       </SectionCard>
 
-      <SectionCard eyebrow="Itens" title={`${order.items.length} item(ns)`}>
+      <SectionCard
+        eyebrow="Itens"
+        title={`${order.items.length} item(ns)${order.services.length ? ` + ${order.services.length} serviço(s)` : ""}`}
+      >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-separate border-spacing-0 text-left text-sm">
             <thead>
@@ -194,6 +197,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   <td className="border-b border-[#edf2ef] py-3 text-right">{item.quantity}</td>
                   {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right">{centsToCurrency(item.unitPriceInCents)}</td> : null}
                   {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right font-semibold">{centsToCurrency(item.totalPriceInCents)}</td> : null}
+                </tr>
+              ))}
+              {order.services.map((service) => (
+                <tr key={service.id} className="transition hover:bg-[#f8faf9]">
+                  <td className="border-b border-[#edf2ef] py-3 font-medium">
+                    {service.name}
+                    <span className="ml-1 text-xs text-[#8a9890]">(serviço)</span>
+                  </td>
+                  <td className="border-b border-[#edf2ef] py-3 text-[#66756d]">-</td>
+                  <td className="border-b border-[#edf2ef] py-3 text-right">-</td>
+                  {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right">-</td> : null}
+                  {showFinance ? <td className="border-b border-[#edf2ef] py-3 text-right font-semibold">{centsToCurrency(service.priceInCents)}</td> : null}
                 </tr>
               ))}
             </tbody>

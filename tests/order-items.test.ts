@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseItems, resolvePaymentStatus } from "@/lib/order-items";
+import { parseItems, parseServices, resolvePaymentStatus } from "@/lib/order-items";
 
 describe("parseItems", () => {
   it("converte itens válidos com preço em número (reais) para centavos", () => {
@@ -59,5 +59,33 @@ describe("resolvePaymentStatus", () => {
   it("pagamento total ou acima quita o pedido", () => {
     expect(resolvePaymentStatus(10000, 10000)).toBe("PAID");
     expect(resolvePaymentStatus(15000, 10000)).toBe("PAID");
+  });
+});
+
+describe("parseServices", () => {
+  it("le nome e valor digitados no pedido", () => {
+    const out = parseServices(JSON.stringify([{ name: "Silk 3 cores", price: "400,00" }]));
+    expect(out).toEqual([{ name: "Silk 3 cores", priceInCents: 40000 }]);
+  });
+
+  it("descarta linha em branco mas mantem servico de cortesia", () => {
+    const out = parseServices(
+      JSON.stringify([
+        { name: "  ", price: "50" },
+        { name: "Bordado cortesia", price: "" },
+      ]),
+    );
+    expect(out).toEqual([{ name: "Bordado cortesia", priceInCents: 0 }]);
+  });
+
+  it("aceita numero alem de texto", () => {
+    expect(parseServices(JSON.stringify([{ name: "Corte", price: 12.5 }]))).toEqual([
+      { name: "Corte", priceInCents: 1250 },
+    ]);
+  });
+
+  it("nao quebra com entrada invalida", () => {
+    expect(parseServices("nao e json")).toEqual([]);
+    expect(parseServices("{}")).toEqual([]);
   });
 });
