@@ -89,3 +89,10 @@ describe("parseServices", () => {
     expect(parseServices("{}")).toEqual([]);
   });
 });
+
+describe("parseServices - valor negativo", () => {
+  it("zera em vez de sumir com a linha", () => {
+    const out = parseServices(JSON.stringify([{ name: "Silk 3 cores", price: "-400" }]));
+    expect(out).toEqual([{ name: "Silk 3 cores", priceInCents: 0 }]);
+  });
+});

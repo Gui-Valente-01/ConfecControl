@@ -77,15 +77,20 @@ export function parseServices(raw: string): ParsedService[] {
   if (!Array.isArray(parsed)) return [];
 
   return parsed
-    .map((service) => ({
-      name: String(service.name ?? "").trim(),
-      priceInCents:
+    .map((service) => {
+      const raw =
         typeof service.price === "number"
           ? Math.round(service.price * 100)
-          : currencyToCents(String(service.price ?? "")),
-    }))
-    // Linha em branco é descartada; serviço de cortesia (valor 0) é mantido.
-    .filter((service) => service.name.length > 0 && service.priceInCents >= 0);
+          : currencyToCents(String(service.price ?? ""));
+      return {
+        name: String(service.name ?? "").trim(),
+        // Valor negativo vira zero em vez de sumir: se o dono errou o sinal,
+        // é melhor ele ver a linha zerada no pedido do que ela desaparecer.
+        priceInCents: Math.max(0, raw),
+      };
+    })
+    // Linha sem nome é descartada; serviço de cortesia (valor 0) é mantido.
+    .filter((service) => service.name.length > 0);
 }
 
 export function resolvePaymentStatus(paid: number, total: number): PaymentStatus {
