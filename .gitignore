@@ -44,3 +44,6 @@ next-env.d.ts
 
 # claude code (config local da maquina)
 .claude/settings.local.json
+
+# backup com dados pessoais: nao versionar
+backup-empresas-removidas.json

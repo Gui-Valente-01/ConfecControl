@@ -262,21 +262,15 @@
         </ol>
         <div class="tip warn"><b>Isso é o que faz o estoque baixar sozinho.</b> Sem a ficha preenchida, você vende 100 camisetas e o estoque de malha continua igual. Vale o trabalho de preencher uma vez.</div>
 
-        <h3>Ficha de serviços: a mão de obra</h3>
-        <ol class="pass">
-          <li>No bloco <b>Serviços</b>, escolha o serviço que entra naquela peça.</li>
-          <li>Deixe o valor <b>em branco</b> para usar o preço padrão, ou digite outro se naquela peça for diferente.</li>
-          <li>Clique em <span class="ui">Vincular</span>.</li>
-        </ol>
-
         <h3>O custo aparece sozinho</h3>
-        <p class="para">Com material e serviço preenchidos, o sistema mostra a conta completa:</p>
+        <p class="para">Com a ficha técnica preenchida, o sistema mostra a conta:</p>
         <div class="calc">Materiais                        R$ 11,50
-Serviços (mão de obra)           R$  9,70
-Outros custos                    R$  2,00
+Outros custos                    R$  6,00
 ─────────────────────────────────────────
-Custo por peça                   R$ 23,20
-Lucro por peça          R$ 26,70   (54%)</div>
+Custo por peça                   R$ 17,50
+Lucro por peça          R$ 32,40   (65%)</div>
+        <p class="para" style="margin-top:.8rem">Repare que <b>serviço não entra aqui</b>: ele é cobrado dentro de cada
+        pedido, porque o mesmo silk raramente sai pelo mesmo preço duas vezes.</p>
         <div class="tip"><b>Se aparecer aviso amarelo</b> dizendo que falta preço em algum material, vá no <a href="#estoque">Estoque</a> e preencha. Enquanto faltar, o custo está incompleto e o lucro parece maior do que é.</div>
       </section>
 
@@ -284,13 +278,15 @@ Lucro por peça          R$ 26,70   (54%)</div>
       <section class="pg" id="servicos">
         <p class="kick">Cadastros <span class="where">Produtos → Serviços</span></p>
         <h2>Serviços</h2>
-        <p class="para">A lista do que a sua confecção faz de mão de obra: silk, bordado, costura, corte. Cadastre uma vez e use em todas as peças.</p>
+        <p class="para">A lista do que a sua confecção faz de mão de obra: silk, bordado, costura, corte. Serve para
+        <b>não redigitar</b>: ao lançar um pedido, você começa a escrever e o nome aparece com o valor de sempre.</p>
         <ol class="pass">
           <li>No bloco <b>Serviços</b>, digite o nome (ex.: <b>Silk 1 cor</b>).</li>
-          <li>Digite o <b>valor por peça</b> (ex.: 2,00).</li>
+          <li>Digite o <b>valor de costume</b> (ex.: 2,00).</li>
           <li>Clique em <span class="ui">Adicionar</span>.</li>
         </ol>
-        <div class="tip"><b>O valor aqui é só a sugestão.</b> Ao usar o serviço numa peça você pode colocar outro valor — silk numa camiseta pode custar diferente de silk num boné.</div>
+        <div class="tip"><b>É só sugestão, não trava nada.</b> No pedido você aceita o valor que apareceu ou digita
+        outro. Cadastrar aqui é opcional: dá para digitar o serviço direto no pedido sem nunca passar por esta tela.</div>
       </section>
 
       <!-- ESTOQUE -->
@@ -330,9 +326,13 @@ Lucro por peça          R$ 26,70   (54%)</div>
           <li>Clique em <span class="ui">Adicionar item</span> e escolha a peça do catálogo (o preço vem preenchido sozinho).</li>
           <li>Informe tamanho, cor, quantidade e preço.</li>
           <li>Defina o <b>prazo de entrega</b> e a <b>forma de pagamento</b>.</li>
+          <li>Em <b>Serviços cobrados</b>, clique em <span class="ui">Adicionar serviço</span> e digite o <b>nome</b> e o
+            <b>valor</b> (ex.: <i>Silk 3 cores — 400,00</i>). Comece a digitar e o sistema sugere os que você já usou.</li>
           <li>Se o cliente pagou entrada, digite em <b>Entrada / valor pago</b>.</li>
           <li>Confira <b>Total, Pago e Saldo</b> no rodapé e clique em <span class="ui">Salvar pedido</span>.</li>
         </ol>
+        <div class="tip"><b>Serviço soma no total.</b> O rodapé separa <b>Peças</b> e <b>Serviços</b> para você conferir, e
+        os dois aparecem na ficha impressa — o cliente vê o que está pagando. Pedido sem serviço? É só deixar vazio.</div>
 
         <h3>Prioridade</h3>
         <p class="para">Na lista, cada pedido tem um seletor de prioridade: <b>Urgente, Alta, Normal, Baixa</b>. Os urgentes sobem para o topo automaticamente — é assim que a equipe sabe o que fazer primeiro.</p>
@@ -416,12 +416,19 @@ Lucro por peça          R$ 26,70   (54%)</div>
             </tbody>
           </table>
         </div>
-        <h3>Dar baixa num pagamento</h3>
+        <h3>Cobrar quem está devendo</h3>
         <ol class="pass">
-          <li>Ache o pedido na tabela.</li>
-          <li>Compare <b>Recebido</b> e <b>Total</b>.</li>
-          <li>Quando o cliente quitar, clique em <span class="ui">Pago</span>.</li>
+          <li>A lista <b>A cobrar</b> já vem ordenada do <b>mais atrasado</b> para o menos — é a ordem em que se pega o telefone.</li>
+          <li>Cada linha mostra há <b>quantos dias</b> está atrasado e <b>quanto falta</b> (não o total do pedido).</li>
+          <li>Clique em <span class="ui">Cobrar</span>: abre o WhatsApp do cliente com a mensagem pronta, já com o número do pedido e o saldo.</li>
+          <li>Quando o dinheiro entrar, clique em <span class="ui">Recebi</span>.</li>
         </ol>
+
+        <h3>O histórico</h3>
+        <p class="para">Abaixo, <b>Pagamentos recebidos</b> mostra tudo que já entrou, do mais recente para o mais antigo,
+        com a <b>data</b> em que foi pago e a forma de pagamento.</p>
+        <div class="tip"><b>Cliente sem WhatsApp cadastrado?</b> No lugar do botão aparece um aviso. Preencha o telefone
+        dele em Clientes para poder cobrar por ali.</div>
         <div class="tip stop"><b>Quem não vê esta tela:</b> o cargo Produção. Quem está na costura não enxerga valores nem quanto a empresa fatura.</div>
       </section>
 
@@ -438,11 +445,11 @@ Lucro por peça          R$ 26,70   (54%)</div>
         <h3>O que dá para descobrir</h3>
         <ul class="dots">
           <li><b>Qual peça vende mais</b> e qual cliente compra mais.</li>
-          <li><b>Custo por serviço:</b> para onde vai sua mão de obra — silk, bordado ou costura.</li>
+          <li><b>Faturamento por serviço:</b> quanto o silk, o bordado e a costura renderam — pelo que foi realmente cobrado nos pedidos.</li>
           <li><b>Serviço x peça própria:</b> você ganha mais prestando serviço ou fazendo sua própria peça?</li>
           <li><b>Produção por responsável</b> e pedidos parados em cada etapa.</li>
         </ul>
-        <div class="tip warn"><b>Os números valem o que os cadastros valem.</b> Se o preço do material ou o valor do serviço estiverem desatualizados, a margem vai estar errada. Reveja de vez em quando.</div>
+        <div class="tip warn"><b>Os números valem o que os cadastros valem.</b> Se o preço dos materiais estiver desatualizado, a margem vai estar errada. Reveja de vez em quando.</div>
       </section>
 
       <!-- PORTAL -->
@@ -571,7 +578,7 @@ Lucro por peça          R$ 26,70   (54%)</div>
             <tbody>
               <tr><td>Não vejo uma tela que está neste manual</td><td>Ou o seu cargo não tem acesso, ou a sua confecção não contratou aquele módulo. Fale com o dono.</td></tr>
               <tr><td>Vendi peças e o estoque não baixou</td><td>A ficha técnica daquela peça está vazia. Preencha em <a href="#produtos">Produtos</a>.</td></tr>
-              <tr><td>O lucro no relatório parece alto demais</td><td>Falta preço em algum material ou o valor dos serviços não foi cadastrado.</td></tr>
+              <tr><td>O lucro no relatório parece alto demais</td><td>Falta preço em algum material, ou os <b>outros custos</b> da peça (facção, mão de obra) não foram preenchidos.</td></tr>
               <tr><td>O pedido sumiu da fila da bancada</td><td>Ele foi concluído e avançou de etapa. Procure no quadro de <a href="#producao">Produção</a>.</td></tr>
               <tr><td>Esqueci minha senha</td><td>Peça ao dono para criar uma nova em <a href="#funcionarios">Funcionários</a>.</td></tr>
               <tr><td>Quero mudar as etapas da produção</td><td><a href="#configuracoes">Configurações</a> → Etapas da produção.</td></tr>
