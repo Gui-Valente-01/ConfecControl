@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
-import { currencyToCents } from "@/lib/format";
+import { moneyToCents } from "@/lib/format";
 import type { FormState } from "@/lib/form-state";
 import { canManageStock } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
@@ -23,7 +23,7 @@ export async function createServiceAction(_prev: FormState, formData: FormData):
   if (denied) return denied;
 
   const name = String(formData.get("name") ?? "").trim();
-  const price = currencyToCents(String(formData.get("price") ?? ""));
+  const price = moneyToCents(String(formData.get("price") ?? ""));
   if (!name) return { error: "Informe o nome do serviço." };
 
   const companyId = await requireCompanyId();
@@ -38,7 +38,7 @@ export async function createServiceAction(_prev: FormState, formData: FormData):
   });
 
   await prisma.service.create({
-    data: { companyId, name, defaultPriceInCents: Math.max(0, price), position: (last?.position ?? 0) + 1 },
+    data: { companyId, name, defaultPriceInCents: price, position: (last?.position ?? 0) + 1 },
   });
 
   revalidateServices();
@@ -58,7 +58,7 @@ export async function updateServiceAction(_prev: FormState, formData: FormData):
     where: { id, companyId },
     data: {
       name,
-      defaultPriceInCents: Math.max(0, currencyToCents(String(formData.get("price") ?? ""))),
+      defaultPriceInCents: moneyToCents(String(formData.get("price") ?? "")),
     },
   });
   if (updated.count === 0) return { error: "Serviço não encontrado." };

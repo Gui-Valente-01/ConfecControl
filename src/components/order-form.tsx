@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
-import { centsToCurrency, currencyToCents } from "@/lib/format";
+import { centsToCurrency, moneyToCents } from "@/lib/format";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 
 type ClientOption = { id: string; name: string };
@@ -192,7 +192,7 @@ export function OrderForm({
   );
 
   const servicesInCents = useMemo(
-    () => services.reduce((sum, service) => sum + Math.max(0, currencyToCents(service.price)), 0),
+    () => services.reduce((sum, service) => sum + moneyToCents(service.price), 0),
     [services],
   );
 
@@ -200,9 +200,9 @@ export function OrderForm({
   const totalInCents = itemsInCents + servicesInCents;
 
   // A entrada é controlada para o saldo acompanhar o que está sendo digitado.
-  // Usa o mesmo currencyToCents do servidor, então a conta na tela é a que será salva.
+  // Usa o mesmo moneyToCents do servidor, então a conta na tela é a que será salva.
   const [paid, setPaid] = useState(defaults?.paidReais ?? "");
-  const paidInCents = Math.max(0, currencyToCents(paid));
+  const paidInCents = moneyToCents(paid);
   const balanceInCents = totalInCents - paidInCents;
 
   const itemsJson = JSON.stringify(

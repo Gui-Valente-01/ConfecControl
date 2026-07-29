@@ -96,3 +96,16 @@ describe("parseServices - valor negativo", () => {
     expect(out).toEqual([{ name: "Silk 3 cores", priceInCents: 0 }]);
   });
 });
+
+describe("parseItems - valor negativo", () => {
+  it("zera preco unitario negativo em vez de gerar pedido com total negativo", () => {
+    const out = parseItems(JSON.stringify([{ description: "Camiseta", quantity: 10, unitPrice: "-30" }]));
+    expect(out[0].unitPriceInCents).toBe(0);
+    expect(out[0].totalPriceInCents).toBe(0);
+  });
+
+  it("zera tambem quando o preco vem como numero negativo", () => {
+    const out = parseItems(JSON.stringify([{ description: "Boné", quantity: 5, unitPrice: -12.5 }]));
+    expect(out[0].unitPriceInCents).toBe(0);
+  });
+});

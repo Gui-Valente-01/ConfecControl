@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { OrderPriority, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { currencyToCents, dateInputToDate } from "@/lib/format";
+import { dateInputToDate, moneyToCents } from "@/lib/format";
 import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
@@ -111,7 +111,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
-  const paidAmountInCents = currencyToCents(String(formData.get("paid") ?? ""));
+  const paidAmountInCents = moneyToCents(String(formData.get("paid") ?? ""));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
   const services = parseServices(String(formData.get("services") ?? "[]"));
@@ -294,7 +294,7 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
-  const paidAmountInCents = currencyToCents(String(formData.get("paid") ?? ""));
+  const paidAmountInCents = moneyToCents(String(formData.get("paid") ?? ""));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
   const services = parseServices(String(formData.get("services") ?? "[]"));

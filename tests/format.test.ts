@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centsToInput, currencyToCents, dateInputToDate, dateToInputValue } from "@/lib/format";
+import { centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents } from "@/lib/format";
 
 describe("currencyToCents", () => {
   it("converte valores no formato brasileiro", () => {
@@ -36,5 +36,24 @@ describe("datas de input", () => {
   it("retorna null para valor vazio ou inválido", () => {
     expect(dateInputToDate("")).toBeNull();
     expect(dateInputToDate("data-invalida")).toBeNull();
+  });
+});
+
+describe("moneyToCents", () => {
+  it("converte igual ao currencyToCents em valores normais", () => {
+    expect(moneyToCents("45,50")).toBe(4550);
+    expect(moneyToCents("R$ 1.000,00")).toBe(100000);
+  });
+
+  it("zera valor negativo em vez de contaminar totais", () => {
+    expect(moneyToCents("-50")).toBe(0);
+    expect(moneyToCents("-1.234,56")).toBe(0);
+    expect(moneyToCents("R$ -20,00")).toBe(0);
+  });
+
+  it("mantem zero e entrada invalida em zero", () => {
+    expect(moneyToCents("0")).toBe(0);
+    expect(moneyToCents("")).toBe(0);
+    expect(moneyToCents("abc")).toBe(0);
   });
 });

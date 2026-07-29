@@ -2,7 +2,7 @@
 // extraídas das server actions para permitir teste unitário.
 
 import type { PaymentStatus } from "@prisma/client";
-import { currencyToCents } from "@/lib/format";
+import { moneyToCents } from "@/lib/format";
 
 export type RawItem = {
   productId?: string | null;
@@ -37,8 +37,8 @@ export function parseItems(raw: string): ParsedItem[] {
       const quantity = Math.max(0, Math.floor(Number(item.quantity) || 0));
       const unitPriceInCents =
         typeof item.unitPrice === "number"
-          ? Math.round(item.unitPrice * 100)
-          : currencyToCents(String(item.unitPrice ?? ""));
+          ? Math.max(0, Math.round(item.unitPrice * 100))
+          : moneyToCents(String(item.unitPrice ?? ""));
       const description = String(item.description ?? "").trim();
       return {
         productId: item.productId ? String(item.productId) : null,
@@ -78,15 +78,14 @@ export function parseServices(raw: string): ParsedService[] {
 
   return parsed
     .map((service) => {
-      const raw =
-        typeof service.price === "number"
-          ? Math.round(service.price * 100)
-          : currencyToCents(String(service.price ?? ""));
       return {
         name: String(service.name ?? "").trim(),
         // Valor negativo vira zero em vez de sumir: se o dono errou o sinal,
         // é melhor ele ver a linha zerada no pedido do que ela desaparecer.
-        priceInCents: Math.max(0, raw),
+        priceInCents:
+          typeof service.price === "number"
+            ? Math.max(0, Math.round(service.price * 100))
+            : moneyToCents(String(service.price ?? "")),
       };
     })
     // Linha sem nome é descartada; serviço de cortesia (valor 0) é mantido.

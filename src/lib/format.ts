@@ -12,6 +12,13 @@ export function currencyToCents(value: string) {
   return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
 }
 
+// Dinheiro digitado pelo usuário nunca é negativo neste sistema: preço, custo e
+// entrada. Um sinal de menos digitado por engano vira zero, em vez de contaminar
+// em silêncio o total do pedido e a margem do relatório.
+export function moneyToCents(value: string) {
+  return Math.max(0, currencyToCents(value));
+}
+
 // Centavos -> string em reais para preencher inputs de edição (ex.: "120,00").
 export function centsToInput(value: number) {
   return (value / 100).toFixed(2).replace(".", ",");
