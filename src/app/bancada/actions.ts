@@ -7,6 +7,7 @@ import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
 const noteKinds = ["NONE", "SHORTAGE", "SURPLUS", "INFO"];
@@ -79,13 +80,13 @@ export async function completeTaskAction(_prev: FormState, formData: FormData): 
   if (!task) return { error: "Tarefa não encontrada ou já concluída." };
 
   const currentStage = task.order.currentStage;
-  const nextStage = currentStage
-    ? await prisma.productionStage.findFirst({
-        where: { companyId: user.companyId, active: true, position: { gt: currentStage.position } },
-        orderBy: { position: "asc" },
-        select: { id: true, name: true },
+  const stages = currentStage
+    ? await prisma.productionStage.findMany({
+        where: { companyId: user.companyId },
+        select: { id: true, name: true, position: true, active: true },
       })
-    : null;
+    : [];
+  const nextStage = currentStage ? pickNextStage(stages, currentStage.position) : null;
 
   const doneData = { status: "DONE", doneAt: new Date(), noteKind, note: note || null };
 

@@ -11,6 +11,7 @@ import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
+import { computeStockConsumption } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
@@ -246,16 +247,14 @@ async function consumeStockForOrder(
   });
   if (boms.length === 0) return;
 
-  // Soma o consumo por material somando todos os itens do pedido.
-  const consumption = new Map<string, number>();
-  for (const item of items) {
-    if (!item.productId) continue;
-    for (const bom of boms) {
-      if (bom.productId !== item.productId) continue;
-      const qty = Number(bom.quantityPerUnit) * item.quantity;
-      consumption.set(bom.materialId, (consumption.get(bom.materialId) ?? 0) + qty);
-    }
-  }
+  const consumption = computeStockConsumption(
+    items,
+    boms.map((bom) => ({
+      productId: bom.productId,
+      materialId: bom.materialId,
+      quantityPerUnit: Number(bom.quantityPerUnit),
+    })),
+  );
 
   for (const [materialId, qty] of consumption) {
     if (qty <= 0) continue;

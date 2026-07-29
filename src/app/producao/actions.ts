@@ -6,6 +6,7 @@ import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+import { pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
 // Mover etapa / definir responsável é só do Dono e do Gerente (Produção é só leitura).
@@ -31,14 +32,11 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
   const currentStage = await prisma.productionStage.findFirst({ where: { id: currentStageId, companyId } });
   if (!currentStage) return { error: "Etapa atual não encontrada." };
 
-  const nextStage = await prisma.productionStage.findFirst({
-    where: {
-      companyId: currentStage.companyId,
-      active: true,
-      position: { gt: currentStage.position },
-    },
-    orderBy: { position: "asc" },
+  const stages = await prisma.productionStage.findMany({
+    where: { companyId: currentStage.companyId },
+    select: { id: true, name: true, position: true, active: true },
   });
+  const nextStage = pickNextStage(stages, currentStage.position);
 
   if (!nextStage) return { error: "O pedido já está na última etapa ativa." };
 
