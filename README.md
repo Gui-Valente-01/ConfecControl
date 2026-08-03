@@ -1,5 +1,21 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Variáveis de ambiente
+
+Ficam em `.env` (produção) e `.env.local` (esta máquina). Os arquivos `.env*`
+não vão para o Git — em produção elas são cadastradas no painel da Vercel.
+
+| Variável | Obrigatória | Para que serve |
+| --- | --- | --- |
+| `DATABASE_URL` | sim | Conexão com o Postgres. |
+| `DIRECT_URL` | sim | Mesma conexão, usada pelas migrations. |
+| `AUTH_SECRET` | sim | Assina o cookie de sessão. |
+| `SUPPORT_WHATSAPP` | não | Telefone do suporte na tela de login. Em branco, o botão não aparece. |
+| `SUPPORT_EMAIL` | não | E-mail do suporte na tela de login. Em branco, o botão não aparece. |
+
+O contato de suporte fica na tela de login de propósito: quem mais precisa
+dele é justamente quem não consegue entrar e não abre nada por dentro.
+
 ## Getting Started
 
 First, run the development server:

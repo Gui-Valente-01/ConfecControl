@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Factory } from "lucide-react";
+import { BookOpen, Factory, Mail, MessageCircle } from "lucide-react";
 import { LoginForm } from "@/components/login-form";
 import { getSessionUser } from "@/lib/auth";
+import { formatPhone, resolveSupportContact } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
 export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect("/");
+
+  // Quem está travado no login não consegue abrir nada dentro do sistema:
+  // o manual e o contato precisam estar nesta tela.
+  const suporte = resolveSupportContact(process.env);
 
   return (
     <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
@@ -59,7 +64,9 @@ export default async function LoginPage() {
               <summary className="cursor-pointer font-medium text-[#63736b]">Esqueci minha senha</summary>
               <p className="mt-2 leading-6">
                 Peça ao dono da sua empresa para redefinir sua senha em <strong>Funcionários - Redefinir</strong>.
-                Se você é o dono e perdeu o acesso, entre em contato com o suporte para recuperar a conta.
+                {suporte.hasAny
+                  ? " Se você é o dono e perdeu o acesso, fale com o suporte pelos contatos abaixo."
+                  : " Se você é o dono e perdeu o acesso, fale com quem instalou o sistema para você."}
               </p>
             </details>
             <p className="mt-4 rounded-lg bg-[#f8faf9] px-3 py-2.5 text-center text-sm leading-6 text-[#66756d]">
@@ -70,6 +77,42 @@ export default async function LoginPage() {
               É dono e recebeu o código de acesso?{" "}
               <Link href="/cadastro" className="font-semibold text-[#087f7d] hover:text-[#05605e]">Criar empresa</Link>
             </p>
+
+            <div className="mt-5 border-t border-[#e6ebe8] pt-4">
+              <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-[#8a9890]">Precisa de ajuda?</p>
+              <div className="mt-3 grid gap-2">
+                <a
+                  href="/manual"
+                  target="_blank"
+                  rel="noopener"
+                  className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+                >
+                  <BookOpen size={15} aria-hidden="true" />
+                  Manual do sistema
+                </a>
+                {suporte.whatsappLink ? (
+                  <a
+                    href={suporte.whatsappLink}
+                    target="_blank"
+                    rel="noopener"
+                    className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#bfe0d9] bg-[#e8f6f3] px-3 text-sm font-semibold text-[#05605e] transition hover:bg-[#d9efe9]"
+                  >
+                    <MessageCircle size={15} aria-hidden="true" />
+                    Suporte no WhatsApp
+                    <span className="font-normal text-[#3f7d78]">{formatPhone(suporte.whatsapp ?? "")}</span>
+                  </a>
+                ) : null}
+                {suporte.email ? (
+                  <a
+                    href={`mailto:${suporte.email}?subject=${encodeURIComponent("Ajuda com o acesso ao ConfecControl")}`}
+                    className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]"
+                  >
+                    <Mail size={15} aria-hidden="true" />
+                    {suporte.email}
+                  </a>
+                ) : null}
+              </div>
+            </div>
           </div>
         </section>
       </div>
