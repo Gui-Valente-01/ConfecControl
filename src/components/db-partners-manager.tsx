@@ -131,7 +131,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="text-sm font-medium text-[#405047]">Telefone</span>
-              <input name="phone" className={fieldClass} placeholder="(11) 99999-9999" />
+              <input name="phone" type="tel" autoComplete="tel" className={fieldClass} placeholder="(11) 99999-9999" />
             </label>
             <label className="block">
               <span className="text-sm font-medium text-[#405047]">E-mail</span>

@@ -26,7 +26,7 @@ export function ClientCreateForm() {
       </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">WhatsApp</span>
-        <input className={fieldClass} name="phone" placeholder="(11) 99999-9999" />
+        <input className={fieldClass} name="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-9999" />
       </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">E-mail</span>
@@ -34,7 +34,7 @@ export function ClientCreateForm() {
       </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">CPF/CNPJ</span>
-        <input className={fieldClass} name="document" placeholder="00.000.000/0001-00" />
+        <input className={fieldClass} name="document" inputMode="numeric" placeholder="00.000.000/0001-00" />
       </label>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Endereço</span>

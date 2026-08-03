@@ -119,7 +119,7 @@ export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManag
                         fields={[
                           { name: "name", label: "Nome", defaultValue: client.name, required: true },
                           { name: "contact", label: "Contato", defaultValue: client.contact ?? "" },
-                          { name: "phone", label: "WhatsApp", defaultValue: client.phone ?? "" },
+                          { name: "phone", label: "WhatsApp", defaultValue: client.phone ?? "", type: "tel" },
                           { name: "email", label: "E-mail", defaultValue: client.email ?? "", type: "email" },
                           { name: "document", label: "CPF/CNPJ", defaultValue: client.document ?? "" },
                           { name: "address", label: "Endereço", defaultValue: client.address ?? "" },

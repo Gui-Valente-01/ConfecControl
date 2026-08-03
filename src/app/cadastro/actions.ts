@@ -5,6 +5,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { seedCompanyStages } from "@/lib/db-bootstrap";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+import { validateContactFields } from "@/lib/validation";
 
 export async function signupAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const accessCode = String(formData.get("accessCode") ?? "").replace(/\D/g, "");
@@ -16,6 +17,11 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   if (!accessCode) return { error: "Informe o token de acesso recebido na contratação." };
   if (!companyName || !name || !email) return { error: "Preencha empresa, nome e e-mail." };
   if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };
+
+  // Esse e-mail vira o login do dono e o token só pode ser usado uma vez:
+  // errar aqui queima o acesso da empresa inteira.
+  const invalido = validateContactFields({ email });
+  if (invalido) return { error: invalido.message };
 
   try {
     const userId = await prisma.$transaction(async (tx) => {

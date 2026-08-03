@@ -18,6 +18,12 @@ describe("whatsappPhone", () => {
     expect(whatsappPhone(undefined)).toBeNull();
     expect(whatsappPhone("sem numero")).toBeNull();
   });
+
+  it("numero impossivel nao vira link, para o botao Cobrar sumir", () => {
+    expect(whatsappPhone("999")).toBeNull();
+    expect(whatsappPhone("(10) 99988-7766")).toBeNull();
+    expect(whatsappPhone("419998877669")).toBeNull();
+  });
 });
 
 describe("whatsappUrl", () => {

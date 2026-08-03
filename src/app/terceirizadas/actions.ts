@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+import { validateContactFields } from "@/lib/validation";
 
 export async function createPartnerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const name = String(formData.get("name") ?? "").trim();
@@ -14,6 +15,9 @@ export async function createPartnerAction(_prev: FormState, formData: FormData):
   const notes = String(formData.get("notes") ?? "").trim();
 
   if (!name) return { error: "Informe o nome da empresa terceirizada." };
+
+  const invalido = validateContactFields({ phone, email });
+  if (invalido) return { error: invalido.message };
 
   const companyId = await requireCompanyId();
 
@@ -39,6 +43,12 @@ export async function updatePartnerAction(_prev: FormState, formData: FormData):
   const name = String(formData.get("name") ?? "").trim();
   if (!id || !name) return { error: "Informe o nome da empresa terceirizada." };
 
+  const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+
+  const invalido = validateContactFields({ phone, email });
+  if (invalido) return { error: invalido.message };
+
   const companyId = await adminCompanyId();
   if (!companyId) return { error: "Apenas o dono pode editar terceirizadas." };
 
@@ -48,8 +58,8 @@ export async function updatePartnerAction(_prev: FormState, formData: FormData):
       name,
       service: String(formData.get("service") ?? "").trim() || null,
       contact: String(formData.get("contact") ?? "").trim() || null,
-      phone: String(formData.get("phone") ?? "").trim() || null,
-      email: String(formData.get("email") ?? "").trim() || null,
+      phone: phone || null,
+      email: email || null,
       notes: String(formData.get("notes") ?? "").trim() || null,
     },
   });

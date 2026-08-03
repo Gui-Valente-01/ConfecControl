@@ -6,6 +6,7 @@ import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+import { validateContactFields } from "@/lib/validation";
 
 // Gera (ou renova) o link de acesso do cliente ao portal. Exige o módulo portal
 // e um e-mail no cliente (usado para os logins seguintes).
@@ -42,6 +43,9 @@ export async function createClientAction(_prev: FormState, formData: FormData): 
 
   if (!name) return { error: "Informe o nome do cliente." };
 
+  const invalido = validateContactFields({ phone, document, email });
+  if (invalido) return { error: invalido.message };
+
   const companyId = await requireCompanyId();
 
   await prisma.client.create({
@@ -66,6 +70,13 @@ export async function updateClientAction(_prev: FormState, formData: FormData): 
   const name = String(formData.get("name") ?? "").trim();
   if (!id || !name) return { error: "Informe o nome do cliente." };
 
+  const phone = String(formData.get("phone") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const document = String(formData.get("document") ?? "").trim();
+
+  const invalido = validateContactFields({ phone, document, email });
+  if (invalido) return { error: invalido.message };
+
   const companyId = await adminCompanyId();
   if (!companyId) return { error: "Apenas o dono pode editar clientes." };
 
@@ -74,9 +85,9 @@ export async function updateClientAction(_prev: FormState, formData: FormData): 
     data: {
       name,
       contact: String(formData.get("contact") ?? "").trim() || null,
-      phone: String(formData.get("phone") ?? "").trim() || null,
-      email: String(formData.get("email") ?? "").trim() || null,
-      document: String(formData.get("document") ?? "").trim() || null,
+      phone: phone || null,
+      email: email || null,
+      document: document || null,
       address: String(formData.get("address") ?? "").trim() || null,
       notes: String(formData.get("notes") ?? "").trim() || null,
     },
