@@ -2,7 +2,7 @@
 // extraídas das server actions para permitir teste unitário.
 
 import type { PaymentStatus } from "@prisma/client";
-import { moneyToCents } from "@/lib/format";
+import { moneyToCents, priceExpressionToCents } from "@/lib/format";
 
 export type RawItem = {
   productId?: string | null;
@@ -85,7 +85,7 @@ export function parseServices(raw: string): ParsedService[] {
         priceInCents:
           typeof service.price === "number"
             ? Math.max(0, Math.round(service.price * 100))
-            : moneyToCents(String(service.price ?? "")),
+            : priceExpressionToCents(String(service.price ?? "")),
       };
     })
     // Linha sem nome é descartada; serviço de cortesia (valor 0) é mantido.

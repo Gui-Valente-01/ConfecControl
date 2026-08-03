@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
-import { centsToCurrency, moneyToCents } from "@/lib/format";
+import { centsToCurrency, moneyToCents, priceExpressionToCents } from "@/lib/format";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 
 type ClientOption = { id: string; name: string };
@@ -192,7 +192,7 @@ export function OrderForm({
   );
 
   const servicesInCents = useMemo(
-    () => services.reduce((sum, service) => sum + moneyToCents(service.price), 0),
+    () => services.reduce((sum, service) => sum + priceExpressionToCents(service.price), 0),
     [services],
   );
 
@@ -383,7 +383,7 @@ export function OrderForm({
                 <input
                   value={service.price}
                   onChange={(e) => updateService(service.key, { price: e.target.value })}
-                  placeholder="400,00"
+                  placeholder="400,00 ou 4x100"
                   className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
                 />
               </label>

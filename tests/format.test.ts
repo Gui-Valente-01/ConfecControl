@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents } from "@/lib/format";
+import { centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents, priceExpressionToCents } from "@/lib/format";
 
 describe("currencyToCents", () => {
   it("converte valores no formato brasileiro", () => {
@@ -55,5 +55,32 @@ describe("moneyToCents", () => {
     expect(moneyToCents("0")).toBe(0);
     expect(moneyToCents("")).toBe(0);
     expect(moneyToCents("abc")).toBe(0);
+  });
+});
+
+describe("priceExpressionToCents", () => {
+  it("resolve multiplicacao com x e com *", () => {
+    expect(priceExpressionToCents("4x100")).toBe(40000);
+    expect(priceExpressionToCents("4*100")).toBe(40000);
+    expect(priceExpressionToCents("4 X 100")).toBe(40000);
+  });
+
+  it("aceita centavos no valor unitario", () => {
+    expect(priceExpressionToCents("4,50x100")).toBe(45000);
+    expect(priceExpressionToCents("R$ 2,25 x 40")).toBe(9000);
+  });
+
+  it("valor simples continua funcionando", () => {
+    expect(priceExpressionToCents("400,00")).toBe(40000);
+    expect(priceExpressionToCents("400")).toBe(40000);
+  });
+
+  it("campo pela metade cai para o valor simples; quantidade zero da zero", () => {
+    expect(priceExpressionToCents("4x")).toBe(400);
+    expect(priceExpressionToCents("4x0")).toBe(0);
+  });
+
+  it("nao aceita negativo", () => {
+    expect(priceExpressionToCents("-4x100")).toBe(0);
   });
 });
