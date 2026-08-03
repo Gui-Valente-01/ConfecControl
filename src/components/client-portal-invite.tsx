@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, LinkIcon, Send } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState, useSyncExternalStore } from "react";
 import { generateClientInviteAction } from "@/app/clientes/actions";
 import { useActionFeedback } from "@/components/toast";
 import { emptyFormState } from "@/lib/form-state";
@@ -13,15 +13,18 @@ type ClientPortalInviteProps = {
   inviteToken: string | null;
 };
 
+// O endereço do site só existe no navegador, e nunca muda enquanto a página vive.
+// useSyncExternalStore lê esse valor sem efeito e sem divergir do que o servidor
+// renderizou: no servidor o retorno é vazio, no cliente é o endereço real.
+const subscribeToNothing = () => () => {};
+const readOrigin = () => window.location.origin;
+const readOriginOnServer = () => "";
+
 export function ClientPortalInvite({ clientId, hasEmail, portalEnabled, inviteToken }: ClientPortalInviteProps) {
   const [state, formAction, pending] = useActionState(generateClientInviteAction, emptyFormState);
   const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState("");
+  const origin = useSyncExternalStore(subscribeToNothing, readOrigin, readOriginOnServer);
   useActionFeedback(state);
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   const link = inviteToken ? `${origin}/portal/entrar?t=${inviteToken}` : "";
 
