@@ -69,3 +69,33 @@ export function pickNextStage(stages: Stage[], currentPosition: number): Stage |
   }
   return next;
 }
+
+export type ProductCostInfo = {
+  id: string;
+  bom: { materialName: string; materialPriceInCents: number }[];
+};
+
+/**
+ * Peças cujo custo está incompleto, e quais materiais faltam precificar.
+ *
+ * É mais perigoso do que custo zerado: a peça mostra um número, mas ele está
+ * por baixo — e o lucro no relatório aparece maior do que é de verdade. O dono
+ * então precifica em cima de uma margem que não existe.
+ */
+export function findIncompleteCosts(products: ProductCostInfo[]): {
+  productIds: Set<string>;
+  materialNames: string[];
+} {
+  const productIds = new Set<string>();
+  const materialNames = new Set<string>();
+
+  for (const product of products) {
+    for (const line of product.bom) {
+      if (line.materialPriceInCents > 0) continue;
+      productIds.add(product.id);
+      materialNames.add(line.materialName);
+    }
+  }
+
+  return { productIds, materialNames: [...materialNames] };
+}

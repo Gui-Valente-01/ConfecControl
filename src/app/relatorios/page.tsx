@@ -1,4 +1,5 @@
-import { AlertTriangle, BarChart3, CalendarRange, Clock, CreditCard, Download, Package, TrendingUp, Trophy, Users, Wrench } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, BarChart3, CalendarRange, Clock, CreditCard, Download, Package, TrendingUp, Trophy, Users, Wrench } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
@@ -6,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
 import { isOrderLate, orderStatusLabels } from "@/lib/status";
 import { requireRouteUser } from "@/lib/auth";
+import { findIncompleteCosts } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +52,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         name: true,
         costInCents: true,
         kind: true,
-        bom: { select: { quantityPerUnit: true, material: { select: { costPerUnitInCents: true } } } },
+        bom: { select: { quantityPerUnit: true, material: { select: { name: true, costPerUnitInCents: true } } } },
       },
     }),
     prisma.payment.findMany({
@@ -119,6 +121,22 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const servicesRevenue = serviceRows.reduce((sum, row) => sum + row.revenue, 0);
   const margin = itemsRevenue > 0 ? Math.round((estimatedProfit / itemsRevenue) * 100) : 0;
   const itemsWithoutCost = rangeItems.filter((item) => !item.productId || (productCost.get(item.productId) ?? 0) === 0).length;
+
+  // Custo incompleto é pior do que custo zerado: a peça tem número, mas ele está
+  // por baixo, e o lucro aparece maior do que é. Acontece quando um material da
+  // ficha ainda não tem preço cadastrado no estoque.
+  const { productIds: productsMissingPrice, materialNames: materialsMissingPrice } = findIncompleteCosts(
+    products.map((p) => ({
+      id: p.id,
+      bom: p.bom.map((entry) => ({
+        materialName: entry.material.name,
+        materialPriceInCents: entry.material.costPerUnitInCents,
+      })),
+    })),
+  );
+  const itemsWithPartialCost = rangeItems.filter(
+    (item) => item.productId && productsMissingPrice.has(item.productId),
+  ).length;
 
   // Produtos mais vendidos (no período)
   const productSales = new Map<string, { label: string; quantity: number; revenue: number }>();
@@ -195,6 +213,30 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
           </a>
         </form>
       </SectionCard>
+
+      {itemsWithPartialCost > 0 ? (
+        <div className="rounded-lg border border-[#ead49c] bg-[#fff7dd] p-4">
+          <div className="flex gap-3">
+            <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#a06a1c]" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-semibold text-[#7b5a0b]">O lucro abaixo pode estar maior do que o real.</p>
+              <p className="mt-1 text-sm text-[#7b5a0b]">
+                {itemsWithPartialCost} venda(s) do período usam peças com material sem preço cadastrado:{" "}
+                <strong>{materialsMissingPrice.slice(0, 5).join(", ")}</strong>
+                {materialsMissingPrice.length > 5 ? ` e mais ${materialsMissingPrice.length - 5}` : ""}. Enquanto faltar,
+                o custo sai por baixo e a margem parece melhor do que é.
+              </p>
+              <Link
+                href="/estoque"
+                className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ead49c] bg-white px-3 text-sm font-semibold text-[#7b5a0b] transition hover:bg-[#fffdf7]"
+              >
+                Cadastrar preços no estoque
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {kpis.map((card) => (

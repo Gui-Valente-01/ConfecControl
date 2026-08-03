@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeStockConsumption, pickNextStage, type BomLine, type Stage } from "@/lib/production";
+import { computeStockConsumption, findIncompleteCosts, pickNextStage, type BomLine, type Stage } from "@/lib/production";
 
 // Ficha de exemplo: a camiseta gasta malha e linha; o boné gasta malha e aba.
 const boms: BomLine[] = [
@@ -103,5 +103,43 @@ describe("pickNextStage", () => {
 
   it("nao volta para tras", () => {
     expect(pickNextStage(stages, 4)?.name).toBe("Pronto");
+  });
+});
+
+describe("findIncompleteCosts", () => {
+  const camiseta = {
+    id: "camiseta",
+    bom: [
+      { materialName: "Malha PV", materialPriceInCents: 2850 },
+      { materialName: "Linha 120", materialPriceInCents: 0 },
+    ],
+  };
+  const bone = {
+    id: "bone",
+    bom: [{ materialName: "Brim", materialPriceInCents: 1900 }],
+  };
+
+  it("aponta a peca e o material que falta precificar", () => {
+    const out = findIncompleteCosts([camiseta, bone]);
+    expect([...out.productIds]).toEqual(["camiseta"]);
+    expect(out.materialNames).toEqual(["Linha 120"]);
+  });
+
+  it("nao acusa nada quando tudo tem preco", () => {
+    const out = findIncompleteCosts([bone]);
+    expect(out.productIds.size).toBe(0);
+    expect(out.materialNames).toEqual([]);
+  });
+
+  it("nao repete o material usado em varias pecas", () => {
+    const outra = { id: "regata", bom: [{ materialName: "Linha 120", materialPriceInCents: 0 }] };
+    const out = findIncompleteCosts([camiseta, outra]);
+    expect(out.materialNames).toEqual(["Linha 120"]);
+    expect(out.productIds.size).toBe(2);
+  });
+
+  it("peca sem ficha nao entra: o problema dela e outro", () => {
+    const out = findIncompleteCosts([{ id: "avulso", bom: [] }]);
+    expect(out.productIds.size).toBe(0);
   });
 });
