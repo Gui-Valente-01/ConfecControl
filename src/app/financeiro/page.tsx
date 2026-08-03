@@ -7,26 +7,40 @@ export const dynamic = "force-dynamic";
 
 export default async function FinanceiroPage() {
   const user = await requireRouteUser("/financeiro");
-  const payments = await prisma.payment.findMany({
-    where: {
-      order: { companyId: user.companyId },
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      order: {
-        select: {
-          number: true,
-          paidAmountInCents: true,
-          deliveryDate: true,
-          client: { select: { name: true, phone: true } },
-        },
+  const companyId = user.companyId;
+
+  // A cobrança olha pedidos (o saldo sai do total menos os recebimentos), e o
+  // histórico olha recebimentos. São perguntas diferentes, com dados diferentes.
+  const [orders, receipts] = await Promise.all([
+    prisma.order.findMany({
+      where: { companyId, status: { not: "CANCELED" } },
+      select: {
+        id: true,
+        number: true,
+        totalAmountInCents: true,
+        deliveryDate: true,
+        client: { select: { name: true, phone: true } },
+        payments: { select: { amountInCents: true } },
       },
-    },
-  });
+    }),
+    prisma.payment.findMany({
+      where: { order: { companyId } },
+      orderBy: [{ paidAt: "desc" }, { createdAt: "desc" }],
+      take: 60,
+      select: {
+        id: true,
+        amountInCents: true,
+        method: true,
+        note: true,
+        paidAt: true,
+        order: { select: { id: true, number: true, client: { select: { name: true } } } },
+      },
+    }),
+  ]);
 
   return (
-    <AppShell eyebrow="Caixa" title="Financeiro" actionLabel="Registrar pagamento" user={user}>
-      <DbFinanceManager payments={payments} />
+    <AppShell eyebrow="Caixa" title="Financeiro" user={user}>
+      <DbFinanceManager orders={orders} receipts={receipts} canDelete={user.role === "ADMIN"} />
     </AppShell>
   );
 }

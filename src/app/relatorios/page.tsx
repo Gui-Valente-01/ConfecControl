@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
 import { isOrderLate, orderStatusLabels } from "@/lib/status";
 import { requireRouteUser } from "@/lib/auth";
+import { computeBalance } from "@/lib/payments";
 import { findIncompleteCosts } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 
@@ -55,10 +56,20 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         bom: { select: { quantityPerUnit: true, material: { select: { name: true, costPerUnitInCents: true } } } },
       },
     }),
-    prisma.payment.findMany({
-      where: { order: { companyId }, status: { in: ["PENDING", "PARTIAL", "OVERDUE"] } },
-      orderBy: { dueDate: "asc" },
-      select: { id: true, amountInCents: true, dueDate: true, order: { select: { number: true, client: { select: { name: true } } } } },
+    // Pendência é SALDO: total do pedido menos o que já entrou. Antes somava o
+    // total das linhas de pagamento, então um pedido de R$ 5.500 com R$ 3.300
+    // pagos entrava inteiro — e o relatório divergia do financeiro.
+    prisma.order.findMany({
+      where: { companyId, status: { not: "CANCELED" } },
+      orderBy: { deliveryDate: "asc" },
+      select: {
+        id: true,
+        number: true,
+        deliveryDate: true,
+        totalAmountInCents: true,
+        client: { select: { name: true } },
+        payments: { select: { amountInCents: true } },
+      },
     }),
     prisma.productionStage.findMany({
       where: { companyId, active: true },
@@ -89,11 +100,18 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const received = rangeOrders.reduce((sum, o) => sum + o.paidAmountInCents, 0);
   const toReceive = Math.max(0, totalRevenue - received);
 
-  // Lucro estimado (base nos itens com custo)
+  // Lucro = receita menos custo. A receita inclui os serviços cobrados: para uma
+  // serigrafia o serviço É o produto, e deixá-lo de fora fazia o lucro sair bem
+  // abaixo do real, enquanto o faturamento já o contava.
   const rangeItems = rangeOrders.flatMap((o) => o.items);
   const itemsRevenue = rangeItems.reduce((sum, item) => sum + item.totalPriceInCents, 0);
+  const serviceRevenue = rangeOrders.reduce(
+    (sum, order) => sum + order.services.reduce((s, service) => s + service.priceInCents, 0),
+    0,
+  );
+  const profitRevenue = itemsRevenue + serviceRevenue;
   const totalCost = rangeItems.reduce((sum, item) => sum + (item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0), 0);
-  const estimatedProfit = itemsRevenue - totalCost;
+  const estimatedProfit = profitRevenue - totalCost;
 
   // Faturamento separado: serviço na peça do cliente x peça feita pela confecção.
   const byKind = { SERVICE: { revenue: 0, units: 0 }, PRODUCT: { revenue: 0, units: 0 } };
@@ -119,7 +137,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     .map(([name, data]) => ({ name, ...data }))
     .sort((a, b) => b.revenue - a.revenue);
   const servicesRevenue = serviceRows.reduce((sum, row) => sum + row.revenue, 0);
-  const margin = itemsRevenue > 0 ? Math.round((estimatedProfit / itemsRevenue) * 100) : 0;
+  const margin = profitRevenue > 0 ? Math.round((estimatedProfit / profitRevenue) * 100) : 0;
   const itemsWithoutCost = rangeItems.filter((item) => !item.productId || (productCost.get(item.productId) ?? 0) === 0).length;
 
   // Custo incompleto é pior do que custo zerado: a peça tem número, mas ele está
@@ -167,7 +185,10 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const lateOrders = allOrders
     .filter((o) => isOrderLate(o.deliveryDate, o.status))
     .sort((a, b) => (a.deliveryDate?.getTime() ?? 0) - (b.deliveryDate?.getTime() ?? 0));
-  const pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amountInCents, 0);
+  const pendingRows = pendingPayments
+    .map((order) => ({ order, balance: computeBalance(order.totalAmountInCents, order.payments) }))
+    .filter((row) => row.balance > 0);
+  const pendingTotal = pendingRows.reduce((sum, row) => sum + row.balance, 0);
   const lowStock = materials.filter((m) => Number(m.currentQuantity) <= Number(m.minimumQuantity));
   const maxStageCount = Math.max(1, ...stages.map((s) => s._count.currentOrders));
 
@@ -245,9 +266,10 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       </section>
 
       <SectionCard eyebrow="Lucro" title="Composição do lucro estimado">
-        <div className="grid gap-4 sm:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[
-            ["Receita dos itens", centsToCurrency(itemsRevenue)],
+            ["Receita das peças", centsToCurrency(itemsRevenue)],
+            ["Receita dos serviços", centsToCurrency(serviceRevenue)],
             ["Custo de produção", centsToCurrency(totalCost)],
             ["Lucro estimado", centsToCurrency(estimatedProfit)],
             ["Margem", `${margin}%`],
@@ -393,18 +415,18 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
           title="Pagamentos pendentes"
           action={<div className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(pendingTotal)}</div>}
         >
-          {pendingPayments.length === 0 ? (
+          {pendingRows.length === 0 ? (
             <EmptyHint icon={CreditCard} text="Nenhum pagamento pendente." />
           ) : (
             <ul className="space-y-2">
-              {pendingPayments.slice(0, 8).map((payment) => (
-                <li key={payment.id} className="flex items-center justify-between gap-3">
+              {pendingRows.slice(0, 8).map(({ order, balance }) => (
+                <li key={order.id} className="flex items-center justify-between gap-3">
                   <span className="text-sm">
-                    <span className="font-mono font-semibold text-[#63736b]">#{payment.order.number}</span>
-                    <span className="ml-2 font-medium">{payment.order.client.name}</span>
-                    {payment.dueDate ? <span className="ml-2 text-xs text-[#8a9890]">vence {formatShortDate(payment.dueDate)}</span> : null}
+                    <span className="font-mono font-semibold text-[#63736b]">#{order.number}</span>
+                    <span className="ml-2 font-medium">{order.client.name}</span>
+                    {order.deliveryDate ? <span className="ml-2 text-xs text-[#8a9890]">prazo {formatShortDate(order.deliveryDate)}</span> : null}
                   </span>
-                  <strong className="text-sm">{centsToCurrency(payment.amountInCents)}</strong>
+                  <strong className="text-sm tabular-nums">{centsToCurrency(balance)}</strong>
                 </li>
               ))}
             </ul>
