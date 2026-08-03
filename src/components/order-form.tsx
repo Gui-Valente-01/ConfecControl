@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
 import { centsToCurrency, moneyToCents, priceExpressionToCents } from "@/lib/format";
 import { emptyFormState, type FormState } from "@/lib/form-state";
+import { useUnsavedWarning } from "@/components/use-unsaved-warning";
 
 type ClientOption = { id: string; name: string };
 type ProductOption = { id: string; name: string; standardPriceInCents: number };
@@ -222,6 +223,21 @@ export function OrderForm({
     services
       .map((service) => ({ name: service.name.trim(), price: service.price }))
       .filter((service) => service.name.length > 0),
+  );
+
+  // "Tem trabalho a perder?" é comparar com o último estado que já está salvo —
+  // não com um formulário vazio. Na edição o pedido chega preenchido, e depois
+  // de salvar o formulário continua na tela com os mesmos valores: nos dois
+  // casos não há nada a perder, e avisar seria falso alarme.
+  const snapshot = `${itemsJson}|${servicesJson}|${paid}`;
+  const [saved, setSaved] = useState({ snapshot, at: state.success });
+  if (state.success && state.success !== saved.at) {
+    // Padrão do React de ajustar estado durante o render ao ver algo mudar.
+    setSaved({ snapshot, at: state.success });
+  }
+  useUnsavedWarning(
+    snapshot !== saved.snapshot,
+    "Você preencheu este pedido e ainda não salvou. Sair agora descarta o que digitou.",
   );
 
   return (
