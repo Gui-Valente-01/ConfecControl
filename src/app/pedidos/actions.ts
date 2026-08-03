@@ -192,14 +192,20 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
                 priceInCents: service.priceInCents,
               })),
             },
-            payments: {
-              create: {
-                amountInCents: totalAmountInCents,
-                status: paymentStatus,
-                method: paymentMethod || null,
-                paidAt: paymentStatus === "PAID" ? new Date() : null,
-              },
-            },
+            // Só há pagamento se entrou dinheiro. A entrada é um recebimento
+            // com data própria, e não a cobrança do total do pedido.
+            payments:
+              paidAmountInCents > 0
+                ? {
+                    create: {
+                      amountInCents: paidAmountInCents,
+                      status: "PAID",
+                      method: paymentMethod || null,
+                      note: "Entrada do pedido",
+                      paidAt: new Date(),
+                    },
+                  }
+                : undefined,
           },
           select: { id: true },
         });
@@ -361,16 +367,30 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
       },
     });
 
-    // Mantem o pagamento principal coerente com o novo total.
-    const primaryPayment = order.payments[0];
-    if (primaryPayment) {
+    // O campo "entrada" da edição mexe só no PRIMEIRO recebimento — o da entrada.
+    // Recebimentos posteriores são histórico de caixa e não podem ser reescritos
+    // por quem só voltou ao pedido para ajustar um prazo.
+    const [entrada, ...posteriores] = order.payments;
+    const recebidoDepois = posteriores.reduce((sum, p) => sum + p.amountInCents, 0);
+    const novaEntrada = Math.max(0, paidAmountInCents - recebidoDepois);
+
+    if (entrada && novaEntrada > 0) {
       await tx.payment.update({
-        where: { id: primaryPayment.id },
+        where: { id: entrada.id },
+        data: { amountInCents: novaEntrada, method: paymentMethod || entrada.method },
+      });
+    } else if (entrada && novaEntrada === 0) {
+      // Entrada zerada na edição: some do histórico, porque aquele dinheiro não entrou.
+      await tx.payment.delete({ where: { id: entrada.id } });
+    } else if (!entrada && novaEntrada > 0) {
+      await tx.payment.create({
         data: {
-          amountInCents: totalAmountInCents,
-          status: paymentStatus,
+          orderId: id,
+          amountInCents: novaEntrada,
+          status: "PAID",
           method: paymentMethod || null,
-          paidAt: paymentStatus === "PAID" ? primaryPayment.paidAt ?? new Date() : null,
+          note: "Entrada do pedido",
+          paidAt: new Date(),
         },
       });
     }

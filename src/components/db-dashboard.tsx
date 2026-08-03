@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, CreditCard, Package } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, CreditCard, Layers, Package } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -49,11 +49,13 @@ type DbDashboardProps = {
   orders: DashboardOrder[];
   stages: DashboardStage[];
   materials: DashboardMaterial[];
+  /** Peças cujo custo está incompleto: sem custo, ou com material sem preço. */
+  productsWithoutCost: number;
   plan: DashboardPlan;
   showFinance: boolean;
 };
 
-export function DbDashboard({ orders, stages, materials, plan, showFinance }: DbDashboardProps) {
+export function DbDashboard({ orders, stages, materials, productsWithoutCost, plan, showFinance }: DbDashboardProps) {
   const now = new Date();
   const openOrders = orders.filter((order) => !["READY", "DELIVERED", "CANCELED"].includes(order.status)).length;
   const lateOrders = orders.filter((order) => isOrderLate(order.deliveryDate, order.status)).length;
@@ -65,6 +67,10 @@ export function DbDashboard({ orders, stages, materials, plan, showFinance }: Db
     lateOrders > 0 ? { text: `${lateOrders} pedido(s) atrasado(s)`, href: "/pedidos", icon: AlertTriangle } : null,
     plan.estoque && lowStock.length > 0 ? { text: `${lowStock.length} material(is) abaixo do mínimo`, href: "/estoque", icon: Package } : null,
     plan.financeiro && pendingPayments > 0 ? { text: `${pendingPayments} pagamento(s) pendente(s)`, href: "/financeiro", icon: CreditCard } : null,
+    // Custo incompleto não trava nada, mas faz a margem do relatório mentir.
+    productsWithoutCost > 0
+      ? { text: `${productsWithoutCost} peça(s) com custo incompleto`, href: "/produtos", icon: Layers }
+      : null,
   ].filter((a): a is { text: string; href: string; icon: typeof AlertTriangle } => a !== null);
 
   const stats = [

@@ -47,3 +47,5 @@ next-env.d.ts
 
 # backup com dados pessoais: nao versionar
 backup-empresas-removidas.json
+
+backup-pagamentos-producao.json

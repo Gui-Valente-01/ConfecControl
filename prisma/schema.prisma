@@ -460,12 +460,18 @@ model StockMovement {
   @@map("movimentos_estoque")
 }
 
+// Um RECEBIMENTO: dinheiro que entrou, com data e forma. Antes existia uma
+// linha só por pedido, com o valor total, atualizada a cada pagamento — não
+// dava para saber quando a entrada entrou nem provar recebimento ao cliente.
 model Payment {
   id              String        @id @default(cuid())
   orderId         String
   amountInCents   Int
   status          PaymentStatus @default(PENDING)
   method          String?
+  // O que foi este recebimento (ex.: "Entrada do pedido"). Ajuda o dono a se
+  // situar no histórico quando há vários no mesmo pedido.
+  note            String?
   dueDate         DateTime?
   paidAt          DateTime?
   createdAt       DateTime      @default(now())
