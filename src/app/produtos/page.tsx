@@ -16,6 +16,8 @@ export default async function ProdutosPage() {
           orderBy: { createdAt: "asc" },
           include: { material: { select: { name: true, unit: true, costPerUnitInCents: true } } },
         },
+        // Peça já usada em pedido não pode ser excluída: o botão explica o motivo.
+        _count: { select: { items: true } },
       },
     }),
     prisma.material.findMany({
@@ -45,6 +47,7 @@ export default async function ProdutosPage() {
       quantityPerUnit: Number(entry.quantityPerUnit),
       material: entry.material,
     })),
+    _count: product._count,
   }));
 
   return (

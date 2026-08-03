@@ -7,6 +7,7 @@ import { ProductCreateForm } from "@/components/product-create-form";
 import { ToastForm } from "@/components/toast-form";
 import { SectionCard } from "@/components/section-card";
 import { ServicesManager } from "@/components/services-manager";
+import { describeBlockedDeletion, describeDeletion } from "@/lib/deletion";
 import { centsToCurrency, centsToInput } from "@/lib/format";
 
 type BomEntry = {
@@ -31,6 +32,7 @@ type DbProduct = {
   averageProductionDays: number | null;
   kind: "PRODUCT" | "SERVICE";
   bom: BomEntry[];
+  _count: { items: number };
 };
 
 type MaterialOption = { id: string; name: string; unit: string };
@@ -86,7 +88,19 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
                     action={deleteProductAction}
                     id={product.id}
                     title="Remover peça"
-                    message={`Excluir a peça ${product.name}?`}
+                    message={describeDeletion({
+                      tipo: "a peça",
+                      nome: product.name,
+                      apaga: [
+                        { count: product.bom.length, singular: "material da ficha técnica", plural: "materiais da ficha técnica" },
+                      ],
+                    })}
+                    blockedReason={describeBlockedDeletion({
+                      tipo: "a peça",
+                      nome: product.name,
+                      bloqueios: [{ count: product._count.items, singular: "item de pedido", plural: "itens de pedido" }],
+                      saida: "Apagar agora bagunçaria o histórico e o relatório de custo.",
+                    })}
                   />
                 </div>
 

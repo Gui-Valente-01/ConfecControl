@@ -3,6 +3,7 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { describeBlockedDeletion } from "@/lib/deletion";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
@@ -104,10 +105,26 @@ export async function deleteClientAction(_prev: FormState, formData: FormData): 
 
   const companyId = await requireCompanyId();
 
+  const client = await prisma.client.findFirst({
+    where: { id, companyId },
+    select: { id: true, name: true, _count: { select: { orders: true } } },
+  });
+  if (!client) return { error: "Cliente não encontrado." };
+
+  // O banco já recusa apagar cliente com pedido (a chave estrangeira é Restrict),
+  // mas o erro que vinha de lá era ilegível. Aqui explicamos o motivo e o número.
+  const bloqueio = describeBlockedDeletion({
+    tipo: "o cliente",
+    nome: client.name,
+    bloqueios: [{ count: client._count.orders, singular: "pedido", plural: "pedidos" }],
+    saida: "Apague os pedidos dele antes, ou deixe o cadastro parado — cliente sem pedido novo não atrapalha nada.",
+  });
+  if (bloqueio) return { error: bloqueio };
+
   // deleteMany com companyId garante que so apaga clientes da empresa do usuário.
   const deleted = await prisma.client.deleteMany({ where: { id, companyId } });
   if (deleted.count === 0) return { error: "Cliente não encontrado." };
 
   revalidatePath("/clientes");
-  return { success: "Cliente removido." };
+  return { success: `Cliente ${client.name} removido.` };
 }

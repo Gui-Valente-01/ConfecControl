@@ -3,6 +3,7 @@
 import type { ProductKind } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import { describeBlockedDeletion } from "@/lib/deletion";
 import type { FormState } from "@/lib/form-state";
 import { moneyToCents } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -78,9 +79,25 @@ export async function deleteProductAction(_prev: FormState, formData: FormData):
 
   const companyId = await requireCompanyId();
 
+  const product = await prisma.product.findFirst({
+    where: { id, companyId },
+    select: { id: true, name: true, _count: { select: { items: true } } },
+  });
+  if (!product) return { error: "Peça não encontrada." };
+
+  // Peça usada em pedido não pode sumir: o item do pedido antigo ficaria sem
+  // produto, e o relatório de custo mudaria sozinho, sem ninguém ter mexido.
+  const bloqueio = describeBlockedDeletion({
+    tipo: "a peça",
+    nome: product.name,
+    bloqueios: [{ count: product._count.items, singular: "item de pedido", plural: "itens de pedido" }],
+    saida: "Apagar agora bagunçaria o histórico e o relatório de custo. Deixe a peça parada no catálogo.",
+  });
+  if (bloqueio) return { error: bloqueio };
+
   const deleted = await prisma.product.deleteMany({ where: { id, companyId } });
   if (deleted.count === 0) return { error: "Peça não encontrada." };
 
   revalidatePath("/produtos");
-  return { success: "Peça removida." };
+  return { success: `Peça ${product.name} removida.` };
 }

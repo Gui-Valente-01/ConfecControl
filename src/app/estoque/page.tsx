@@ -12,6 +12,8 @@ export default async function EstoquePage() {
     prisma.material.findMany({
       where: { companyId: user.companyId },
       orderBy: { createdAt: "desc" },
+      // Contagens para o aviso de exclusão dizer o que some junto.
+      include: { _count: { select: { usedBy: true, movements: true } } },
     }),
     prisma.stockMovement.findMany({
       where: { material: { companyId: user.companyId } },

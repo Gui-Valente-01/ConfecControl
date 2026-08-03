@@ -4,6 +4,7 @@ import { deleteClientAction, updateClientAction } from "@/app/clientes/actions";
 import { ClientCreateForm } from "@/components/client-create-form";
 import { ClientPortalInvite } from "@/components/client-portal-invite";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { describeBlockedDeletion, describeDeletion } from "@/lib/deletion";
 import { InlineEdit } from "@/components/inline-edit";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
@@ -94,7 +95,13 @@ export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManag
                           action={deleteClientAction}
                           id={client.id}
                           title="Remover cliente"
-                          message={`Excluir o cliente ${client.name}? Esta ação não pode ser desfeita.`}
+                          message={describeDeletion({ tipo: "o cliente", nome: client.name })}
+                          blockedReason={describeBlockedDeletion({
+                            tipo: "o cliente",
+                            nome: client.name,
+                            bloqueios: [{ count: client._count.orders, singular: "pedido", plural: "pedidos" }],
+                            saida: "Apague os pedidos dele antes, ou deixe o cadastro parado.",
+                          })}
                         />
                       </div>
                     </div>

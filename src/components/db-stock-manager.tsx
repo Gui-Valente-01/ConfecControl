@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ToastForm } from "@/components/toast-form";
+import { describeDeletion } from "@/lib/deletion";
 import { centsToCurrency, centsToInput, formatDateTime } from "@/lib/format";
 import type { StockMovementType } from "@prisma/client";
 
@@ -19,6 +20,7 @@ type DbMaterial = {
   minimumQuantity: number;
   costPerUnitInCents: number;
   supplier: string | null;
+  _count: { usedBy: number; movements: number };
 };
 
 type DbMovement = {
@@ -97,7 +99,22 @@ export function DbStockManager({ materials, movements, canEdit, canManage }: DbS
                           action={deleteMaterialAction}
                           id={item.id}
                           title="Remover material"
-                          message={`Excluir o material ${item.name}?`}
+                          message={describeDeletion({
+                            tipo: "o material",
+                            nome: item.name,
+                            apaga: [
+                              {
+                                count: item._count.usedBy,
+                                singular: "peça que usa esse material na ficha técnica",
+                                plural: "peças que usam esse material na ficha técnica",
+                              },
+                              {
+                                count: item._count.movements,
+                                singular: "movimentação de estoque no histórico",
+                                plural: "movimentações de estoque no histórico",
+                              },
+                            ],
+                          })}
                         />
                       ) : null}
                     </div>

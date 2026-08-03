@@ -4,6 +4,7 @@ import { Handshake, Mail, Phone, Plus, Power } from "lucide-react";
 import { useActionState } from "react";
 import { createPartnerAction, deletePartnerAction, togglePartnerActiveAction, updatePartnerAction } from "@/app/terceirizadas/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { describeDeletion } from "@/lib/deletion";
 import { InlineEdit } from "@/components/inline-edit";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -105,7 +106,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
                     action={deletePartnerAction}
                     id={partner.id}
                     title="Remover terceirizada"
-                    message={`Excluir a terceirizada ${partner.name}?`}
+                    message={describeDeletion({ tipo: "a terceirizada", nome: partner.name })}
                   />
                 </div>
               </article>

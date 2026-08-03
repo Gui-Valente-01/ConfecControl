@@ -12,6 +12,12 @@ type ConfirmDeleteButtonProps = {
   title?: string;
   variant?: "icon" | "full";
   label?: string;
+  /**
+   * Motivo pelo qual esse cadastro não pode ser excluído agora (ex.: cliente
+   * com pedido). Quando vem preenchido, o botão fica desligado e explica o
+   * porquê, em vez de deixar a pessoa clicar, confirmar e tomar um erro.
+   */
+  blockedReason?: string | null;
 };
 
 export function ConfirmDeleteButton({
@@ -21,9 +27,23 @@ export function ConfirmDeleteButton({
   title = "Excluir",
   variant = "icon",
   label = "Excluir",
+  blockedReason = null,
 }: ConfirmDeleteButtonProps) {
   const [state, formAction] = useActionState(action, emptyFormState);
   useActionFeedback(state);
+
+  if (blockedReason) {
+    const base =
+      variant === "icon"
+        ? "inline-flex size-9 items-center justify-center rounded-lg border border-[#e6ebe8] bg-[#f4f7f5] text-[#a9b5ae]"
+        : "inline-flex h-10 items-center gap-2 rounded-lg border border-[#e6ebe8] bg-[#f4f7f5] px-4 text-sm font-semibold text-[#a9b5ae]";
+    return (
+      <button type="button" disabled className={`${base} cursor-not-allowed`} title={blockedReason} aria-label={blockedReason}>
+        <Trash2 size={variant === "icon" ? 16 : 16} aria-hidden="true" />
+        {variant === "full" ? label : null}
+      </button>
+    );
+  }
 
   return (
     <form

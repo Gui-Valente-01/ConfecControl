@@ -96,11 +96,20 @@ export async function deleteMaterialAction(_prev: FormState, formData: FormData)
   if (!id) return { error: "Material não encontrado." };
 
   const companyId = await requireCompanyId();
+
+  const material = await prisma.material.findFirst({
+    where: { id, companyId },
+    select: { id: true, name: true },
+  });
+  if (!material) return { error: "Material não encontrado." };
+
+  // Aqui a exclusão apaga mesmo: leva junto a ficha técnica das peças e todo o
+  // histórico de entrada e saída. Por isso a tela avisa antes com os números.
   const deleted = await prisma.material.deleteMany({ where: { id, companyId } });
   if (deleted.count === 0) return { error: "Material não encontrado." };
 
   revalidateStock();
-  return { success: "Material removido." };
+  return { success: `Material ${material.name} removido.` };
 }
 
 const movementTypes: StockMovementType[] = ["IN", "OUT", "ADJUSTMENT"];
