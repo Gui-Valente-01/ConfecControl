@@ -1,10 +1,11 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
 import { centsToCurrency, centsToInput, moneyToCents, priceExpressionToCents } from "@/lib/format";
+import { describeAtypicalPrices, findAtypicalPrices } from "@/lib/price-check";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 import { useUnsavedWarning } from "@/components/use-unsaved-warning";
 
@@ -202,6 +203,32 @@ export function OrderForm({
   // Serviço é receita: entra no total que o cliente paga.
   const totalInCents = itemsInCents + servicesInCents;
 
+  // Valor muito longe do preço cadastrado é quase sempre vírgula no lugar
+  // errado. Só compara com peça que tem preço padrão: sem referência, cala.
+  const atypical = useMemo(() => {
+    // A chave da linha entra no label para o aviso saber em qual campo pousar,
+    // e sai de novo na hora de montar o texto: duas peças podem ter o mesmo nome.
+    const entradas = items.flatMap((item) => {
+      const product = products.find((option) => option.id === item.productId);
+      if (!product) return [];
+      return [
+        {
+          label: `${item.key} ${item.description.trim() || product.name}`,
+          typedInCents: Math.round((Number(item.unitPrice) || 0) * 100),
+          referenceInCents: product.standardPriceInCents,
+        },
+      ];
+    });
+
+    return findAtypicalPrices(entradas).map((achado) => {
+      // A chave é "row-N", sem espaço; a descrição tem. Corta no primeiro só.
+      const corte = achado.label.indexOf(" ");
+      return { ...achado, key: achado.label.slice(0, corte), label: achado.label.slice(corte + 1) };
+    });
+  }, [items, products]);
+
+  const atypicalKeys = new Set(atypical.map((item) => item.key));
+
   // A entrada é controlada para o saldo acompanhar o que está sendo digitado.
   // Usa o mesmo moneyToCents do servidor, então a conta na tela é a que será salva.
   const [paid, setPaid] = useState(defaults?.paidReais ?? "");
@@ -243,7 +270,16 @@ export function OrderForm({
   );
 
   return (
-    <form className="space-y-4" action={formAction}>
+    <form
+      className="space-y-4"
+      action={formAction}
+      onSubmit={(event) => {
+        // Não bloqueia: o preço fora da curva pode ser proposital. Só obriga a
+        // olhar uma vez, que é o que falta para a vírgula errada não passar.
+        const aviso = describeAtypicalPrices(atypical);
+        if (aviso && !window.confirm(aviso)) event.preventDefault();
+      }}
+    >
       {orderId ? <input type="hidden" name="id" value={orderId} /> : null}
       <input type="hidden" name="items" value={itemsJson} />
       <input type="hidden" name="services" value={servicesJson} />
@@ -344,11 +380,26 @@ export function OrderForm({
                   step="0.01"
                   value={item.unitPrice}
                   onChange={(e) => updateItem(item.key, { unitPrice: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  aria-invalid={atypicalKeys.has(item.key) || undefined}
+                  className={`mt-1 h-9 w-full rounded-lg border px-2 text-sm outline-none transition focus:ring-4 ${
+                    atypicalKeys.has(item.key)
+                      ? "border-[#d9a03a] bg-[#fffaf0] ring-[#d9a03a]/20 focus:border-[#b9821f]"
+                      : "border-[#c7d3ce] ring-[#087f7d]/20 focus:border-[#087f7d]"
+                  }`}
                   placeholder="45,00"
                 />
               </label>
             </div>
+            {atypicalKeys.has(item.key) ? (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-[#fffaf0] px-2.5 py-2 text-xs leading-5 text-[#8a6516]">
+                <AlertTriangle size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
+                <span>
+                  Esse preço está bem longe do cadastrado para a peça (
+                  {centsToCurrency(products.find((option) => option.id === item.productId)?.standardPriceInCents ?? 0)}).
+                  Confira a vírgula. Se for esse mesmo, pode salvar.
+                </span>
+              </p>
+            ) : null}
             {items.length > 1 ? (
               <div className="mt-2 flex justify-end">
                 <button
