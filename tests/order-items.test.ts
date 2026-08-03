@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseItems, parseServices, resolvePaymentStatus } from "@/lib/order-items";
+import { centsToInput } from "@/lib/format";
 
 describe("parseItems", () => {
   it("converte itens válidos com preço em número (reais) para centavos", () => {
@@ -107,5 +108,31 @@ describe("parseItems - valor negativo", () => {
   it("zera tambem quando o preco vem como numero negativo", () => {
     const out = parseItems(JSON.stringify([{ description: "Boné", quantity: 5, unitPrice: -12.5 }]));
     expect(out[0].unitPriceInCents).toBe(0);
+  });
+});
+
+// CC-03: o ciclo salvar -> reabrir -> salvar nao pode inflar o valor.
+// Era o pior dos bugs: o sistema corrompia sozinho, sem o usuario digitar errado.
+describe("ciclo de edicao do servico", () => {
+  const abrirParaEditar = (cents: number) => centsToInput(cents);
+
+  it("servico de R$ 3,25 sobrevive a reabertura", () => {
+    const salvo = parseServices(JSON.stringify([{ name: "Silk", price: abrirParaEditar(325) }]));
+    expect(salvo[0].priceInCents).toBe(325);
+  });
+
+  it("dez reaberturas seguidas nao mudam o valor", () => {
+    let cents = 1050;
+    for (let i = 0; i < 10; i++) {
+      cents = parseServices(JSON.stringify([{ name: "Bordado", price: abrirParaEditar(cents) }]))[0].priceInCents;
+    }
+    expect(cents).toBe(1050);
+  });
+
+  it("aceita o que o dono digitar, com ponto ou virgula", () => {
+    const comPonto = parseServices(JSON.stringify([{ name: "Silk", price: "3.25" }]));
+    const comVirgula = parseServices(JSON.stringify([{ name: "Silk", price: "3,25" }]));
+    expect(comPonto[0].priceInCents).toBe(325);
+    expect(comVirgula[0].priceInCents).toBe(325);
   });
 });

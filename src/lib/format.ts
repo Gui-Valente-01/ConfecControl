@@ -1,15 +1,48 @@
+// Dinheiro sempre com centavos. Arredondar na exibição escondia diferença do
+// cliente: R$ 43,25 impresso como "R$ 43" vira discussão na hora da entrega.
 export function centsToCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value / 100);
 }
 
+/**
+ * Texto digitado -> centavos inteiros.
+ *
+ * O dono digita dos dois jeitos, e os dois têm que funcionar: "3,25" e "3.25"
+ * são R$ 3,25. Antes o ponto era sempre tratado como separador de milhar, então
+ * "3.25" virava R$ 325 — erro de cem vezes no valor cobrado.
+ *
+ * A regra segue o costume brasileiro de escrita:
+ * - com vírgula, ela é o decimal e os pontos são milhar ("1.234,56");
+ * - só com ponto, ele é decimal se sobrarem 1 ou 2 dígitos ("3.25", "10.5");
+ * - ponto com 3 dígitos depois é milhar ("1.234"), como se escreve de verdade;
+ * - vários pontos são sempre milhar ("1.234.567").
+ */
 export function currencyToCents(value: string) {
-  const normalized = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const cleaned = value.replace(/[^\d,.-]/g, "");
+  if (!cleaned) return 0;
+
+  const negative = cleaned.trimStart().startsWith("-");
+  const digitsAndSeparators = cleaned.replace(/-/g, "");
+
+  let normalized: string;
+  if (digitsAndSeparators.includes(",")) {
+    // Vírgula manda: o que vem depois dela é centavo.
+    normalized = digitsAndSeparators.replace(/\./g, "").replace(",", ".");
+  } else {
+    const parts = digitsAndSeparators.split(".");
+    const last = parts.length > 1 ? parts[parts.length - 1] : "";
+    const pontoEhDecimal = parts.length === 2 && last.length > 0 && last.length <= 2;
+    normalized = pontoEhDecimal ? digitsAndSeparators : digitsAndSeparators.replace(/\./g, "");
+  }
+
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.round(parsed * 100) * (negative ? -1 : 1);
 }
 
 // Dinheiro digitado pelo usuário nunca é negativo neste sistema: preço, custo e

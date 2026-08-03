@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents, priceExpressionToCents } from "@/lib/format";
+import { centsToCurrency, centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents, priceExpressionToCents } from "@/lib/format";
 
 describe("currencyToCents", () => {
   it("converte valores no formato brasileiro", () => {
@@ -82,5 +82,80 @@ describe("priceExpressionToCents", () => {
 
   it("nao aceita negativo", () => {
     expect(priceExpressionToCents("-4x100")).toBe(0);
+  });
+});
+
+// CC-02: o dono digita dos dois jeitos e os dois precisam funcionar.
+describe("currencyToCents - ponto e virgula", () => {
+  it("virgula como decimal", () => {
+    expect(currencyToCents("3,25")).toBe(325);
+    expect(currencyToCents("5,50")).toBe(550);
+    expect(currencyToCents("10,5")).toBe(1050);
+    expect(currencyToCents("43,25")).toBe(4325);
+  });
+
+  it("ponto como decimal (era o bug de 100x)", () => {
+    expect(currencyToCents("3.25")).toBe(325);
+    expect(currencyToCents("5.50")).toBe(550);
+    expect(currencyToCents("10.5")).toBe(1050);
+    expect(currencyToCents("43.25")).toBe(4325);
+  });
+
+  it("ponto como milhar quando tem 3 digitos depois", () => {
+    expect(currencyToCents("1.234")).toBe(123400);
+    expect(currencyToCents("1.234.567")).toBe(123456700);
+  });
+
+  it("formato brasileiro completo", () => {
+    expect(currencyToCents("1.234,56")).toBe(123456);
+    expect(currencyToCents("R$ 1.234,56")).toBe(123456);
+  });
+
+  it("formato com ponto decimal e milhar junto", () => {
+    expect(currencyToCents("1234.56")).toBe(123456);
+  });
+
+  it("inteiro sem separador", () => {
+    expect(currencyToCents("400")).toBe(40000);
+    expect(currencyToCents("R$ 40")).toBe(4000);
+  });
+
+  it("vazio e invalido dao zero", () => {
+    expect(currencyToCents("")).toBe(0);
+    expect(currencyToCents("abc")).toBe(0);
+  });
+
+  it("negativo mantem o sinal para quem precisa detectar", () => {
+    expect(currencyToCents("-3,25")).toBe(-325);
+    expect(currencyToCents("-3.25")).toBe(-325);
+  });
+});
+
+// CC-01: exibicao nunca mais arredonda.
+describe("centsToCurrency - centavos", () => {
+  it("mostra os centavos", () => {
+    expect(centsToCurrency(325)).toContain("3,25");
+    expect(centsToCurrency(550)).toContain("5,50");
+    expect(centsToCurrency(1050)).toContain("10,50");
+    expect(centsToCurrency(4325)).toContain("43,25");
+  });
+
+  it("valor inteiro mostra duas casas", () => {
+    expect(centsToCurrency(4000)).toContain("40,00");
+  });
+});
+
+// CC-03: salvar -> reabrir -> salvar nao pode mudar o valor.
+describe("ida e volta do valor", () => {
+  it("centsToInput e currencyToCents sao inversos", () => {
+    for (const cents of [325, 550, 1050, 4325, 123456, 100, 1]) {
+      expect(currencyToCents(centsToInput(cents))).toBe(cents);
+    }
+  });
+
+  it("dez edicoes seguidas nao alteram o valor", () => {
+    let cents = 1050;
+    for (let i = 0; i < 10; i++) cents = currencyToCents(centsToInput(cents));
+    expect(cents).toBe(1050);
   });
 });

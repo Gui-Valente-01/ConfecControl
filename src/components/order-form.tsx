@@ -4,7 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
-import { centsToCurrency, moneyToCents, priceExpressionToCents } from "@/lib/format";
+import { centsToCurrency, centsToInput, moneyToCents, priceExpressionToCents } from "@/lib/format";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 import { useUnsavedWarning } from "@/components/use-unsaved-warning";
 
@@ -120,6 +120,8 @@ export function OrderForm({
           size: item.size ?? "",
           color: item.color ?? "",
           quantity: String(item.quantity),
+          // Campo <input type="number">: exige ponto e envia número ao servidor,
+          // então não passa pela leitura de texto. Formato brasileiro aqui quebraria o campo.
           unitPrice: (item.unitPriceInCents / 100).toString(),
         }),
       );
@@ -155,7 +157,7 @@ export function OrderForm({
   const [services, setServices] = useState<EditableService[]>(() =>
     defaults?.services?.length
       ? defaults.services.map((service) =>
-          newService({ name: service.name, price: (service.priceInCents / 100).toString() }),
+          newService({ name: service.name, price: centsToInput(service.priceInCents) }),
         )
       : [],
   );
@@ -175,7 +177,7 @@ export function OrderForm({
         if (service.key !== key) return service;
         const next = { ...service, name };
         if (known && !service.price.trim() && known.defaultPriceInCents > 0) {
-          next.price = (known.defaultPriceInCents / 100).toString();
+          next.price = centsToInput(known.defaultPriceInCents);
         }
         return next;
       }),

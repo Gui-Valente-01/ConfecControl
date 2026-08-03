@@ -7,7 +7,7 @@ import { SectionCard } from "@/components/section-card";
 import { updateOrderAction } from "@/app/pedidos/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
-import { dateToInputValue } from "@/lib/format";
+import { centsToInput, dateToInputValue } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +43,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
     clientId: order.clientId,
     deliveryDate: dateToInputValue(order.deliveryDate),
     paymentMethod: order.paymentMethod ?? "",
-    paidReais: order.paidAmountInCents ? (order.paidAmountInCents / 100).toString() : "",
+    paidReais: order.paidAmountInCents ? centsToInput(order.paidAmountInCents) : "",
     internalNotes: order.internalNotes ?? "",
     items: order.items.map((item) => ({
       productId: item.productId,
