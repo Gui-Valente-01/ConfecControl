@@ -51,7 +51,7 @@ export default async function ProdutosPage() {
   }));
 
   return (
-    <AppShell eyebrow="Catalogo" title="Produtos e peças" actionLabel="Nova peça" user={user}>
+    <AppShell eyebrow="Catálogo" title="Peças" actionLabel="Nova peça" user={user}>
       <DbProductsManager
         products={mappedProducts}
         materials={materials}

@@ -49,7 +49,7 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
   return (
     <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
       <SectionCard
-        eyebrow="Produtos"
+        eyebrow="Catálogo"
         title="Peças cadastradas"
         action={<div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{products.length} peças</div>}
       >
@@ -57,7 +57,7 @@ export function DbProductsManager({ products, materials, services, canEdit }: Db
           <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
             <Shirt className="mx-auto text-[#087f7d]" size={28} aria-hidden="true" />
             <h3 className="mt-3 font-semibold">Nenhuma peça cadastrada</h3>
-            <p className="mt-2 text-sm text-[#66756d]">Cadastre produtos para usar nos pedidos reais.</p>
+            <p className="mt-2 text-sm text-[#66756d]">Cadastre suas peças para usar nos pedidos.</p>
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">

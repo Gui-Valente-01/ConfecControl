@@ -347,7 +347,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <SectionCard eyebrow="Vendas" title="Produtos mais vendidos">
+        <SectionCard eyebrow="Vendas" title="Peças mais vendidas">
           {topProducts.length === 0 ? (
             <EmptyHint icon={Trophy} text="Nenhum item vendido no período." />
           ) : (

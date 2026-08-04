@@ -16,7 +16,7 @@ const typeOptions = [
   { value: "", label: "Tudo" },
   { value: "pedidos", label: "Pedidos" },
   { value: "clientes", label: "Clientes" },
-  { value: "produtos", label: "Produtos" },
+  { value: "produtos", label: "Peças" },
 ];
 
 export default async function BuscaPage({ searchParams }: { searchParams: SearchParams }) {
@@ -138,9 +138,9 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
           ) : null}
 
           {showProducts ? (
-          <SectionCard eyebrow="Produtos" title="Produtos">
+          <SectionCard eyebrow="Catálogo" title="Peças">
             {products.length === 0 ? (
-              <Empty text="Nenhum produto." />
+              <Empty text="Nenhuma peça." />
             ) : (
               <ul className="space-y-2">
                 {products.map((product) => (

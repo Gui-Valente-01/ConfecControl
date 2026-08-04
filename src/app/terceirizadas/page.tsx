@@ -26,7 +26,7 @@ export default async function TerceirizadasPage() {
   }));
 
   return (
-    <AppShell eyebrow="Parceiros" title="Terceirizadas" actionLabel="Nova terceirizada" user={user}>
+    <AppShell eyebrow="Terceirização" title="Terceirizadas" actionLabel="Nova terceirizada" user={user}>
       <DbPartnersManager partners={mapped} canEdit={user.role === "ADMIN"} />
     </AppShell>
   );

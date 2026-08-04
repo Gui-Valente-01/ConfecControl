@@ -45,7 +45,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
       </datalist>
 
       <SectionCard
-        eyebrow="Parceiros"
+        eyebrow="Terceirização"
         title="Empresas terceirizadas"
         action={<div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{partners.length} empresa(s)</div>}
       >

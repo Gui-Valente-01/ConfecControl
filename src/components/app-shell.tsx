@@ -32,9 +32,13 @@ import { planAllowsRoute } from "@/lib/features";
 import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
 
 const navItems = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  // O menu usa a mesma palavra que o resto do sistema. "Dashboard" era a única
+  // palavra em inglês no produto inteiro, e "Produtos" brigava com "peça", que
+  // é como todas as outras telas chamam o item do catálogo. A rota continua
+  // /produtos: mudar endereço quebraria link salvo e favorito de quem já usa.
+  { label: "Painel", href: "/", icon: LayoutDashboard },
   { label: "Clientes", href: "/clientes", icon: Users },
-  { label: "Produtos", href: "/produtos", icon: Shirt },
+  { label: "Peças", href: "/produtos", icon: Shirt },
   { label: "Pedidos", href: "/pedidos", icon: ClipboardList },
   { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
   { label: "Produção", href: "/producao", icon: Factory },
