@@ -49,3 +49,9 @@ next-env.d.ts
 backup-empresas-removidas.json
 
 backup-pagamentos-producao.json
+
+# Playwright: relatorios e rastros de execucao, nao vao para o Git
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

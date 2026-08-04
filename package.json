@@ -15,7 +15,10 @@
     "db:baseline": "prisma migrate resolve --applied 20260706000000_init",
     "db:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:dev-setup": "node scripts/setup-dev-db.mjs"
+    "db:dev-setup": "node scripts/setup-dev-db.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -25,6 +28,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
