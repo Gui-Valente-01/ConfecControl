@@ -116,30 +116,36 @@ export default async function BancadaPage() {
                   {task.pickedByName} · pegou {formatDateTime(task.pickedAt)}
                 </p>
 
+                {/* Esta tela é usada em pé, no celular, com a mão ocupada. Os
+                    controles têm 44px de altura (mínimo confortável para o
+                    dedo) e texto de 16px no celular, que é o tamanho abaixo do
+                    qual o iPhone dá zoom sozinho ao tocar no campo. */}
                 <ToastForm action={completeTaskAction} className="mt-3 space-y-2 border-t border-[#eef2ef] pt-3">
                   <input type="hidden" name="id" value={task.id} />
                   <div className="flex flex-wrap gap-2">
-                    <select name="noteKind" defaultValue="NONE" className="h-9 rounded-lg border border-[#c7d3ce] bg-white px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
+                    <select name="noteKind" defaultValue="NONE" className="h-11 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm">
                       {noteOptions.map(([value, label]) => (
                         <option key={value} value={value}>{label}</option>
                       ))}
                     </select>
                     <input
                       name="note"
-                      placeholder="Descrição (o que faltou/sobrou)"
-                      className="h-9 min-w-40 flex-1 rounded-lg border border-[#c7d3ce] px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                      placeholder="O que faltou ou sobrou"
+                      className="h-11 min-w-40 flex-1 rounded-lg border border-[#c7d3ce] px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
                     />
                   </div>
                   <div className="flex gap-2">
-                    <button className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#087f7d] text-xs font-semibold text-white transition hover:bg-[#05605e]">
-                      <CheckCircle2 size={14} aria-hidden="true" />
+                    <button className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#087f7d] text-base font-semibold text-white transition hover:bg-[#05605e] sm:h-10 sm:text-sm">
+                      <CheckCircle2 size={18} aria-hidden="true" />
                       Concluído
                     </button>
                   </div>
                 </ToastForm>
-                <ToastForm action={releaseTaskAction} className="mt-2" confirm="Liberar este pedido (desfaz o 'peguei')?">
+                <ToastForm action={releaseTaskAction} className="mt-1" confirm="Liberar este pedido (desfaz o 'peguei')?">
                   <input type="hidden" name="id" value={task.id} />
-                  <button className="text-xs font-semibold text-[#9f2f42] hover:underline">Liberar pedido</button>
+                  <button className="inline-flex h-11 items-center px-1 text-sm font-semibold text-[#9f2f42] hover:underline sm:h-9">
+                    Liberar pedido
+                  </button>
                 </ToastForm>
               </article>
             ))}
@@ -256,7 +262,7 @@ export default async function BancadaPage() {
                         required
                         defaultValue=""
                         disabled={mesas.length === 0}
-                        className="h-10 min-w-28 flex-1 rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                        className="h-12 min-w-28 flex-1 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
                       >
                         <option value="" disabled>Mesa...</option>
                         {mesas.map((mesa) => (
@@ -265,9 +271,9 @@ export default async function BancadaPage() {
                       </select>
                       <button
                         disabled={mesas.length === 0}
-                        className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#111a16] px-4 text-sm font-semibold text-white transition hover:bg-[#05100b] disabled:opacity-50"
+                        className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#111a16] px-5 text-base font-semibold text-white transition hover:bg-[#05100b] disabled:opacity-50 sm:h-10 sm:px-4 sm:text-sm"
                       >
-                        <Hand size={15} aria-hidden="true" />
+                        <Hand size={18} aria-hidden="true" />
                         Pegar
                       </button>
                     </ToastForm>
