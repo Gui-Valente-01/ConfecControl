@@ -3,7 +3,7 @@ import { DbDashboard } from "@/components/db-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
 import { getSessionUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
-import { canSeeFinance } from "@/lib/roles";
+import { canManageOrders, canSeeFinance } from "@/lib/roles";
 import { findIncompleteCosts } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 
@@ -85,6 +85,7 @@ export default async function Home() {
         productsWithoutCost={productsWithoutCost}
         plan={plan}
         showFinance={showFinance}
+        podeCriarPedido={canManageOrders(user.role)}
       />
     </AppShell>
   );

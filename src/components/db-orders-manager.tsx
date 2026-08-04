@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { CheckCircle2, Eye, Filter } from "lucide-react";
 import { createOrderAction, deleteOrderAction } from "@/app/pedidos/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { OrderForm } from "@/components/order-form";
@@ -7,6 +7,7 @@ import { PrioritySelect } from "@/components/priority-select";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
+import type { FiltroPedido } from "@/lib/order-filters";
 import { orderPriorityBadge, orderPriorityLabels, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import type { OrderPriority, OrderStatus, PaymentStatus } from "@prisma/client";
 
@@ -20,6 +21,7 @@ type DbOrder = {
   priority: OrderPriority;
   paymentStatus: PaymentStatus;
   totalAmountInCents: number;
+  paidAmountInCents: number;
   client: { name: string };
   items: { description: string; quantity: number }[];
 };
@@ -32,22 +34,107 @@ type DbOrdersManagerProps = {
   canPrioritize: boolean;
   canManage: boolean;
   showFinance: boolean;
+  filtro: FiltroPedido | null;
+  filtroTexto: { titulo: string; explicacao: string; vazio: string } | null;
+  /** Quantos pedidos existem sem filtro nenhum, para o "ver todos" fazer sentido. */
+  totalSemFiltro: number;
 };
 
-export function DbOrdersManager({ clients, products, serviceSuggestions, orders, canPrioritize, canManage, showFinance }: DbOrdersManagerProps) {
+// Atalhos da lista. São os mesmos recortes que o Início usa nos avisos, para a
+// pessoa reencontrar aqui o que clicou lá — e não precisar aprender dois nomes
+// para a mesma coisa.
+const ATALHOS: { filtro: FiltroPedido; rotulo: string }[] = [
+  { filtro: "atrasados", rotulo: "Atrasados" },
+  { filtro: "hoje", rotulo: "Entregar hoje" },
+  { filtro: "material", rotulo: "Aguardando material" },
+  { filtro: "producao", rotulo: "Em produção" },
+  { filtro: "prontos", rotulo: "Prontos" },
+  { filtro: "receber", rotulo: "Falta receber" },
+];
+
+export function DbOrdersManager({
+  clients,
+  products,
+  serviceSuggestions,
+  orders,
+  canPrioritize,
+  canManage,
+  showFinance,
+  filtro,
+  filtroTexto,
+  totalSemFiltro,
+}: DbOrdersManagerProps) {
   const now = new Date();
 
   return (
     <section className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_380px]" : ""}`}>
       <SectionCard
         eyebrow="Fila de pedidos"
-        title="Pedidos cadastrados"
-        action={<div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{orders.length} pedidos</div>}
+        title={filtroTexto ? filtroTexto.titulo : "Pedidos cadastrados"}
+        action={
+          <div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">
+            {orders.length === 1 ? "1 pedido" : `${orders.length} pedidos`}
+          </div>
+        }
       >
+        {/* Atalhos: um clique reduz a lista ao que importa agora. */}
+        <nav aria-label="Filtrar pedidos" className="mb-4 flex flex-wrap gap-2">
+          <Link
+            href="/pedidos"
+            aria-current={filtro === null ? "page" : undefined}
+            className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition ${
+              filtro === null
+                ? "border-[#087f7d] bg-[#e8f6f3] text-[#05605e]"
+                : "border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
+            }`}
+          >
+            Todos ({totalSemFiltro})
+          </Link>
+          {ATALHOS.map((atalho) => {
+            const ativo = filtro === atalho.filtro;
+            return (
+              <Link
+                key={atalho.filtro}
+                href={`/pedidos?filtro=${atalho.filtro}`}
+                aria-current={ativo ? "page" : undefined}
+                className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition ${
+                  ativo
+                    ? "border-[#087f7d] bg-[#e8f6f3] text-[#05605e]"
+                    : "border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
+                }`}
+              >
+                {atalho.rotulo}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {filtroTexto ? (
+          <p className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#bfe0d9] bg-[#e8f6f3] px-3 py-2.5 text-sm text-[#05605e]">
+            <Filter size={15} aria-hidden="true" />
+            <span>{filtroTexto.explicacao}</span>
+            <Link href="/pedidos" className="font-semibold underline underline-offset-2">
+              Ver todos os pedidos
+            </Link>
+          </p>
+        ) : null}
+
         {orders.length === 0 ? (
           <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-            <h3 className="font-semibold">Nenhum pedido cadastrado</h3>
-            <p className="mt-2 text-sm text-[#66756d]">Cadastre clientes e produtos, depois crie o primeiro pedido real.</p>
+            {filtroTexto ? (
+              <>
+                <CheckCircle2 size={24} className="mx-auto text-[#05605e]" aria-hidden="true" />
+                <h3 className="mt-2 font-semibold">{filtroTexto.vazio}</h3>
+                <Link href="/pedidos" className="mt-3 inline-flex text-sm font-semibold text-[#087f7d] underline underline-offset-2">
+                  Ver todos os pedidos
+                </Link>
+              </>
+            ) : (
+              <>
+                <h3 className="font-semibold">Nenhum pedido cadastrado</h3>
+                <p className="mt-2 text-sm text-[#66756d]">Cadastre clientes e peças, depois crie o primeiro pedido real.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

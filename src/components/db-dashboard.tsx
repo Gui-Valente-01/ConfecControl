@@ -1,10 +1,12 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, CreditCard, Layers, Package } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, Package } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
+import { TarefasDoDia, type ContagensDoDia } from "@/components/tarefas-do-dia";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
-import { isOrderLate, orderStatusLabels } from "@/lib/status";
+import { filtrarPedidos } from "@/lib/order-filters";
+import { orderStatusLabels } from "@/lib/status";
 import type { OrderStatus, PaymentStatus } from "@prisma/client";
 
 type DashboardStage = {
@@ -27,6 +29,7 @@ type DashboardOrder = {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   totalAmountInCents: number;
+  paidAmountInCents: number;
   client: { name: string };
   items: { description: string; quantity: number }[];
 };
@@ -53,29 +56,31 @@ type DbDashboardProps = {
   productsWithoutCost: number;
   plan: DashboardPlan;
   showFinance: boolean;
+  podeCriarPedido: boolean;
 };
 
-export function DbDashboard({ orders, stages, materials, productsWithoutCost, plan, showFinance }: DbDashboardProps) {
+export function DbDashboard({ orders, stages, materials, productsWithoutCost, plan, showFinance, podeCriarPedido }: DbDashboardProps) {
   const now = new Date();
   const openOrders = orders.filter((order) => !["READY", "DELIVERED", "CANCELED"].includes(order.status)).length;
-  const lateOrders = orders.filter((order) => isOrderLate(order.deliveryDate, order.status)).length;
   const lowStock = materials.filter((item) => item.currentQuantity <= item.minimumQuantity);
-  const pendingPayments = orders.filter((order) => order.status !== "CANCELED" && order.paymentStatus !== "PAID").length;
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmountInCents, 0);
 
-  const alerts = [
-    lateOrders > 0 ? { text: `${lateOrders} pedido(s) atrasado(s)`, href: "/pedidos", icon: AlertTriangle } : null,
-    plan.estoque && lowStock.length > 0 ? { text: `${lowStock.length} material(is) abaixo do mínimo`, href: "/estoque", icon: Package } : null,
-    plan.financeiro && pendingPayments > 0 ? { text: `${pendingPayments} pagamento(s) pendente(s)`, href: "/financeiro", icon: CreditCard } : null,
-    // Custo incompleto não trava nada, mas faz a margem do relatório mentir.
-    productsWithoutCost > 0
-      ? { text: `${productsWithoutCost} peça(s) com custo incompleto`, href: "/produtos", icon: Layers }
-      : null,
-  ].filter((a): a is { text: string; href: string; icon: typeof AlertTriangle } => a !== null);
+  // As contagens usam exatamente as mesmas regras da lista de pedidos, para o
+  // número do aviso bater com o que abre ao clicar. Se cada tela contasse do
+  // seu jeito, o aviso diria 3 e a lista mostraria 2 — e aí ninguém confia.
+  const contagens: ContagensDoDia = {
+    atrasados: filtrarPedidos(orders, "atrasados", now).length,
+    hoje: filtrarPedidos(orders, "hoje", now).length,
+    aguardandoMaterial: filtrarPedidos(orders, "material", now).length,
+    prontos: filtrarPedidos(orders, "prontos", now).length,
+    aReceber: filtrarPedidos(orders, "receber", now).length,
+    estoqueBaixo: lowStock.length,
+    custoIncompleto: productsWithoutCost,
+  };
 
   const stats = [
     { label: "Pedidos em aberto", value: String(openOrders), note: "acompanhados no quadro", icon: ClipboardList, tone: "primary" as const },
-    { label: "Atrasados", value: String(lateOrders), note: "prioridade alta", icon: AlertTriangle, tone: "danger" as const },
+    { label: "Atrasados", value: String(contagens.atrasados), note: "prioridade alta", icon: AlertTriangle, tone: "danger" as const },
     showFinance
       ? { label: "Faturamento previsto", value: centsToCurrency(totalRevenue), note: "somando pedidos reais", icon: CheckCircle2, tone: "warning" as const }
       : null,
@@ -86,24 +91,12 @@ export function DbDashboard({ orders, stages, materials, productsWithoutCost, pl
 
   return (
     <>
-      {alerts.length > 0 ? (
-        <section className="flex flex-wrap gap-3" aria-label="Alertas">
-          {alerts.map((alert) => {
-            const Icon = alert.icon;
-            return (
-              <Link
-                key={alert.href}
-                href={alert.href}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#f1c0c9] bg-[#fff0f2] px-3 py-2 text-sm font-semibold text-[#9f2f42] transition hover:bg-[#ffe3e8]"
-              >
-                <Icon size={16} aria-hidden="true" />
-                {alert.text}
-                <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-            );
-          })}
-        </section>
-      ) : null}
+      <TarefasDoDia
+        contagens={contagens}
+        mostrarFinanceiro={plan.financeiro}
+        mostrarEstoque={plan.estoque}
+        podeCriarPedido={podeCriarPedido}
+      />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Resumo">
         {stats.map((stat) => (

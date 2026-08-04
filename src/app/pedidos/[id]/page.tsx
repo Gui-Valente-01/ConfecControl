@@ -4,6 +4,7 @@ import { ArrowLeft, MessageCircle, Paperclip, Pencil, Printer } from "lucide-rea
 import { AppShell } from "@/components/app-shell";
 import { AttachmentUploadForm } from "@/components/attachment-upload-form";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
+import { OrderProgressTrail } from "@/components/order-progress-trail";
 import { SectionCard } from "@/components/section-card";
 import { whatsappUrl } from "@/lib/whatsapp";
 import { StatusBadge } from "@/components/status-badge";
@@ -101,6 +102,15 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           ) : null}
         </div>
       </div>
+
+      {/* Antes de qualquer detalhe: em que pé está e o que fazer agora. */}
+      <OrderProgressTrail
+        status={order.status}
+        totalAmountInCents={order.totalAmountInCents}
+        paidAmountInCents={order.paidAmountInCents}
+        etapaAtual={order.currentStage?.name ?? null}
+        podeAvancar={canManage}
+      />
 
       <SectionCard eyebrow="Resumo" title={order.client.name}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

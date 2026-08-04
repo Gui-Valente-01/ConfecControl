@@ -2,12 +2,21 @@ import { AppShell } from "@/components/app-shell";
 import { DbOrdersManager } from "@/components/db-orders-manager";
 import { requireRouteUser } from "@/lib/auth";
 import { canManageOrders, canSeeFinance } from "@/lib/roles";
+import { descreverFiltro, eFiltroPedido, filtrarPedidos } from "@/lib/order-filters";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export default async function PedidosPage() {
+export default async function PedidosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filtro?: string }>;
+}) {
   const user = await requireRouteUser("/pedidos");
+  // O filtro vem da URL (?filtro=atrasados) porque é assim que os avisos do
+  // Início conseguem abrir a lista já reduzida ao que a pessoa clicou.
+  const params = await searchParams;
+  const filtro = eFiltroPedido(params.filtro) ? params.filtro : null;
   const [clients, products, serviceSuggestions, orders] = await Promise.all([
     prisma.client.findMany({ where: { companyId: user.companyId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
     prisma.product.findMany({
@@ -35,16 +44,27 @@ export default async function PedidosPage() {
   const canManage = canManageOrders(user.role);
   const showFinance = canSeeFinance(user.role);
 
+  const visiveis = filtrarPedidos(orders, filtro);
+  const descricao = filtro ? descreverFiltro(filtro) : null;
+
   return (
-    <AppShell eyebrow="Operação" title="Pedidos" actionLabel={canManage ? "Novo pedido" : undefined} user={user}>
+    <AppShell
+      eyebrow="Operação"
+      title={descricao ? descricao.titulo : "Pedidos"}
+      actionLabel={canManage ? "Novo pedido" : undefined}
+      user={user}
+    >
       <DbOrdersManager
         clients={clients}
         serviceSuggestions={serviceSuggestions}
         products={products}
-        orders={orders}
+        orders={visiveis}
         canPrioritize={canPrioritize}
         canManage={canManage}
         showFinance={showFinance}
+        filtro={filtro}
+        filtroTexto={descricao}
+        totalSemFiltro={orders.length}
       />
     </AppShell>
   );

@@ -6,6 +6,7 @@ import {
   Bell,
   BarChart3,
   BookOpen,
+  ChevronDown,
   ClipboardList,
   CreditCard,
   Factory,
@@ -15,6 +16,7 @@ import {
   LayoutGrid,
   LogOut,
   Menu,
+  MoreHorizontal,
   Package,
   Plus,
   Search,
@@ -32,26 +34,39 @@ import { logoutAction } from "@/app/login/actions";
 import { planAllowsRoute } from "@/lib/features";
 import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
 
-const navItems = [
-  // O menu usa a mesma palavra que o resto do sistema. "Dashboard" era a única
-  // palavra em inglês no produto inteiro, e "Produtos" brigava com "peça", que
-  // é como todas as outras telas chamam o item do catálogo. A rota continua
-  // /produtos: mudar endereço quebraria link salvo e favorito de quem já usa.
-  { label: "Painel", href: "/", icon: LayoutDashboard },
-  { label: "Clientes", href: "/clientes", icon: Users },
-  { label: "Peças", href: "/produtos", icon: Shirt },
+// O menu usa a mesma palavra que o resto do sistema. "Dashboard" era a única
+// palavra em inglês no produto inteiro, e "Produtos" brigava com "peça", que é
+// como todas as outras telas chamam o item do catálogo. As rotas continuam as
+// mesmas: mudar endereço quebraria link salvo e favorito de quem já usa.
+//
+// Eram 14 itens soltos, todos com o mesmo peso. Para quem nunca usou um sistema
+// de gestão, 14 escolhas é o mesmo que nenhuma pista. Agora ficam em cima só as
+// seis telas do dia a dia; o resto é cadastro e ajuste, que se mexe de vez em
+// quando, e vai para "Mais".
+const navPrincipal = [
+  { label: "Início", href: "/", icon: LayoutDashboard },
   { label: "Pedidos", href: "/pedidos", icon: ClipboardList },
-  { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
   { label: "Produção", href: "/producao", icon: Factory },
-  { label: "Bancada", href: "/bancada", icon: LayoutGrid },
-  { label: "Estoque", href: "/estoque", icon: Package },
   { label: "Financeiro", href: "/financeiro", icon: CreditCard },
   { label: "Relatórios", href: "/relatorios", icon: BarChart3 },
-  { label: "Funcionários", href: "/usuarios", icon: ShieldCheck },
+  { label: "Solicitações", href: "/solicitacoes", icon: Inbox },
+];
+
+const navMais = [
+  { label: "Clientes", href: "/clientes", icon: Users },
+  { label: "Peças", href: "/produtos", icon: Shirt },
+  { label: "Materiais", href: "/estoque", icon: Package },
   { label: "Terceirizadas", href: "/terceirizadas", icon: Handshake },
+  { label: "Funcionários", href: "/usuarios", icon: ShieldCheck },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
   { label: "Lixeira", href: "/lixeira", icon: Trash2 },
 ];
+
+// A Bancada é uma atividade da produção, não um módulo à parte: aparece dentro
+// de Produção, e o menu mostra as duas como uma coisa só.
+const SUBROTAS: Record<string, { label: string; href: string; icon: typeof LayoutGrid }[]> = {
+  "/producao": [{ label: "Bancada", href: "/bancada", icon: LayoutGrid }],
+};
 
 type ShellUser = {
   name: string;
@@ -89,8 +104,117 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const visibleNav = navItems.filter(
-    (item) => canAccessRoute(user.role, item.href) && planAllowsRoute(user.features, item.href),
+  const podeVer = (href: string) =>
+    canAccessRoute(user.role, href) && planAllowsRoute(user.features, href);
+
+  const principal = navPrincipal.filter((item) => podeVer(item.href));
+  const mais = navMais.filter((item) => podeVer(item.href));
+
+  // "Mais" começa aberto quando a pessoa já está numa das telas de dentro:
+  // fechado ali, o menu esconderia justamente a página em que ela está.
+  const emMais = mais.some((item) => pathname.startsWith(item.href) && item.href !== "/");
+  const [maisAberto, setMaisAberto] = useState(emMais);
+
+  const estaAtivo = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+
+  // Um só renderizador para o menu do computador e o do celular: dois códigos
+  // separados foi como o "Dashboard" e o "Painel" acabaram com nomes diferentes.
+  const renderNav = (aoNavegar?: () => void, alturaItem = "h-10") => (
+    <>
+      {principal.map((item) => {
+        const Icon = item.icon;
+        const ativo = estaAtivo(item.href);
+        const subrotas = (SUBROTAS[item.href] ?? []).filter((sub) => podeVer(sub.href));
+        const algumaSubAtiva = subrotas.some((sub) => estaAtivo(sub.href));
+        return (
+          <div key={item.href}>
+            <Link
+              href={item.href}
+              onClick={aoNavegar}
+              aria-current={ativo ? "page" : undefined}
+              className={`flex ${alturaItem} items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
+                ativo || algumaSubAtiva
+                  ? "bg-white text-[#111a16] shadow-sm"
+                  : "text-[#c8d6cf] hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Icon size={18} aria-hidden="true" />
+              {item.label}
+            </Link>
+            {subrotas.map((sub) => {
+              const SubIcon = sub.icon;
+              const subAtiva = estaAtivo(sub.href);
+              return (
+                <Link
+                  key={sub.href}
+                  href={sub.href}
+                  onClick={aoNavegar}
+                  aria-current={subAtiva ? "page" : undefined}
+                  className={`ml-5 flex ${alturaItem} items-center gap-2.5 rounded-lg border-l border-white/15 pl-4 pr-3 text-sm transition ${
+                    subAtiva ? "bg-white/90 font-semibold text-[#111a16]" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <SubIcon size={16} aria-hidden="true" />
+                  {sub.label}
+                </Link>
+              );
+            })}
+          </div>
+        );
+      })}
+
+      {mais.length > 0 ? (
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={() => setMaisAberto((aberto) => !aberto)}
+            aria-expanded={maisAberto}
+            className={`flex ${alturaItem} w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-[#c8d6cf] transition hover:bg-white/10 hover:text-white`}
+          >
+            <MoreHorizontal size={18} aria-hidden="true" />
+            <span className="flex-1 text-left">Mais</span>
+            <ChevronDown
+              size={16}
+              aria-hidden="true"
+              className={`transition-transform ${maisAberto ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {maisAberto ? (
+            <div className="mt-1 space-y-1">
+              {mais.map((item) => {
+                const Icon = item.icon;
+                const ativo = estaAtivo(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={aoNavegar}
+                    aria-current={ativo ? "page" : undefined}
+                    className={`ml-5 flex ${alturaItem} items-center gap-2.5 rounded-lg border-l border-white/15 pl-4 pr-3 text-sm transition ${
+                      ativo ? "bg-white font-semibold text-[#111a16]" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <a
+                href="/manual"
+                target="_blank"
+                rel="noopener"
+                onClick={aoNavegar}
+                className={`ml-5 flex ${alturaItem} items-center gap-2.5 rounded-lg border-l border-white/15 pl-4 pr-3 text-sm text-[#9eb1a8] transition hover:bg-white/10 hover:text-white`}
+              >
+                <BookOpen size={16} aria-hidden="true" />
+                Manual
+              </a>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </>
   );
   const resolvedSearch =
     search === false
@@ -124,24 +248,7 @@ export function AppShell({
           </Link>
 
           <nav className="mt-6 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1" aria-label="Navegação principal">
-            {visibleNav.map((item) => {
-              const Icon = item.icon;
-              const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
-                    active
-                      ? "bg-white text-[#111a16] shadow-sm"
-                      : "text-[#c8d6cf] hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <Icon size={18} aria-hidden="true" />
-                  {item.label}
-                </Link>
-              );
-            })}
+            {renderNav()}
           </nav>
 
           <div className="mt-5 shrink-0 rounded-xl border border-white/10 bg-white/[0.06] p-4">
@@ -286,24 +393,10 @@ export function AppShell({
                 <X size={18} aria-hidden="true" />
               </button>
             </div>
+            {/* Fecha sozinho ao escolher uma página: no celular, menu que fica
+                aberto por cima do conteúdo faz a pessoa achar que não navegou. */}
             <nav className="mt-8 min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label="Navegação mobile">
-              {visibleNav.map((item) => {
-                const Icon = item.icon;
-                const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
-                      active ? "bg-white text-[#111a16]" : "text-[#c8d6cf] hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {renderNav(() => setMobileOpen(false), "h-11")}
             </nav>
             <div className="mt-5 shrink-0 rounded-xl border border-white/10 bg-white/[0.06] p-3">
               <p className="text-sm font-semibold">{user.name}</p>
