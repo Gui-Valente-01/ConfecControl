@@ -75,8 +75,44 @@ textarea::placeholder {
 }
 
 @media print {
+  /* A margem do papel é definida aqui, e não com padding no conteúdo. Sem esta
+     regra cada navegador escolhe a sua, e a mesma folha sai em posição
+     diferente em cada máquina da confecção. */
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
   body {
     background: #ffffff;
+    color: #000000;
+  }
+
+  /* Cabeçalho da tabela se repete quando o pedido passa de uma folha, e
+     nenhuma linha parte no meio: item cortado ao meio gera discussão na
+     entrega. */
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr,
+  img {
+    break-inside: avoid;
+  }
+
+  /* Alguns navegadores imprimem a URL colada atrás de cada link. Num recibo
+     entregue ao cliente isso só suja a folha. */
+  a[href]::after {
+    content: none !important;
+  }
+
+  /* Bloco que não pode ser dividido entre duas folhas (totais, assinatura). */
+  .print-keep {
+    break-inside: avoid;
   }
 }
 
