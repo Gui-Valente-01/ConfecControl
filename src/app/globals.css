@@ -74,6 +74,52 @@ textarea::placeholder {
   outline-offset: 2px;
 }
 
+/* Celular (abaixo do breakpoint sm). Regra única em vez de acertar a altura
+   campo por campo em 43 arquivos: assim nenhuma tela fica de fora, nem as
+   que vierem depois.
+
+   São duas coisas:
+
+   1. Fonte de 16px nos campos. Abaixo disso o Safari do iPhone dá zoom
+      sozinho quando a pessoa toca no campo, e ela perde o lugar na tela.
+
+   2. Altura mínima de 44px nos controles, que é o tamanho confortável para
+      o dedo. É min-height, não height: quem já é maior continua igual, e o
+      <button> centraliza o próprio texto por padrão, então nada desalinha.
+
+   No computador nada muda: a regra só vale até 639.98px. */
+@media (max-width: 639.98px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea,
+  button {
+    min-height: 44px;
+  }
+
+  /* Botão de ícone (lixeira, fechar) é quadrado: sem isso ficaria 36 de
+     largura por 44 de altura, um retângulo torto e ainda estreito demais
+     para acertar. */
+  button {
+    min-width: 44px;
+  }
+
+  /* Link que faz papel de botão ("Ver histórico", "Imprimir", o menu). Aqui
+     só valem os que têm flex ou inline-flex, que é como esses são escritos;
+     link dentro de texto corrido não tem, e continua sem altura forçada —
+     senão cada link no meio de uma frase abriria um buraco no parágrafo.
+     O ~= casa a palavra inteira, então "flex-1" não entra por engano. */
+  a[class*="inline-flex"],
+  a[class~="flex"] {
+    min-height: 44px;
+  }
+}
+
 @media print {
   /* A margem do papel é definida aqui, e não com padding no conteúdo. Sem esta
      regra cada navegador escolhe a sua, e a mesma folha sai em posição
