@@ -70,6 +70,42 @@ export function pickNextStage(stages: Stage[], currentPosition: number): Stage |
   return next;
 }
 
+/**
+ * A tela ainda está mostrando a etapa certa?
+ *
+ * O botão de avançar manda junto a etapa que a tela via quando carregou. Se
+ * outra pessoa moveu o pedido nesse meio tempo, esse valor está velho — e
+ * avançar a partir dele joga o pedido para uma etapa que já passou.
+ *
+ * Cenário real: o pedido está na Costura. O gerente ainda tem a tela de meia
+ * hora atrás, mostrando Corte. Ele clica em avançar, o sistema calcula "a
+ * próxima depois de Corte" e o pedido volta para o Silk sozinho.
+ */
+export function isStageOutdated(
+  telaViu: string | null | undefined,
+  pedidoTem: string | null | undefined,
+): boolean {
+  return (telaViu ?? null) !== (pedidoTem ?? null);
+}
+
+/**
+ * O trabalho de bancada foi feito na etapa em que o pedido ainda está?
+ *
+ * A tarefa guarda o nome da etapa no momento de pegar. Se o pedido mudou de
+ * etapa enquanto a pessoa trabalhava, concluir avançaria a partir da etapa
+ * nova e puparia uma etapa inteira sem ninguém ter feito o serviço.
+ *
+ * Tarefa sem etapa registrada (pedido que nunca teve etapa) não trava: não há
+ * o que comparar, e barrar aí só impediria a pessoa de fechar o trabalho.
+ */
+export function isTaskStageOutdated(
+  etapaPega: string | null | undefined,
+  etapaAtual: string | null | undefined,
+): boolean {
+  if (!etapaPega) return false;
+  return etapaPega !== (etapaAtual ?? null);
+}
+
 export type ProductCostInfo = {
   id: string;
   bom: { materialName: string; materialPriceInCents: number }[];

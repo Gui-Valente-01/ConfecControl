@@ -6,7 +6,7 @@ import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
-import { pickNextStage } from "@/lib/production";
+import { isStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
 // Mover etapa / definir responsável é só do Dono e do Gerente (Produção é só leitura).
@@ -26,8 +26,23 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
   const companyId = await requireCompanyId();
 
   // Garante que o pedido pertence a empresa do usuário logado.
-  const order = await prisma.order.findFirst({ where: { id: orderId, companyId }, select: { id: true } });
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, companyId },
+    select: { id: true, currentStageId: true, currentStage: { select: { name: true } } },
+  });
   if (!order) return { error: "Pedido não encontrado." };
+
+  // O botão manda junto a etapa que a tela via ao carregar. Se outra pessoa
+  // moveu o pedido nesse meio tempo, avançar a partir daquele valor jogaria o
+  // pedido para uma etapa que já passou.
+  if (isStageOutdated(currentStageId, order.currentStageId)) {
+    const onde = order.currentStage?.name;
+    return {
+      error: onde
+        ? `Outra pessoa já moveu este pedido: ele está em ${onde}. Atualize a página antes de mover.`
+        : "Outra pessoa já mexeu neste pedido. Atualize a página antes de mover.",
+    };
+  }
 
   const currentStage = await prisma.productionStage.findFirst({ where: { id: currentStageId, companyId } });
   if (!currentStage) return { error: "Etapa atual não encontrada." };

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { computeStockConsumption, findIncompleteCosts, pickNextStage, type BomLine, type Stage } from "@/lib/production";
+import {
+  computeStockConsumption,
+  findIncompleteCosts,
+  isStageOutdated,
+  isTaskStageOutdated,
+  pickNextStage,
+  type BomLine,
+  type Stage,
+} from "@/lib/production";
 
 // Ficha de exemplo: a camiseta gasta malha e linha; o boné gasta malha e aba.
 const boms: BomLine[] = [
@@ -141,5 +149,47 @@ describe("findIncompleteCosts", () => {
   it("peca sem ficha nao entra: o problema dela e outro", () => {
     const out = findIncompleteCosts([{ id: "avulso", bom: [] }]);
     expect(out.productIds.size).toBe(0);
+  });
+});
+
+describe("isStageOutdated", () => {
+  it("tela em dia com o pedido: pode avancar", () => {
+    expect(isStageOutdated("costura", "costura")).toBe(false);
+  });
+
+  it("outra pessoa moveu o pedido: a tela esta velha", () => {
+    // A tela viu "corte", mas o pedido ja esta na "costura". Avancar a partir
+    // de "corte" mandaria o pedido para o "silk", ou seja, para tras.
+    expect(isStageOutdated("corte", "costura")).toBe(true);
+  });
+
+  it("pedido perdeu a etapa enquanto a tela estava aberta", () => {
+    expect(isStageOutdated("corte", null)).toBe(true);
+    expect(isStageOutdated(null, "corte")).toBe(true);
+  });
+
+  it("os dois sem etapa contam como iguais", () => {
+    expect(isStageOutdated(null, null)).toBe(false);
+    expect(isStageOutdated(undefined, null)).toBe(false);
+  });
+});
+
+describe("isTaskStageOutdated", () => {
+  it("pedido parado na mesma etapa: pode concluir", () => {
+    expect(isTaskStageOutdated("Silk", "Silk")).toBe(false);
+  });
+
+  it("pedido andou enquanto a pessoa trabalhava: concluir pularia uma etapa", () => {
+    expect(isTaskStageOutdated("Silk", "Costura")).toBe(true);
+  });
+
+  it("pedido ficou sem etapa no meio do trabalho", () => {
+    expect(isTaskStageOutdated("Silk", null)).toBe(true);
+  });
+
+  it("tarefa sem etapa registrada nao trava: nao ha o que comparar", () => {
+    expect(isTaskStageOutdated(null, "Costura")).toBe(false);
+    expect(isTaskStageOutdated(null, null)).toBe(false);
+    expect(isTaskStageOutdated("", "Costura")).toBe(false);
   });
 });

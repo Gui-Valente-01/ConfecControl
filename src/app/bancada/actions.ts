@@ -7,7 +7,7 @@ import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
-import { pickNextStage } from "@/lib/production";
+import { isTaskStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
 const noteKinds = ["NONE", "SHORTAGE", "SURPLUS", "INFO"];
@@ -74,12 +74,28 @@ export async function completeTaskAction(_prev: FormState, formData: FormData): 
     select: {
       id: true,
       orderId: true,
-      order: { select: { number: true, currentStage: { select: { id: true, position: true } } } },
+      stageName: true,
+      order: { select: { number: true, currentStage: { select: { id: true, name: true, position: true } } } },
     },
   });
   if (!task) return { error: "Tarefa não encontrada ou já concluída." };
 
   const currentStage = task.order.currentStage;
+
+  // A tarefa guarda a etapa de quando a pessoa pegou. Se o pedido andou nesse
+  // meio tempo, avançar a partir da etapa nova pularia uma etapa inteira sem
+  // ninguém ter feito o serviço. Aqui o trabalho é fechado, mas o pedido não
+  // se move: quem move é quem estiver com ele agora.
+  if (isTaskStageOutdated(task.stageName, currentStage?.name)) {
+    await prisma.bancadaTask.update({
+      where: { id: task.id },
+      data: { status: "DONE", doneAt: new Date(), noteKind, note: note || null },
+    });
+    revalidatePath("/bancada");
+    return {
+      error: `Seu trabalho no pedido #${task.order.number} foi registrado, mas o pedido já saiu da etapa ${task.stageName} enquanto você trabalhava. Ele não foi movido — confira com o responsável.`,
+    };
+  }
   const stages = currentStage
     ? await prisma.productionStage.findMany({
         where: { companyId: user.companyId },
