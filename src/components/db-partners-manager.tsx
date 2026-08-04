@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { SubmitButton } from "@/components/submit-button";
 import { ToastForm } from "@/components/toast-form";
 import { useActionFeedback } from "@/components/toast";
+import { useFieldError } from "@/components/use-field-error";
 import { emptyFormState } from "@/lib/form-state";
 
 type DbPartner = {
@@ -33,6 +34,7 @@ const suggestedServices = ["Bordado", "Estampa", "Lavanderia", "Corte", "Costura
 export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]; canEdit: boolean }) {
   const [state, formAction] = useActionState(createPartnerAction, emptyFormState);
   useActionFeedback(state);
+  const formRef = useFieldError(state);
 
   return (
     <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
@@ -116,7 +118,7 @@ export function DbPartnersManager({ partners, canEdit }: { partners: DbPartner[]
       </SectionCard>
 
       <SectionCard eyebrow="Nova terceirizada" title="Cadastrar empresa">
-        <form className="space-y-3" action={formAction}>
+        <form ref={formRef} className="space-y-3" action={formAction}>
           <label className="block">
             <span className="text-sm font-medium text-[#405047]">Nome da empresa</span>
             <input name="name" required className={fieldClass} placeholder="Ex.: Bordados Aurora" />

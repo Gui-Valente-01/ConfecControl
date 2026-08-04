@@ -374,13 +374,16 @@ export function OrderForm({
               </label>
               <label className="block">
                 <span className="text-xs font-medium text-[#63736b]">Preço un. (R$)</span>
+                {/* Sem aria-invalid neste campo: preço fora da curva é aviso, não
+                    recusa. O valor continua válido e salvável, então não pode usar
+                    a marcação (nem o vermelho) de campo errado. */}
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={item.unitPrice}
                   onChange={(e) => updateItem(item.key, { unitPrice: e.target.value })}
-                  aria-invalid={atypicalKeys.has(item.key) || undefined}
+                  data-cc-atypical={atypicalKeys.has(item.key) ? "true" : undefined}
                   className={`mt-1 h-9 w-full rounded-lg border px-2 text-sm outline-none transition focus:ring-4 ${
                     atypicalKeys.has(item.key)
                       ? "border-[#d9a03a] bg-[#fffaf0] ring-[#d9a03a]/20 focus:border-[#b9821f]"

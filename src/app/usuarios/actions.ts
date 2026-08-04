@@ -7,7 +7,7 @@ import { hashPassword, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateContactFields } from "@/lib/validation";
 
-export type UserFormState = { error?: string; success?: string };
+export type UserFormState = { error?: string; success?: string; field?: string };
 
 const roles: UserRole[] = ["ADMIN", "MANAGER", "PRODUCTION", "FINANCE", "SALES"];
 
@@ -28,16 +28,17 @@ export async function createUserAction(_prev: UserFormState, formData: FormData)
   const sector = String(formData.get("sector") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
 
-  if (!name || !email) return { error: "Informe nome e e-mail." };
-  if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };
-  if (!roles.includes(roleRaw as UserRole)) return { error: "Cargo inválido." };
+  if (!name) return { error: "Informe o nome do funcionário.", field: "name" };
+  if (!email) return { error: "Informe o e-mail de login.", field: "email" };
+  if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres.", field: "password" };
+  if (!roles.includes(roleRaw as UserRole)) return { error: "Cargo inválido.", field: "role" };
 
   // O e-mail aqui é o login do funcionário: errar deixa a pessoa sem entrar.
   const invalido = validateContactFields({ email, phone });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (existing) return { error: "Já existe um funcionário com esse e-mail." };
+  if (existing) return { error: "Já existe um funcionário com esse e-mail.", field: "email" };
 
   await prisma.user.create({
     data: {
@@ -63,12 +64,12 @@ export async function updateUserDetailsAction(_prev: UserFormState, formData: Fo
   const roleRaw = String(formData.get("role") ?? "");
   const sector = String(formData.get("sector") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
-  if (!id || !name || !email || !roles.includes(roleRaw as UserRole)) {
-    return { error: "Informe nome, e-mail e um cargo válido." };
-  }
+  if (!id || !name) return { error: "Informe o nome do funcionário.", field: "name" };
+  if (!email) return { error: "Informe o e-mail de login.", field: "email" };
+  if (!roles.includes(roleRaw as UserRole)) return { error: "Cargo inválido.", field: "role" };
 
   const invalido = validateContactFields({ email, phone });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   // Confirma que o funcionario e da empresa e que o e-mail nao pertence a outro.
   const target = await prisma.user.findFirst({ where: { id, companyId: actor.companyId }, select: { id: true } });
@@ -78,7 +79,7 @@ export async function updateUserDetailsAction(_prev: UserFormState, formData: Fo
   }
 
   const emailTaken = await prisma.user.findFirst({ where: { email, NOT: { id } }, select: { id: true } });
-  if (emailTaken) return { error: "Já existe um funcionário com esse e-mail." };
+  if (emailTaken) return { error: "Já existe um funcionário com esse e-mail.", field: "email" };
 
   await prisma.user.update({
     where: { id },

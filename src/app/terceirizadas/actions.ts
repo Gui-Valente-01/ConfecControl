@@ -14,10 +14,10 @@ export async function createPartnerAction(_prev: FormState, formData: FormData):
   const email = String(formData.get("email") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
 
-  if (!name) return { error: "Informe o nome da empresa terceirizada." };
+  if (!name) return { error: "Informe o nome da empresa terceirizada.", field: "name" };
 
   const invalido = validateContactFields({ phone, email });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   const companyId = await requireCompanyId();
 
@@ -41,13 +41,13 @@ export async function createPartnerAction(_prev: FormState, formData: FormData):
 export async function updatePartnerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return { error: "Informe o nome da empresa terceirizada." };
+  if (!id || !name) return { error: "Informe o nome da empresa terceirizada.", field: "name" };
 
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
 
   const invalido = validateContactFields({ phone, email });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   const companyId = await adminCompanyId();
   if (!companyId) return { error: "Apenas o dono pode editar terceirizadas." };

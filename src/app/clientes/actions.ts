@@ -42,10 +42,10 @@ export async function createClientAction(_prev: FormState, formData: FormData): 
   const address = String(formData.get("address") ?? "").trim();
   const notes = String(formData.get("notes") ?? "").trim();
 
-  if (!name) return { error: "Informe o nome do cliente." };
+  if (!name) return { error: "Informe o nome do cliente.", field: "name" };
 
   const invalido = validateContactFields({ phone, document, email });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   const companyId = await requireCompanyId();
 
@@ -69,14 +69,14 @@ export async function createClientAction(_prev: FormState, formData: FormData): 
 export async function updateClientAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) return { error: "Informe o nome do cliente." };
+  if (!id || !name) return { error: "Informe o nome do cliente.", field: "name" };
 
   const phone = String(formData.get("phone") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const document = String(formData.get("document") ?? "").trim();
 
   const invalido = validateContactFields({ phone, document, email });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: invalido.field };
 
   const companyId = await adminCompanyId();
   if (!companyId) return { error: "Apenas o dono pode editar clientes." };

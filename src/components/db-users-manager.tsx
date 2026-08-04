@@ -33,6 +33,7 @@ import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
 import { SubmitButton } from "@/components/submit-button";
 import { ToastForm } from "@/components/toast-form";
 import { useActionFeedback } from "@/components/toast";
+import { useFieldError } from "@/components/use-field-error";
 import { formatLongDate } from "@/lib/format";
 import { roleLabels } from "@/lib/roles";
 import { suggestedSectors } from "@/lib/sectors";
@@ -112,6 +113,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
   const [newRole, setNewRole] = useState<UserRole>("PRODUCTION");
   const [showPassword, setShowPassword] = useState(false);
   useActionFeedback(state);
+  const formRef = useFieldError(state);
 
   const activeUsers = users.filter((user) => user.active).length;
   const managerUsers = users.filter((user) => user.role === "ADMIN" || user.role === "MANAGER").length;
@@ -515,7 +517,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
               </div>
             </div>
 
-            <form className="space-y-4 p-5" action={formAction} autoComplete="off">
+            <form ref={formRef} className="space-y-4 p-5" action={formAction} autoComplete="off">
               <p className="text-xs text-[#63736b]">
                 Campos marcados com <span className="font-bold text-[#9f2f42]">*</span> são obrigatórios.
               </p>

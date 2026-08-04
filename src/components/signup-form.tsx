@@ -3,6 +3,7 @@
 import { Building2, KeyRound, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { useActionState } from "react";
 import { signupAction } from "@/app/cadastro/actions";
+import { useFieldError } from "@/components/use-field-error";
 import { emptyFormState } from "@/lib/form-state";
 
 const wrapClass = "relative mt-1";
@@ -11,9 +12,10 @@ const iconClass = "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 
 
 export function SignupForm() {
   const [state, formAction, pending] = useActionState(signupAction, emptyFormState);
+  const formRef = useFieldError(state);
 
   return (
-    <form className="mt-6 space-y-4" action={formAction}>
+    <form ref={formRef} className="mt-6 space-y-4" action={formAction}>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Token de acesso</span>
         <div className={wrapClass}>

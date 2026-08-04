@@ -74,6 +74,18 @@ textarea::placeholder {
   outline-offset: 2px;
 }
 
+/* Campo recusado pelo servidor. A marcação vem do useFieldError, junto com a
+   rolagem até ele: o toast diz o que houve, e a borda diz onde. */
+[aria-invalid="true"] {
+  border-color: var(--cc-danger) !important;
+  background-color: #fff8f9;
+}
+
+[aria-invalid="true"]:focus {
+  outline: 2px solid var(--cc-danger);
+  outline-offset: 1px;
+}
+
 /* Celular (abaixo do breakpoint sm). Regra única em vez de acertar a altura
    campo por campo em 43 arquivos: assim nenhuma tela fica de fora, nem as
    que vierem depois.

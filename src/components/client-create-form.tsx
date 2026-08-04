@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { createClientAction } from "@/app/clientes/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { useActionFeedback } from "@/components/toast";
+import { useFieldError } from "@/components/use-field-error";
 import { emptyFormState } from "@/lib/form-state";
 
 const fieldClass =
@@ -13,9 +14,10 @@ const fieldClass =
 export function ClientCreateForm() {
   const [state, formAction] = useActionState(createClientAction, emptyFormState);
   useActionFeedback(state);
+  const formRef = useFieldError(state);
 
   return (
-    <form className="space-y-3" action={formAction}>
+    <form ref={formRef} className="space-y-3" action={formAction}>
       <label className="block">
         <span className="text-sm font-medium text-[#405047]">Empresa</span>
         <input className={fieldClass} name="name" placeholder="Ex.: Moda Sul" required />

@@ -21,7 +21,7 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   // Esse e-mail vira o login do dono e o token só pode ser usado uma vez:
   // errar aqui queima o acesso da empresa inteira.
   const invalido = validateContactFields({ email });
-  if (invalido) return { error: invalido.message };
+  if (invalido) return { error: invalido.message, field: "email" };
 
   try {
     const userId = await prisma.$transaction(async (tx) => {
