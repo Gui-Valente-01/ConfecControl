@@ -12,7 +12,7 @@ import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { computeStockConsumption } from "@/lib/production";
-import { prisma } from "@/lib/prisma";
+import { prisma, type TransactionClient } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 
@@ -238,7 +238,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
 // Roda sempre dentro de uma transação (tx) e usa update atômico no banco
 // (GREATEST(0, qty - x)) para evitar lost update em baixas concorrentes.
 async function consumeStockForOrder(
-  tx: Prisma.TransactionClient,
+  tx: TransactionClient,
   orderId: string,
   orderNumber: number,
   companyId: string,
@@ -278,7 +278,7 @@ async function consumeStockForOrder(
 
 // Devolve ao estoque tudo que foi baixado automaticamente por este pedido
 // e remove os movimentos correspondentes. Usado ao editar ou excluir pedido.
-async function reverseStockForOrder(tx: Prisma.TransactionClient, orderId: string) {
+async function reverseStockForOrder(tx: TransactionClient, orderId: string) {
   const movements = await tx.stockMovement.findMany({
     where: { orderId, type: "OUT" },
     select: { materialId: true, quantity: true },

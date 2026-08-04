@@ -21,7 +21,9 @@ export async function portalActivateAction(_prev: FormState, formData: FormData)
     where: { inviteToken: token },
     include: { company: { select: { features: true } } },
   });
-  if (!client) return { error: "Link de acesso inválido ou já utilizado." };
+  // Cliente na lixeira nao entra no portal. A checagem e na mao porque
+  // findUnique fica de fora do filtro automatico (o where so aceita campo unico).
+  if (!client || client.deletedAt) return { error: "Link de acesso inválido ou já utilizado." };
   if (!planHasFeature(client.company.features, "portal")) {
     return { error: "Esta confecção não está com o portal do cliente ativo." };
   }

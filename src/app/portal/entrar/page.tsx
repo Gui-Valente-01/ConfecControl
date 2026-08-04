@@ -25,7 +25,8 @@ export default async function PortalEntrarPage({
       where: { inviteToken: token },
       include: { company: { select: { name: true, features: true } } },
     });
-    if (client && planHasFeature(client.company.features, "portal")) {
+    // Cliente na lixeira nao aparece: findUnique nao passa pelo filtro automatico.
+    if (client && !client.deletedAt && planHasFeature(client.company.features, "portal")) {
       inviteCompany = client.company.name;
     }
   }

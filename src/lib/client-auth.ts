@@ -75,7 +75,9 @@ export async function getPortalClient(): Promise<PortalClient | null> {
     where: { id: clientId },
     include: { company: { select: { name: true, features: true } } },
   });
-  if (!client || !client.portalEnabled) return null;
+  // Cliente na lixeira perde a sessao do portal na hora. A checagem e na mao
+  // porque findUnique fica de fora do filtro automatico da lixeira.
+  if (!client || client.deletedAt || !client.portalEnabled) return null;
   // Se a confecção não tem (mais) o módulo portal, o acesso fica suspenso.
   if (!planHasFeature(client.company.features, "portal")) return null;
 

@@ -121,10 +121,15 @@ export async function deleteClientAction(_prev: FormState, formData: FormData): 
   });
   if (bloqueio) return { error: bloqueio };
 
-  // deleteMany com companyId garante que so apaga clientes da empresa do usuário.
-  const deleted = await prisma.client.deleteMany({ where: { id, companyId } });
+  // Vai para a lixeira: some das telas mas continua no banco, com volta.
+  // O companyId garante que so mexe em cliente da empresa do usuário.
+  const deleted = await prisma.client.updateMany({
+    where: { id, companyId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
   if (deleted.count === 0) return { error: "Cliente não encontrado." };
 
   revalidatePath("/clientes");
-  return { success: `Cliente ${client.name} removido.` };
+  revalidatePath("/lixeira");
+  return { success: `Cliente ${client.name} foi para a lixeira.` };
 }

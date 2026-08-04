@@ -75,9 +75,13 @@ export async function deleteServiceAction(_prev: FormState, formData: FormData):
   const companyId = await adminCompanyId();
   if (!companyId) return { error: "Apenas o dono pode excluir serviços." };
 
-  const deleted = await prisma.service.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.service.updateMany({
+    where: { id, companyId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
   if (deleted.count === 0) return { error: "Serviço não encontrado." };
 
   revalidateServices();
-  return { success: "Serviço removido." };
+  revalidatePath("/lixeira");
+  return { success: "Serviço foi para a lixeira." };
 }

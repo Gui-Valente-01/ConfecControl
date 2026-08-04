@@ -25,6 +25,9 @@ const roleRoutes: Record<UserRole, string[] | "all"> = {
     "/solicitacoes",
     "/bancada",
     "/configuracoes",
+    // O Gerente exclui material e terceirizada, então precisa poder desfazer.
+    // Apagar de vez continua só do Dono, dentro da própria tela.
+    "/lixeira",
   ],
   PRODUCTION: ["/", "/pedidos", "/producao", "/estoque", "/bancada"],
   FINANCE: ["/", "/clientes", "/pedidos", "/financeiro", "/relatorios"],

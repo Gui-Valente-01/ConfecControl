@@ -88,10 +88,15 @@ export async function deletePartnerAction(_prev: FormState, formData: FormData):
   if (!id) return { error: "Terceirizada não encontrada." };
 
   const companyId = await requireCompanyId();
-  const deleted = await prisma.partner.deleteMany({ where: { id, companyId } });
+  // Vai para a lixeira: pedido antigo que aponta para ela continua inteiro.
+  const deleted = await prisma.partner.updateMany({
+    where: { id, companyId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
   if (deleted.count === 0) return { error: "Terceirizada não encontrada." };
 
   revalidatePath("/terceirizadas");
   revalidatePath("/producao");
-  return { success: "Terceirizada removida." };
+  revalidatePath("/lixeira");
+  return { success: "Terceirizada foi para a lixeira." };
 }

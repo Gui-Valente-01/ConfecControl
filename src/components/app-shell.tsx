@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldCheck,
   Shirt,
+  Trash2,
   UserRound,
   Users,
   X,
@@ -49,6 +50,7 @@ const navItems = [
   { label: "Funcionários", href: "/usuarios", icon: ShieldCheck },
   { label: "Terceirizadas", href: "/terceirizadas", icon: Handshake },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
+  { label: "Lixeira", href: "/lixeira", icon: Trash2 },
 ];
 
 type ShellUser = {

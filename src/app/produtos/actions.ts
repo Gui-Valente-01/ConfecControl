@@ -95,9 +95,13 @@ export async function deleteProductAction(_prev: FormState, formData: FormData):
   });
   if (bloqueio) return { error: bloqueio };
 
-  const deleted = await prisma.product.deleteMany({ where: { id, companyId } });
+  const deleted = await prisma.product.updateMany({
+    where: { id, companyId, deletedAt: null },
+    data: { deletedAt: new Date() },
+  });
   if (deleted.count === 0) return { error: "Peça não encontrada." };
 
   revalidatePath("/produtos");
-  return { success: `Peça ${product.name} removida.` };
+  revalidatePath("/lixeira");
+  return { success: `Peça ${product.name} foi para a lixeira.` };
 }
