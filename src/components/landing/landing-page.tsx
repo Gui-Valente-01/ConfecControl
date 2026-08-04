@@ -104,7 +104,13 @@ export function LandingPage() {
             >
               Entrar
             </Link>
-            <PrimaryCta className="hidden h-10 sm:inline-flex" />
+            {/* Quem esconde é o container, e não uma classe passada ao botão:
+                o PrimaryCta já traz "inline-flex" embutido, e as duas regras de
+                display brigavam — o botão continuava aparecendo em tela estreita
+                e empurrava o cabeçalho para fora. */}
+            <span className="hidden sm:inline-flex">
+              <PrimaryCta className="h-10" />
+            </span>
           </div>
         </div>
       </header>

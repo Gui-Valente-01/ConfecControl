@@ -103,12 +103,16 @@ export default async function LoginPage() {
                   </a>
                 ) : null}
                 {suporte.email ? (
+                  // E-mail é um texto sem espaço: não quebra sozinho e, num
+                  // aparelho de 320px, empurrava a tela de login inteira para o
+                  // lado. Com break-all ele passa para a linha de baixo, e a
+                  // altura deixa de ser fixa para caber nas duas linhas.
                   <a
                     href={`mailto:${suporte.email}?subject=${encodeURIComponent("Ajuda com o acesso ao ConfecControl")}`}
-                    className="flex h-10 items-center justify-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]"
+                    className="flex min-h-10 min-w-0 items-center justify-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 py-2 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]"
                   >
-                    <Mail size={15} aria-hidden="true" />
-                    {suporte.email}
+                    <Mail size={15} className="shrink-0" aria-hidden="true" />
+                    <span className="min-w-0 break-all text-center">{suporte.email}</span>
                   </a>
                 ) : null}
               </div>

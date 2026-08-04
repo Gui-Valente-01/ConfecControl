@@ -62,6 +62,15 @@ select,
 textarea {
   background-color: var(--cc-surface);
   color: var(--foreground);
+  /* Campo de formulário tem largura mínima própria, de mais ou menos 20
+     caracteres — com a fonte de 16px do celular isso dá 273px. Num aparelho de
+     320px, o cartão do formulário não conseguia encolher abaixo disso e a tela
+     inteira passava a rolar para o lado.
+
+     Zerar aqui vale para todos os formulários de uma vez. O tamanho continua
+     vindo das classes (w-full, h-11...): isto só permite encolher quando a
+     tela é estreita, em vez de empurrar a página. */
+  min-width: 0;
 }
 
 input::placeholder,
