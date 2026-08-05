@@ -26,6 +26,22 @@
     --ink:#e9f0ea; --ink-soft:#a4b5aa; --ink-faint:#7e8e85; --teal:#34b8ab; --teal-deep:#34b8ab; --teal-wash:rgba(52,184,171,.12);
     --amber:#dda255; --amber-wash:rgba(221,162,85,.12); --rose:#e37066; --rose-wash:rgba(227,112,102,.13); }
 
+
+  /* seletor de cargo */
+  .cargos { border:1px solid var(--line); background:var(--card); border-radius:.9rem;
+            padding:1.1rem 1.2rem; margin:0 0 2.2rem; }
+  .cargos h2 { margin:0; font-size:1.08rem; letter-spacing:-.01em; }
+  .cargos-ajuda { margin:.3rem 0 .9rem; color:var(--ink-soft); font-size:.92rem; }
+  .cargos-botoes { display:flex; flex-wrap:wrap; gap:.5rem; }
+  .cargos-botoes button { min-height:44px; padding:0 .95rem; border-radius:.6rem; cursor:pointer;
+    border:1px solid var(--line-2); background:var(--card); color:var(--ink);
+    font:inherit; font-size:.94rem; font-weight:600; }
+  .cargos-botoes button:hover { border-color:var(--teal); }
+  .cargos-botoes button[aria-pressed="true"] { background:var(--teal); border-color:var(--teal); color:#fff; }
+  .cargos-botoes button.tudo { font-weight:500; color:var(--ink-soft); }
+  .cargos-resumo { margin:.85rem 0 0; color:var(--teal-deep); font-size:.92rem; font-weight:600; min-height:1.4em; }
+  [hidden] { display:none !important; }
+
   * { box-sizing:border-box; }
   html { scroll-behavior:smooth; }
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } }
@@ -113,50 +129,65 @@
     </div>
   </header>
 
+  <!-- Seletor de cargo: o manual inteiro assusta quem so precisa da bancada. -->
+  <section class="cargos" aria-labelledby="cargos-titulo">
+    <h2 id="cargos-titulo">Qual é o seu trabalho na confecção?</h2>
+    <p class="cargos-ajuda">Escolha para ver só as telas que você usa. Dá para trocar quando quiser.</p>
+    <div class="cargos-botoes" role="group" aria-label="Escolha o seu cargo">
+      <button type="button" data-cargo="dono">Dono</button>
+      <button type="button" data-cargo="gerente">Gerente</button>
+      <button type="button" data-cargo="producao">Produção</button>
+      <button type="button" data-cargo="financeiro">Financeiro</button>
+      <button type="button" data-cargo="vendas">Vendas</button>
+      <button type="button" data-cargo="tudo" class="tudo">Ver o manual inteiro</button>
+    </div>
+    <p class="cargos-resumo" id="cargos-resumo" role="status"></p>
+  </section>
+
   <div class="layout">
     <nav class="toc" aria-label="Índice">
       <div class="cols">
-        <p class="cap">Começar</p>
-        <a href="#entrar">Entrar no sistema</a>
-        <a href="#celular">Instalar no celular</a>
-        <a href="#painel">Painel do dia</a>
-        <a href="#busca">Busca</a>
+        <p class="cap" data-grupo>Começar</p>
+        <a href="#entrar" data-cargos="dono gerente producao financeiro vendas">Entrar no sistema</a>
+        <a href="#celular" data-cargos="dono gerente producao financeiro vendas">Instalar no celular</a>
+        <a href="#painel" data-cargos="dono gerente producao financeiro vendas">Painel do dia</a>
+        <a href="#busca" data-cargos="dono gerente producao financeiro vendas">Busca</a>
 
-        <p class="cap">Cadastros</p>
-        <a href="#clientes">Clientes</a>
-        <a href="#produtos">Produtos e peças</a>
-        <a href="#servicos">Serviços</a>
-        <a href="#estoque">Estoque</a>
+        <p class="cap" data-grupo>Cadastros</p>
+        <a href="#clientes" data-cargos="dono gerente financeiro vendas">Clientes</a>
+        <a href="#produtos" data-cargos="dono gerente vendas">Produtos e peças</a>
+        <a href="#servicos" data-cargos="dono gerente">Serviços</a>
+        <a href="#estoque" data-cargos="dono gerente producao">Estoque</a>
 
-        <p class="cap">O dia a dia</p>
-        <a href="#pedidos">Pedidos</a>
-        <a href="#producao">Produção</a>
-        <a href="#bancada">Bancada</a>
-        <a href="#historico">Histórico da bancada</a>
+        <p class="cap" data-grupo>O dia a dia</p>
+        <a href="#pedidos" data-cargos="dono gerente producao financeiro vendas">Pedidos</a>
+        <a href="#producao" data-cargos="dono gerente producao">Produção</a>
+        <a href="#bancada" data-cargos="dono gerente producao">Bancada</a>
+        <a href="#historico" data-cargos="dono gerente">Histórico da bancada</a>
 
-        <p class="cap">Dinheiro</p>
-        <a href="#financeiro">Financeiro</a>
-        <a href="#relatorios">Relatórios</a>
+        <p class="cap" data-grupo>Dinheiro</p>
+        <a href="#financeiro" data-cargos="dono gerente financeiro">Financeiro</a>
+        <a href="#relatorios" data-cargos="dono gerente financeiro">Relatórios</a>
 
-        <p class="cap">Seu cliente</p>
-        <a href="#portal">Portal do cliente</a>
-        <a href="#solicitacoes">Solicitações</a>
+        <p class="cap" data-grupo>Seu cliente</p>
+        <a href="#portal" data-cargos="dono gerente">Portal do cliente</a>
+        <a href="#solicitacoes" data-cargos="dono gerente vendas">Solicitações</a>
 
-        <p class="cap">Administração</p>
-        <a href="#funcionarios">Funcionários</a>
-        <a href="#terceirizadas">Terceirizadas</a>
-        <a href="#configuracoes">Configurações</a>
-        <a href="#conta">Minha conta</a>
+        <p class="cap" data-grupo>Administração</p>
+        <a href="#funcionarios" data-cargos="dono">Funcionários</a>
+        <a href="#terceirizadas" data-cargos="dono gerente">Terceirizadas</a>
+        <a href="#configuracoes" data-cargos="dono gerente">Configurações</a>
+        <a href="#conta" data-cargos="dono gerente producao financeiro vendas">Minha conta</a>
 
-        <p class="cap">Fim</p>
-        <a href="#rotina">Rotina sugerida</a>
-        <a href="#duvidas">Dúvidas comuns</a>
+        <p class="cap" data-grupo>Fim</p>
+        <a href="#rotina" data-cargos="dono gerente producao financeiro vendas">Rotina sugerida</a>
+        <a href="#duvidas" data-cargos="dono gerente producao financeiro vendas">Dúvidas comuns</a>
       </div>
     </nav>
 
     <main>
       <!-- ENTRAR -->
-      <section class="pg" id="entrar">
+      <section class="pg" id="entrar" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Começar</p>
         <h2>Entrar no sistema</h2>
         <p class="para">Cada pessoa da confecção tem o próprio acesso. Ninguém compartilha senha.</p>
@@ -171,7 +202,7 @@
       </section>
 
       <!-- CELULAR -->
-      <section class="pg" id="celular">
+      <section class="pg" id="celular" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Começar</p>
         <h2>Instalar no celular</h2>
         <p class="para">O ConfecControl vira um aplicativo no celular, sem precisar baixar de loja nenhuma. É assim que a equipe usa no chão de fábrica.</p>
@@ -185,7 +216,7 @@
       </section>
 
       <!-- PAINEL -->
-      <section class="pg" id="painel">
+      <section class="pg" id="painel" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Começar <span class="where">Painel</span></p>
         <h2>Painel do dia</h2>
         <p class="para">A primeira tela ao entrar. Ela responde uma pergunta só: <b>o que precisa da minha atenção hoje?</b></p>
@@ -201,7 +232,7 @@
       </section>
 
       <!-- BUSCA -->
-      <section class="pg" id="busca">
+      <section class="pg" id="busca" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Começar <span class="where">topo de qualquer tela</span></p>
         <h2>Busca</h2>
         <p class="para">A barra no alto procura em pedidos, clientes e produtos ao mesmo tempo.</p>
@@ -214,7 +245,7 @@
       </section>
 
       <!-- CLIENTES -->
-      <section class="pg" id="clientes">
+      <section class="pg" id="clientes" data-cargos="dono gerente financeiro vendas">
         <p class="kick">Cadastros <span class="where">Clientes</span></p>
         <h2>Clientes</h2>
         <p class="para">Sua carteira de clientes, com o histórico de cada um.</p>
@@ -236,7 +267,7 @@
       </section>
 
       <!-- PRODUTOS -->
-      <section class="pg" id="produtos">
+      <section class="pg" id="produtos" data-cargos="dono gerente vendas">
         <p class="kick">Cadastros <span class="where">Produtos</span></p>
         <h2>Produtos e peças</h2>
         <p class="para">O catálogo do que a sua confecção faz. É aqui que o sistema aprende quanto custa cada peça — e por isso é a tela mais importante de configurar bem.</p>
@@ -275,7 +306,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- SERVICOS -->
-      <section class="pg" id="servicos">
+      <section class="pg" id="servicos" data-cargos="dono gerente">
         <p class="kick">Cadastros <span class="where">Produtos → Serviços</span></p>
         <h2>Serviços</h2>
         <p class="para">A lista do que a sua confecção faz de mão de obra: silk, bordado, costura, corte. Serve para
@@ -290,7 +321,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- ESTOQUE -->
-      <section class="pg" id="estoque">
+      <section class="pg" id="estoque" data-cargos="dono gerente producao">
         <p class="kick">Cadastros <span class="where">Estoque</span> <span class="plan">módulo</span></p>
         <h2>Estoque</h2>
         <p class="para">Controle de tecido, linha, tinta e aviamentos.</p>
@@ -315,7 +346,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- PEDIDOS -->
-      <section class="pg" id="pedidos">
+      <section class="pg" id="pedidos" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">O dia a dia <span class="where">Pedidos</span></p>
         <h2>Pedidos</h2>
         <p class="para">O coração do sistema. Todo trabalho começa aqui.</p>
@@ -349,7 +380,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- PRODUCAO -->
-      <section class="pg" id="producao">
+      <section class="pg" id="producao" data-cargos="dono gerente producao">
         <p class="kick">O dia a dia <span class="where">Produção</span> <span class="plan">módulo</span></p>
         <h2>Produção</h2>
         <p class="para">O quadro visual da fábrica. É o mural de post-it da parede, só que digital e visível de qualquer lugar.</p>
@@ -363,7 +394,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- BANCADA -->
-      <section class="pg" id="bancada">
+      <section class="pg" id="bancada" data-cargos="dono gerente producao">
         <p class="kick">O dia a dia <span class="where">Bancada</span> <span class="plan">módulo</span></p>
         <h2>Bancada</h2>
         <p class="para">A tela de quem está produzindo. Feita para usar no celular, em pé, no meio da fábrica.</p>
@@ -386,7 +417,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- HISTORICO -->
-      <section class="pg" id="historico">
+      <section class="pg" id="historico" data-cargos="dono gerente">
         <p class="kick">O dia a dia <span class="where">Bancada → Ver histórico</span> <span class="plan">só dono e gerente</span></p>
         <h2>Histórico da bancada</h2>
         <p class="para">O acompanhamento de quem produziu o quê. Serve para enxergar a produção da equipe sem ficar perguntando de um em um.</p>
@@ -400,7 +431,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- FINANCEIRO -->
-      <section class="pg" id="financeiro">
+      <section class="pg" id="financeiro" data-cargos="dono gerente financeiro">
         <p class="kick">Dinheiro <span class="where">Financeiro</span> <span class="plan">módulo</span></p>
         <h2>Financeiro</h2>
         <p class="para">Quem pagou, quem deve e de qual pedido — sem planilha.</p>
@@ -433,7 +464,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- RELATORIOS -->
-      <section class="pg" id="relatorios">
+      <section class="pg" id="relatorios" data-cargos="dono gerente financeiro">
         <p class="kick">Dinheiro <span class="where">Relatórios</span> <span class="plan">módulo</span></p>
         <h2>Relatórios</h2>
         <p class="para">Onde o sistema deixa de ser cadastro e vira decisão.</p>
@@ -453,7 +484,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- PORTAL -->
-      <section class="pg" id="portal">
+      <section class="pg" id="portal" data-cargos="dono gerente">
         <p class="kick">Seu cliente <span class="where">Portal</span> <span class="plan">módulo</span></p>
         <h2>Portal do cliente</h2>
         <p class="para">Uma área onde <b>o seu cliente</b> acompanha o pedido dele sozinho — e para de ligar perguntando.</p>
@@ -466,7 +497,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- SOLICITACOES -->
-      <section class="pg" id="solicitacoes">
+      <section class="pg" id="solicitacoes" data-cargos="dono gerente vendas">
         <p class="kick">Seu cliente <span class="where">Solicitações</span> <span class="plan">módulo</span></p>
         <h2>Solicitações</h2>
         <p class="para">A caixa de entrada dos pedidos que o cliente manda pelo portal — inclusive com foto.</p>
@@ -479,7 +510,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- FUNCIONARIOS -->
-      <section class="pg" id="funcionarios">
+      <section class="pg" id="funcionarios" data-cargos="dono">
         <p class="kick">Administração <span class="where">Funcionários</span> <span class="plan">só o dono</span></p>
         <h2>Funcionários e acessos</h2>
         <p class="para">Onde o dono cria o login de cada pessoa e define o que ela enxerga.</p>
@@ -507,7 +538,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- TERCEIRIZADAS -->
-      <section class="pg" id="terceirizadas">
+      <section class="pg" id="terceirizadas" data-cargos="dono gerente">
         <p class="kick">Administração <span class="where">Terceirizadas</span> <span class="plan">módulo</span></p>
         <h2>Terceirizadas</h2>
         <p class="para">O cadastro das facções e parceiros que fazem parte do seu serviço.</p>
@@ -519,7 +550,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- CONFIGURACOES -->
-      <section class="pg" id="configuracoes">
+      <section class="pg" id="configuracoes" data-cargos="dono gerente">
         <p class="kick">Administração <span class="where">Configurações</span></p>
         <h2>Configurações</h2>
         <p class="para">Onde o sistema se molda ao jeito que a sua confecção trabalha.</p>
@@ -543,7 +574,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- CONTA -->
-      <section class="pg" id="conta">
+      <section class="pg" id="conta" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Administração <span class="where">Minha conta</span></p>
         <h2>Minha conta</h2>
         <p class="para">Seus dados e sua senha.</p>
@@ -555,7 +586,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- ROTINA -->
-      <section class="pg" id="rotina">
+      <section class="pg" id="rotina" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Fim</p>
         <h2>Rotina sugerida</h2>
         <ol class="pass">
@@ -569,7 +600,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
       </section>
 
       <!-- DUVIDAS -->
-      <section class="pg" id="duvidas">
+      <section class="pg" id="duvidas" data-cargos="dono gerente producao financeiro vendas">
         <p class="kick">Fim</p>
         <h2>Dúvidas comuns</h2>
         <div class="tw">
@@ -591,6 +622,75 @@ Lucro por peça          R$ 32,40   (65%)</div>
     </main>
   </div>
 </div>
+
+
+<script>
+// Filtro por cargo.
+//
+// O manual inteiro tem 22 telas. Quem trabalha na bancada usa cinco -- e abrir
+// um documento com tudo faz a pessoa achar que precisa aprender tudo antes de
+// comecar. Escolhido o cargo, some o que ela nao acessa.
+//
+// A escolha fica guardada no proprio aparelho: quem abre o manual de novo cai
+// direto no seu. Sem cargo escolhido, mostra tudo -- o padrao nunca esconde.
+(function () {
+  var CHAVE = "confec-manual-cargo";
+  var NOMES = { dono:"Dono", gerente:"Gerente", producao:"Produção", financeiro:"Financeiro", vendas:"Vendas" };
+
+  var botoes = document.querySelectorAll(".cargos-botoes button");
+  var resumo = document.getElementById("cargos-resumo");
+  var secoes = document.querySelectorAll("section[data-cargos]");
+  var links = document.querySelectorAll(".toc a[data-cargos]");
+  var grupos = document.querySelectorAll(".toc p[data-grupo]");
+
+  function aplicar(cargo) {
+    var tudo = !cargo || cargo === "tudo";
+    var visiveis = 0;
+
+    secoes.forEach(function (s) {
+      var serve = tudo || s.dataset.cargos.split(" ").indexOf(cargo) >= 0;
+      s.hidden = !serve;
+      if (serve) visiveis++;
+    });
+
+    links.forEach(function (a) {
+      a.hidden = !(tudo || a.dataset.cargos.split(" ").indexOf(cargo) >= 0);
+    });
+
+    // Titulo de grupo sem nenhum link embaixo vira titulo solto: some junto.
+    grupos.forEach(function (g) {
+      var vazio = true;
+      for (var n = g.nextElementSibling; n && n.tagName === "A"; n = n.nextElementSibling) {
+        if (!n.hidden) { vazio = false; break; }
+      }
+      g.hidden = vazio;
+    });
+
+    botoes.forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.cargo === (cargo || "tudo")));
+    });
+
+    resumo.textContent = tudo
+      ? "Mostrando o manual inteiro: " + visiveis + " telas."
+      : "Mostrando as " + visiveis + " telas que " + NOMES[cargo] + " usa.";
+  }
+
+  botoes.forEach(function (b) {
+    b.addEventListener("click", function () {
+      var c = b.dataset.cargo;
+      if (c === "tudo") { localStorage.removeItem(CHAVE); } else { localStorage.setItem(CHAVE, c); }
+      aplicar(c);
+      // Volta ao topo do conteudo: senao a pessoa fica olhando o meio de uma
+      // secao que acabou de sumir.
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  var guardado = null;
+  try { guardado = localStorage.getItem(CHAVE); } catch (e) { /* navegador sem armazenamento */ }
+  aplicar(guardado && NOMES[guardado] ? guardado : "tudo");
+})();
+</script>
 
 </body>
 </html>
