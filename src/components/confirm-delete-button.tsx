@@ -1,7 +1,8 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useActionFeedback } from "@/components/toast";
 import { emptyFormState, type FormState } from "@/lib/form-state";
 
@@ -31,6 +32,8 @@ export function ConfirmDeleteButton({
 }: ConfirmDeleteButtonProps) {
   const [state, formAction] = useActionState(action, emptyFormState);
   useActionFeedback(state);
+  const [perguntando, setPerguntando] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   if (blockedReason) {
     const base =
@@ -45,27 +48,48 @@ export function ConfirmDeleteButton({
     );
   }
 
+  // A primeira linha da mensagem é a pergunta; o resto explica o que some.
+  const [pergunta, ...restante] = message.split("\n");
+
   return (
-    <form
-      action={formAction}
-      onSubmit={(event) => {
-        if (!window.confirm(message)) event.preventDefault();
-      }}
-    >
-      <input type="hidden" name="id" value={id} />
-      {variant === "icon" ? (
-        <button
-          className="inline-flex size-9 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]"
-          title={title}
-        >
-          <Trash2 size={16} aria-hidden="true" />
-        </button>
-      ) : (
-        <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white px-4 text-sm font-semibold text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]">
-          <Trash2 size={16} aria-hidden="true" />
-          {label}
-        </button>
-      )}
-    </form>
+    <>
+      <form ref={formRef} action={formAction}>
+        <input type="hidden" name="id" value={id} />
+        {/* type="button": quem envia é o botão de dentro da janela, depois de
+            confirmar. Sem isto, o Enter no formulário apagaria sem perguntar. */}
+        {variant === "icon" ? (
+          <button
+            type="button"
+            onClick={() => setPerguntando(true)}
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]"
+            title={title}
+            aria-label={title}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setPerguntando(true)}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white px-4 text-sm font-semibold text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]"
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            {label}
+          </button>
+        )}
+      </form>
+
+      <ConfirmDialog
+        aberto={perguntando}
+        titulo={pergunta || title}
+        mensagem={restante.join("\n")}
+        confirmarLabel={label}
+        onCancelar={() => setPerguntando(false)}
+        onConfirmar={() => {
+          setPerguntando(false);
+          formRef.current?.requestSubmit();
+        }}
+      />
+    </>
   );
 }
