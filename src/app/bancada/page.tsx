@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { CheckCircle2, Hand, History, LayoutGrid, PackageCheck, Shirt, UserRound } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Hand, History, LayoutGrid, PackageCheck, Shirt, UserRound } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { formatDateTime, formatShortDate } from "@/lib/format";
+import { ModeloDoPedido } from "@/components/modelo-do-pedido";
+import { primeiraImagem } from "@/lib/anexos";
+import { mesasCompativeis } from "@/lib/mesa-rules";
 import { canSeeBancadaHistory } from "@/lib/roles";
 import {
   bancadaNoteBadge,
@@ -18,23 +21,31 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-function firstImage(attachments: { url: string; type: string | null }[]) {
-  const image = attachments.find((a) => (a.type ?? "").startsWith("image/")) ?? attachments[0];
-  return image?.url ?? null;
-}
+
 
 export default async function BancadaPage() {
   const user = await requireRouteUser("/bancada");
   const companyId = user.companyId;
 
   const [mesas, activeTasks, doneByMesa, recentDone, doneStages, openOrders] = await Promise.all([
-    prisma.mesa.findMany({ where: { companyId, active: true }, orderBy: { position: "asc" }, select: { id: true, name: true } }),
+    prisma.mesa.findMany({
+      where: { companyId, active: true },
+      orderBy: { position: "asc" },
+      select: { id: true, name: true, stageId: true, stage: { select: { name: true } } },
+    }),
     prisma.bancadaTask.findMany({
       where: { companyId, status: "PICKED" },
       orderBy: { pickedAt: "asc" },
       include: {
         mesa: { select: { name: true } },
-        order: { select: { number: true, client: { select: { name: true } }, items: { select: { description: true, quantity: true }, take: 1 } } },
+        order: {
+          select: {
+            number: true,
+            client: { select: { name: true } },
+            items: { select: { description: true, quantity: true }, take: 1 },
+            attachments: { select: { id: true, name: true, url: true, type: true }, orderBy: { createdAt: "asc" } },
+          },
+        },
       },
     }),
     prisma.bancadaTask.groupBy({ by: ["mesaId"], where: { companyId, status: "DONE" }, _count: { _all: true } }),
@@ -56,7 +67,7 @@ export default async function BancadaPage() {
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
-        attachments: { select: { url: true, type: true } },
+        attachments: { select: { id: true, name: true, url: true, type: true }, orderBy: { createdAt: "asc" } },
         currentStage: { select: { name: true } },
       },
     }),
@@ -76,6 +87,14 @@ export default async function BancadaPage() {
     .map((row) => ({ name: row.mesaId ? mesaNameById.get(row.mesaId) ?? "Mesa removida" : "Sem mesa", count: row._count._all }))
     .sort((a, b) => b.count - a.count);
   const totalDone = doneCounts.reduce((sum, row) => sum + row.count, 0);
+
+  // Forma que a regra de compatibilidade espera, montada uma vez só.
+  const mesasComEtapa = mesas.map((mesa) => ({
+    id: mesa.id,
+    name: mesa.name,
+    stageId: mesa.stageId,
+    stageName: mesa.stage?.name ?? null,
+  }));
 
   const noteOptions = Object.entries(bancadaNoteLabels);
   const canSeeHistory = canSeeBancadaHistory(user.role);
@@ -115,6 +134,12 @@ export default async function BancadaPage() {
                   <UserRound size={12} aria-hidden="true" />
                   {task.pickedByName} · pegou {formatDateTime(task.pickedAt)}
                 </p>
+
+                {/* O modelo fica à mão de quem está produzindo: é o que evita
+                    fazer a peça errada e descobrir só na conferência. */}
+                <div className="mt-3">
+                  <ModeloDoPedido anexos={task.order.attachments} numeroPedido={task.order.number} compacto />
+                </div>
 
                 {/* Esta tela é usada em pé, no celular, com a mão ocupada. Os
                     controles têm 44px de altura (mínimo confortável para o
@@ -223,15 +248,20 @@ export default async function BancadaPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {available.map((order) => {
-              const photo = firstImage(order.attachments);
+              const foto = primeiraImagem(order.attachments);
               const firstItem = order.items[0];
               const extra = order.items.length - 1;
+              const mesasParaOPedido = mesasCompativeis(mesasComEtapa, order.currentStageId);
               return (
                 <article key={order.id} className="overflow-hidden rounded-xl border border-[#d9e1dd] bg-white shadow-sm">
                   <div className="flex h-44 items-center justify-center bg-[#f0f3f1]">
-                    {photo ? (
+                    {foto ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo} alt={`Pedido ${order.number}`} className="h-full w-full object-cover" />
+                      <img
+                        src={foto.url}
+                        alt={`Modelo do pedido ${order.number}: ${foto.name}`}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <Shirt size={40} className="text-[#b6c2bb]" aria-hidden="true" />
                     )}
@@ -255,28 +285,47 @@ export default async function BancadaPage() {
                     </p>
                     <p className="mt-1 text-xs text-[#8a9890]">Entrega: {formatShortDate(order.deliveryDate)}</p>
 
-                    <ToastForm action={pickOrderAction} className="mt-3 flex flex-wrap gap-2 border-t border-[#eef2ef] pt-3">
-                      <input type="hidden" name="orderId" value={order.id} />
-                      <select
-                        name="mesaId"
-                        required
-                        defaultValue=""
-                        disabled={mesas.length === 0}
-                        className="h-12 min-w-28 flex-1 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
-                      >
-                        <option value="" disabled>Mesa...</option>
-                        {mesas.map((mesa) => (
-                          <option key={mesa.id} value={mesa.id}>{mesa.name}</option>
-                        ))}
-                      </select>
-                      <button
-                        disabled={mesas.length === 0}
-                        className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#111a16] px-5 text-base font-semibold text-white transition hover:bg-[#05100b] disabled:opacity-50 sm:h-10 sm:px-4 sm:text-sm"
-                      >
-                        <Hand size={18} aria-hidden="true" />
-                        Pegar
-                      </button>
-                    </ToastForm>
+                    {/* Arte em PDF ou .cdr não aparece na foto acima: aqui ela
+                        vira um item que dá para abrir ou baixar. */}
+                    <div className="mt-2">
+                      <ModeloDoPedido anexos={order.attachments} numeroPedido={order.number} compacto />
+                    </div>
+
+                    {/* Só as mesas que atendem a etapa deste pedido. Mostrar
+                        as outras e recusar depois seria fazer a pessoa errar
+                        primeiro para só então explicar. */}
+                    {mesasParaOPedido.length === 0 ? (
+                      <p className="mt-3 flex items-start gap-2 rounded-lg border border-[#ead49c] bg-[#fffcf3] px-2.5 py-2 text-xs leading-5 text-[#7b5a0b]">
+                        <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
+                        <span>
+                          Nenhuma mesa atende a etapa <strong>{order.currentStage?.name ?? "atual"}</strong> deste
+                          pedido. Avance ele na Produção, ou ajuste as mesas em Configurações.
+                        </span>
+                      </p>
+                    ) : (
+                      <ToastForm action={pickOrderAction} className="mt-3 flex flex-wrap gap-2 border-t border-[#eef2ef] pt-3">
+                        <input type="hidden" name="orderId" value={order.id} />
+                        <select
+                          name="mesaId"
+                          required
+                          defaultValue=""
+                          aria-label={`Mesa para o pedido ${order.number}`}
+                          className="h-12 min-w-28 flex-1 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+                        >
+                          <option value="" disabled>Mesa...</option>
+                          {mesasParaOPedido.map((mesa) => (
+                            <option key={mesa.id} value={mesa.id}>{mesa.name}</option>
+                          ))}
+                        </select>
+                        <button
+                          aria-label={`Pegar o pedido ${order.number}`}
+                          className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#111a16] px-5 text-base font-semibold text-white transition hover:bg-[#05100b] sm:h-10 sm:px-4 sm:text-sm"
+                        >
+                          <Hand size={18} aria-hidden="true" />
+                          Pegar
+                        </button>
+                      </ToastForm>
+                    )}
                   </div>
                 </article>
               );

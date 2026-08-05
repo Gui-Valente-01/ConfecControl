@@ -53,13 +53,14 @@ export default async function ConfiguracoesPage() {
     active: mesa.active,
     inUse: mesa._count.tasks > 0,
     responsibleUserId: mesa.responsibleUserId,
+    stageId: mesa.stageId,
   }));
 
   return (
     <AppShell eyebrow="Administração" title="Configurações" actionLabel="Salvar" user={user}>
       <DbSettingsPanel company={company} />
       <StagesManager stages={mappedStages} />
-      {hasBancada ? <MesasManager mesas={mappedMesas} team={team} /> : null}
+      {hasBancada ? <MesasManager mesas={mappedMesas} team={team} stages={mappedStages} /> : null}
     </AppShell>
   );
 }

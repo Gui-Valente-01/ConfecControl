@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, UserRound } from "lucide-react";
+import { Layers, Plus, UserRound } from "lucide-react";
 import { useActionState } from "react";
 import { createMesaAction, deleteMesaAction, updateMesaAction } from "@/app/configuracoes/actions";
 import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
@@ -18,11 +18,21 @@ type Mesa = {
   active: boolean;
   inUse: boolean;
   responsibleUserId: string | null;
+  stageId: string | null;
 };
 
 type TeamMember = { id: string; name: string };
+type StageOption = { id: string; name: string };
 
-export function MesasManager({ mesas, team }: { mesas: Mesa[]; team: TeamMember[] }) {
+export function MesasManager({
+  mesas,
+  team,
+  stages,
+}: {
+  mesas: Mesa[];
+  team: TeamMember[];
+  stages: StageOption[];
+}) {
   const [state, formAction] = useActionState(createMesaAction, emptyFormState);
   useActionFeedback(state);
 
@@ -72,6 +82,22 @@ export function MesasManager({ mesas, team }: { mesas: Mesa[]; team: TeamMember[
                   <option value="">Sem responsável</option>
                   {team.map((member) => (
                     <option key={member.id} value={member.id}>{member.name}</option>
+                  ))}
+                </select>
+              </label>
+              {/* Etapa que a mesa atende: é o que impede um pedido de entrar
+                  na bancada errada. Em branco, a mesa aceita qualquer pedido. */}
+              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+                <Layers size={13} aria-hidden="true" />
+                <span className="sr-only">Etapa atendida pela mesa {mesa.name}</span>
+                <select
+                  name="stageId"
+                  defaultValue={mesa.stageId ?? ""}
+                  className="h-9 min-w-36 rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                >
+                  <option value="">Aceita qualquer etapa</option>
+                  {stages.map((stage) => (
+                    <option key={stage.id} value={stage.id}>{stage.name}</option>
                   ))}
                 </select>
               </label>

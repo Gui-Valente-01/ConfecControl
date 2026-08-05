@@ -54,9 +54,21 @@ export async function updateMesaAction(_prev: FormState, formData: FormData): Pr
     responsibleUserId = member?.id ?? null;
   }
 
+  // Etapa que a mesa atende. Em branco = aceita qualquer pedido. Só aceita
+  // etapa da própria empresa, senão daria para apontar para a etapa de outra.
+  const stageRaw = String(formData.get("stageId") ?? "").trim();
+  let stageId: string | null = null;
+  if (stageRaw) {
+    const stage = await prisma.productionStage.findFirst({
+      where: { id: stageRaw, companyId },
+      select: { id: true },
+    });
+    stageId = stage?.id ?? null;
+  }
+
   const updated = await prisma.mesa.updateMany({
     where: { id, companyId },
-    data: { name, position: Number.isFinite(position) ? position : 0, active, responsibleUserId },
+    data: { name, position: Number.isFinite(position) ? position : 0, active, responsibleUserId, stageId },
   });
   if (updated.count === 0) return { error: "Mesa não encontrada." };
 

@@ -7,6 +7,7 @@ import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { explicarRecusa, mesaAceitaEtapa, mesasCompativeis } from "@/lib/mesa-rules";
 import { isTaskStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
@@ -28,17 +29,44 @@ export async function pickOrderAction(_prev: FormState, formData: FormData): Pro
   if (!orderId) return { error: "Pedido não encontrado." };
   if (!mesaId) return { error: "Escolha a mesa antes de pegar o pedido." };
 
-  const [order, mesa, activeTask] = await Promise.all([
+  const [order, mesa, activeTask, todasMesas] = await Promise.all([
     prisma.order.findFirst({
       where: { id: orderId, companyId: user.companyId },
-      select: { id: true, number: true, currentStage: { select: { name: true } } },
+      select: { id: true, number: true, currentStageId: true, currentStage: { select: { name: true } } },
     }),
-    prisma.mesa.findFirst({ where: { id: mesaId, companyId: user.companyId, active: true }, select: { id: true } }),
+    prisma.mesa.findFirst({
+      where: { id: mesaId, companyId: user.companyId, active: true },
+      select: { id: true, name: true, stageId: true, stage: { select: { name: true } } },
+    }),
     prisma.bancadaTask.findFirst({ where: { orderId, companyId: user.companyId, status: "PICKED" }, select: { pickedByName: true } }),
+    prisma.mesa.findMany({
+      where: { companyId: user.companyId, active: true },
+      orderBy: { position: "asc" },
+      select: { id: true, name: true, stageId: true, stage: { select: { name: true } } },
+    }),
   ]);
   if (!order) return { error: "Pedido não encontrado." };
   if (!mesa) return { error: "Mesa inválida." };
   if (activeTask) return { error: `Este pedido já está com ${activeTask.pickedByName} na bancada.` };
+
+  // Mesa de silk faz silk. Sem isso, um pedido ainda no recebimento entrava na
+  // bancada de estamparia e o trabalho ia para a etapa errada.
+  const mesaComEtapa = { id: mesa.id, name: mesa.name, stageId: mesa.stageId, stageName: mesa.stage?.name ?? null };
+  if (!mesaAceitaEtapa(mesaComEtapa, order.currentStageId)) {
+    const validas = mesasCompativeis(
+      todasMesas.map((m) => ({ id: m.id, name: m.name, stageId: m.stageId, stageName: m.stage?.name ?? null })),
+      order.currentStageId,
+    );
+    return {
+      error: explicarRecusa({
+        numeroPedido: order.number,
+        etapaDoPedido: order.currentStage?.name ?? null,
+        mesa: mesaComEtapa,
+        mesasValidas: validas,
+      }),
+      field: "mesaId",
+    };
+  }
 
   await prisma.bancadaTask.create({
     data: {

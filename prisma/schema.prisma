@@ -214,15 +214,22 @@ model Mesa {
   // Funcionário responsável pela mesa. Não impede outros de usá-la:
   // serve para saber a quem cobrar quando algo trava naquela estação.
   responsibleUserId String?
+  // Etapa que esta mesa atende (mesa de silk faz silk). Em branco, a mesa
+  // aceita qualquer pedido — que é o estado de quem ainda não configurou, e
+  // não pode travar o sistema de quem já estava usando.
+  stageId           String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  company     Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  responsible User?         @relation("mesaResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  responsible User?            @relation("mesaResponsible", fields: [responsibleUserId], references: [id], onDelete: SetNull)
+  // Apagar a etapa não apaga a mesa: ela volta a aceitar qualquer pedido.
+  stage       ProductionStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
   tasks       BancadaTask[]
 
   @@index([companyId])
   @@index([responsibleUserId])
+  @@index([stageId])
   @@map("mesas")
 }
 
@@ -418,6 +425,7 @@ model ProductionStage {
 
   company       Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   currentOrders Order[]
+  mesas         Mesa[]
   fromHistory   ProductionHistory[] @relation("fromStage")
   toHistory     ProductionHistory[] @relation("toStage")
 
