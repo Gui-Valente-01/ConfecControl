@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AlertTriangle, ArrowRight, BarChart3, CalendarRange, Clock, CreditCard, Download, Package, TrendingUp, Trophy, Users, Wrench } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { MetricCard } from "@/components/metric-card";
+import { compararValores, periodoAnterior, textoVariacao } from "@/lib/comparacao";
+import { agruparRentabilidade, lerMargem, noPrejuizo, ordenarPorLucro } from "@/lib/rentabilidade";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
@@ -31,7 +33,11 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const validFrom = Number.isNaN(fromDate.getTime()) ? monthStart : fromDate;
   const validTo = Number.isNaN(toDate.getTime()) ? now : toDate;
 
-  const [rangeOrders, allOrders, products, pendingPayments, stages, materials] = await Promise.all([
+  // Mesmo tamanho de período, imediatamente antes: é o que dá sentido ao
+  // número. "R$ 23 mil" sozinho não diz se foi um bom mês.
+  const anterior = periodoAnterior({ de: validFrom, ate: validTo });
+
+  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, materials] = await Promise.all([
     prisma.order.findMany({
       where: { companyId, orderDate: { gte: validFrom, lte: validTo } },
       select: {
@@ -40,6 +46,16 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true, productId: true, totalPriceInCents: true } },
         services: { select: { name: true, priceInCents: true } },
+      },
+    }),
+    // Só o que a comparação usa: total, recebido e os itens para o lucro.
+    prisma.order.findMany({
+      where: { companyId, orderDate: { gte: anterior.de, lte: anterior.ate } },
+      select: {
+        totalAmountInCents: true,
+        paidAmountInCents: true,
+        items: { select: { quantity: true, productId: true, totalPriceInCents: true } },
+        services: { select: { priceInCents: true } },
       },
     }),
     prisma.order.findMany({
@@ -181,6 +197,39 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     .sort((a, b) => b.total - a.total)
     .slice(0, 5);
 
+  // Rentabilidade: por peça e por cliente, ordenada por LUCRO.
+  //
+  // "Quem mais compra" era por faturamento, e isso engana: cliente que compra
+  // muito com margem apertada pode valer menos que um pequeno com margem boa.
+  const rentPorPeca = ordenarPorLucro(
+    agruparRentabilidade(
+      rangeItems.map((item) => ({
+        chave: item.productId ?? `desc:${item.description}`,
+        rotulo: item.productId ? productName.get(item.productId) ?? item.description : item.description,
+        quantidade: item.quantity,
+        receitaInCents: item.totalPriceInCents,
+        custoInCents: item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0,
+      })),
+    ),
+  );
+
+  const rentPorCliente = ordenarPorLucro(
+    agruparRentabilidade(
+      rangeOrders.flatMap((order) =>
+        order.items.map((item) => ({
+          chave: order.client.name,
+          rotulo: order.client.name,
+          quantidade: item.quantity,
+          receitaInCents: item.totalPriceInCents,
+          custoInCents: item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0,
+        })),
+      ),
+    ),
+  );
+
+  // A lista que não existia: o que saiu por menos do que custou.
+  const pecasNoPrejuizo = noPrejuizo(rentPorPeca);
+
   // Estado atual (independe do período)
   const lateOrders = allOrders
     .filter((o) => isOrderLate(o.deliveryDate, o.status))
@@ -201,11 +250,50 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   }
   const assigneeRows = [...byAssignee.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
 
+  // Os mesmos números do período anterior, pelas mesmas contas — senão a
+  // comparação sairia entre coisas diferentes.
+  const faturamentoAnterior = ordersAnterior.reduce((s, o) => s + o.totalAmountInCents, 0);
+  const recebidoAnterior = ordersAnterior.reduce((s, o) => s + o.paidAmountInCents, 0);
+  const itensAnterior = ordersAnterior.flatMap((o) => o.items);
+  const lucroAnterior =
+    itensAnterior.reduce((s, i) => s + i.totalPriceInCents, 0) +
+    ordersAnterior.reduce((s, o) => s + o.services.reduce((x, sv) => x + sv.priceInCents, 0), 0) -
+    itensAnterior.reduce((s, i) => s + (i.productId ? (productCost.get(i.productId) ?? 0) * i.quantity : 0), 0);
+
+  const varFaturamento = compararValores(totalRevenue, faturamentoAnterior);
+  const varRecebido = compararValores(received, recebidoAnterior);
+  const varLucro = compararValores(estimatedProfit, lucroAnterior);
+  const varPedidos = compararValores(rangeOrders.length, ordersAnterior.length);
+
   const kpis = [
-    { label: "Faturamento (período)", value: centsToCurrency(totalRevenue), note: `${rangeOrders.length} pedido(s) no intervalo`, icon: BarChart3, tone: "primary" as const },
-    { label: "Recebido", value: centsToCurrency(received), note: `${centsToCurrency(toReceive)} a receber`, icon: CreditCard, tone: "primary" as const },
-    { label: "Lucro estimado", value: centsToCurrency(estimatedProfit), note: `margem de ${margin}%`, icon: TrendingUp, tone: "warning" as const },
-    { label: "Pedidos atrasados", value: String(lateOrders.length), note: "estado atual", icon: Clock, tone: lateOrders.length > 0 ? "danger" as const : "neutral" as const },
+    {
+      label: "Faturamento (período)",
+      value: centsToCurrency(totalRevenue),
+      note: textoVariacao(varFaturamento, centsToCurrency),
+      icon: BarChart3,
+      tone: "primary" as const,
+    },
+    {
+      label: "Recebido",
+      value: centsToCurrency(received),
+      note: `${centsToCurrency(toReceive)} a receber · ${textoVariacao(varRecebido, centsToCurrency)}`,
+      icon: CreditCard,
+      tone: "primary" as const,
+    },
+    {
+      label: "Lucro estimado",
+      value: centsToCurrency(estimatedProfit),
+      note: `margem de ${margin}% · ${textoVariacao(varLucro, centsToCurrency)}`,
+      icon: TrendingUp,
+      tone: "warning" as const,
+    },
+    {
+      label: "Pedidos no período",
+      value: String(rangeOrders.length),
+      note: textoVariacao(varPedidos, (n) => `${n} pedido${n === 1 ? "" : "s"}`),
+      icon: Clock,
+      tone: "primary" as const,
+    },
   ];
 
   return (
@@ -343,6 +431,79 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
               );
             })}
           </div>
+        </SectionCard>
+      </section>
+
+      {/* O que dá dinheiro de verdade. Vem antes de "mais vendidas" de
+          propósito: vender muito e lucrar pouco é o erro que essa tela
+          existia para revelar e não revelava. */}
+      {pecasNoPrejuizo.length > 0 ? (
+        <SectionCard eyebrow="Atenção" title="Saindo no prejuízo">
+          <p className="mb-3 text-sm text-[#66756d]">
+            Estas peças foram vendidas por menos do que custaram para fazer. O faturamento sobe, mas o
+            dinheiro não fica.
+          </p>
+          <ul className="divide-y divide-[#eef2ef]">
+            {pecasNoPrejuizo.slice(0, 5).map((linha) => (
+              <li key={linha.rotulo} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0">
+                <span className="min-w-0 flex-1 font-medium text-[#405047]">{linha.rotulo}</span>
+                <span className="text-xs text-[#8a9890]">
+                  {linha.quantidade} un. · vendeu {centsToCurrency(linha.receitaInCents)} · custou{" "}
+                  {centsToCurrency(linha.custoInCents)}
+                </span>
+                <span className="font-semibold tabular-nums text-[#9f2f42]">
+                  {centsToCurrency(linha.lucroInCents)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      ) : null}
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <SectionCard eyebrow="Lucro" title="Peças que mais dão lucro">
+          {rentPorPeca.length === 0 ? (
+            <EmptyHint icon={Trophy} text="Nenhum item vendido no período." />
+          ) : (
+            <ul className="divide-y divide-[#eef2ef]">
+              {rentPorPeca.slice(0, 5).map((linha) => (
+                <li key={linha.rotulo} className="py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 flex-1 truncate font-medium text-[#405047]">{linha.rotulo}</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-[#05605e]">
+                      {centsToCurrency(linha.lucroInCents)}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[#8a9890]">
+                    {linha.quantidade} un. · faturou {centsToCurrency(linha.receitaInCents)} ·{" "}
+                    {lerMargem(linha.margem, linha.custoIncompleto)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+
+        <SectionCard eyebrow="Lucro" title="Clientes que mais dão lucro">
+          {rentPorCliente.length === 0 ? (
+            <EmptyHint icon={Users} text="Nenhum pedido no período." />
+          ) : (
+            <ul className="divide-y divide-[#eef2ef]">
+              {rentPorCliente.slice(0, 5).map((linha) => (
+                <li key={linha.rotulo} className="py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 flex-1 truncate font-medium text-[#405047]">{linha.rotulo}</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-[#05605e]">
+                      {centsToCurrency(linha.lucroInCents)}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-[#8a9890]">
+                    faturou {centsToCurrency(linha.receitaInCents)} · {lerMargem(linha.margem, linha.custoIncompleto)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </SectionCard>
       </section>
 
