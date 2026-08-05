@@ -14,7 +14,30 @@ export type Anexo = {
   name: string;
   url: string;
   type: string | null;
+  /** "BANCADA" = foto da produção. Vazio = arte do cliente. */
+  origem?: string | null;
+  /** Quem tirou a foto, quando veio da bancada. */
+  sentBy?: string | null;
 };
+
+/**
+ * Veio da bancada?
+ *
+ * A separação importa: foto do que ficou pronto, ou de um problema, não pode
+ * ser confundida com a arte aprovada — senão o próximo funcionário produz
+ * olhando a imagem errada.
+ */
+export function ehDaBancada(anexo: Anexo): boolean {
+  return anexo.origem === "BANCADA";
+}
+
+/** Separa a arte que o cliente mandou das fotos tiradas na produção. */
+export function separarPorOrigem(anexos: Anexo[]): { arte: Anexo[]; producao: Anexo[] } {
+  const arte: Anexo[] = [];
+  const producao: Anexo[] = [];
+  for (const anexo of anexos) (ehDaBancada(anexo) ? producao : arte).push(anexo);
+  return { arte, producao };
+}
 
 export type TipoAnexo = "imagem" | "pdf" | "arte" | "outro";
 

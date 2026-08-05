@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
@@ -7,6 +9,7 @@ import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
+import { storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 import { explicarRecusa, mesaAceitaEtapa, mesasCompativeis } from "@/lib/mesa-rules";
 import { isTaskStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
@@ -175,4 +178,63 @@ export async function releaseTaskAction(_prev: FormState, formData: FormData): P
 
   revalidatePath("/bancada");
   return { success: "Pedido liberado." };
+}
+
+// Tamanho máximo da foto tirada na bancada. É o mesmo limite dos outros anexos.
+const MAX_FOTO_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Foto tirada pelo funcionário durante a produção.
+ *
+ * Existe separada do envio de anexo da tela do pedido porque aquela exige
+ * permissão de administrar pedidos — que o cargo Produção não tem, e não deve
+ * ter. Aqui a permissão é outra e bem mais estreita: a pessoa só anexa no
+ * pedido que ELA está com a mão agora, na bancada.
+ *
+ * Sem isso, o funcionário avisava o problema por WhatsApp e aquilo sumia do
+ * pedido: quem fosse ver depois não achava mais.
+ */
+export async function uploadFotoBancadaAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireBancadaUser();
+  const taskId = String(formData.get("taskId") ?? "");
+  const arquivo = formData.get("foto");
+
+  if (!taskId) return { error: "Trabalho não encontrado." };
+  if (!(arquivo instanceof File) || arquivo.size === 0) {
+    return { error: "Escolha ou tire uma foto para enviar." };
+  }
+  if (arquivo.size > MAX_FOTO_BYTES) {
+    return { error: "Foto acima de 8 MB. Tire de novo com qualidade menor." };
+  }
+  if (!storageConfigured()) {
+    return { error: "Envio de fotos não está configurado. Avise o dono da confecção." };
+  }
+
+  // O escopo: precisa ser um trabalho em andamento, desta empresa. Sem isto,
+  // qualquer pessoa da produção anexaria em qualquer pedido da empresa.
+  const task = await prisma.bancadaTask.findFirst({
+    where: { id: taskId, companyId: user.companyId, status: "PICKED" },
+    select: { id: true, orderId: true, order: { select: { number: true } } },
+  });
+  if (!task) return { error: "Este trabalho não está mais em andamento na bancada." };
+
+  const nomeLimpo = arquivo.name.replace(/[^\w.\-]/g, "_").slice(-60) || "foto.jpg";
+  const caminho = `${user.companyId}/${task.orderId}/${randomUUID()}-${nomeLimpo}`;
+  const url = await uploadAttachmentToStorage(caminho, await arquivo.arrayBuffer(), arquivo.type || null);
+  if (!url) return { error: "Não foi possível enviar a foto. Tente de novo." };
+
+  await prisma.attachment.create({
+    data: {
+      orderId: task.orderId,
+      name: arquivo.name || "Foto da produção",
+      url,
+      type: arquivo.type || null,
+      origem: "BANCADA",
+      sentBy: user.name,
+    },
+  });
+
+  revalidatePath("/bancada");
+  revalidatePath(`/pedidos/${task.orderId}`);
+  return { success: `Foto anexada ao pedido #${task.order.number}.` };
 }

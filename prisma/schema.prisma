@@ -527,6 +527,16 @@ model Attachment {
   name      String
   url       String
   type      String?
+  // De onde veio o arquivo. Vazio = arte do cliente, que é o caso de tudo que
+  // já existe. "BANCADA" = foto tirada pelo funcionário durante a produção.
+  //
+  // A separação importa: foto do que ficou pronto, ou de um problema, não pode
+  // ser confundida com a arte aprovada — senão o próximo funcionário produz
+  // olhando a foto errada.
+  origem    String?
+  // Quem enviou. Só preenchido no que vem da bancada: é o que permite voltar e
+  // perguntar para a pessoa certa quando a foto mostra um problema.
+  sentBy    String?
   createdAt DateTime @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)

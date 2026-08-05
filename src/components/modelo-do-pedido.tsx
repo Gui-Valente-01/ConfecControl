@@ -3,7 +3,15 @@
 import Image from "next/image";
 import { FileText, ImageOff, Palette, Paperclip } from "lucide-react";
 import { useState } from "react";
-import { classificarAnexo, comoAbrir, rotuloAnexo, separarAnexos, type Anexo } from "@/lib/anexos";
+import {
+  classificarAnexo,
+  comoAbrir,
+  ehVisualizavel,
+  rotuloAnexo,
+  separarAnexos,
+  separarPorOrigem,
+  type Anexo,
+} from "@/lib/anexos";
 import { VisualizadorAnexo } from "@/components/visualizador-anexo";
 
 // O modelo que o funcionário precisa ver antes de produzir.
@@ -34,7 +42,11 @@ export function ModeloDoPedido({
   /** Na lista da bancada mostra pouco; ao abrir o pedido, mostra tudo. */
   compacto?: boolean;
 }) {
-  const { imagens, arquivos } = separarAnexos(anexos);
+  // A arte do cliente vem primeiro e separada das fotos da produção: quem vai
+  // produzir precisa saber qual imagem é o modelo aprovado e qual é o registro
+  // do que já foi feito.
+  const { arte, producao } = separarPorOrigem(anexos);
+  const { imagens, arquivos } = separarAnexos(arte);
   // Índice do anexo aberto no visualizador; null = fechado.
   const [vendo, setVendo] = useState<number | null>(null);
 
@@ -123,10 +135,58 @@ export function ModeloDoPedido({
         </ul>
       ) : null}
 
-      {imagens.length === 0 ? (
+      {imagens.length === 0 && arte.length > 0 ? (
         <p className="text-xs text-[#8a9890]">
           Nenhum arquivo dá para ver aqui na tela. Toque acima para abrir ou baixar.
         </p>
+      ) : null}
+
+      {producao.length > 0 ? (
+        <div className="border-t border-[#eef2ef] pt-2">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8a9890]">
+            Fotos da produção
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {producao.map((anexo) => (
+              <li key={anexo.id}>
+                <button
+                  type="button"
+                  onClick={() => setVendo(posicaoNaLista(anexo))}
+                  title={anexo.sentBy ? `${anexo.name} — enviada por ${anexo.sentBy}` : anexo.name}
+                  aria-label={
+                    anexo.sentBy
+                      ? `Ver a foto ${anexo.name}, enviada por ${anexo.sentBy}`
+                      : `Ver a foto ${anexo.name}`
+                  }
+                  className="block overflow-hidden rounded-lg border border-[#ead49c] transition hover:border-[#b9821f]"
+                >
+                  {ehVisualizavel(anexo) ? (
+                    <Image
+                      src={anexo.url}
+                      alt={`Foto da produção do pedido ${numeroPedido}: ${anexo.name}`}
+                      width={64}
+                      height={64}
+                      className="object-cover"
+                      style={{ width: 64, height: 64 }}
+                    />
+                  ) : (
+                    <span className="flex size-16 items-center justify-center bg-[#fffcf3] text-[#7b5a0b]">
+                      <Paperclip size={16} aria-hidden="true" />
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {/* Quem tirou fica visível: é o que permite voltar e perguntar. */}
+          {producao[0]?.sentBy ? (
+            <p className="mt-1 text-xs text-[#8a9890]">
+              {producao.length === 1
+                ? `Enviada por ${producao[0].sentBy}`
+                : `Enviadas pela equipe, a última por ${producao[producao.length - 1].sentBy}`}
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       <VisualizadorAnexo

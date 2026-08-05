@@ -6,6 +6,7 @@ import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { formatDateTime, formatShortDate } from "@/lib/format";
+import { FotoDaBancada } from "@/components/foto-da-bancada";
 import { ModeloDoPedido } from "@/components/modelo-do-pedido";
 import { primeiraImagem } from "@/lib/anexos";
 import { mesasCompativeis } from "@/lib/mesa-rules";
@@ -43,7 +44,7 @@ export default async function BancadaPage() {
             number: true,
             client: { select: { name: true } },
             items: { select: { description: true, quantity: true }, take: 1 },
-            attachments: { select: { id: true, name: true, url: true, type: true }, orderBy: { createdAt: "asc" } },
+            attachments: { select: { id: true, name: true, url: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
           },
         },
       },
@@ -67,7 +68,7 @@ export default async function BancadaPage() {
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
-        attachments: { select: { id: true, name: true, url: true, type: true }, orderBy: { createdAt: "asc" } },
+        attachments: { select: { id: true, name: true, url: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
         currentStage: { select: { name: true } },
       },
     }),
@@ -139,6 +140,9 @@ export default async function BancadaPage() {
                     fazer a peça errada e descobrir só na conferência. */}
                 <div className="mt-3">
                   <ModeloDoPedido anexos={task.order.attachments} numeroPedido={task.order.number} compacto />
+                  {/* Só em quem está com a mão no trabalho: é o escopo que a
+                      ação do servidor também exige. */}
+                  <FotoDaBancada taskId={task.id} numeroPedido={task.order.number} />
                 </div>
 
                 {/* Esta tela é usada em pé, no celular, com a mão ocupada. Os

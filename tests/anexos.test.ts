@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   classificarAnexo,
   comoAbrir,
+  ehDaBancada,
+  separarPorOrigem,
   ehVisualizavel,
   primeiraImagem,
   rotuloAnexo,
@@ -120,5 +122,31 @@ describe("separarAnexos", () => {
 
   it("lista vazia nao quebra", () => {
     expect(separarAnexos([])).toEqual({ imagens: [], arquivos: [] });
+  });
+});
+
+describe("origem do anexo", () => {
+  const arte = { id: "1", name: "arte.png", url: "/a.png", type: "image/png" };
+  const foto = { id: "2", name: "pronto.jpg", url: "/b.jpg", type: "image/jpeg", origem: "BANCADA", sentBy: "Maria" };
+
+  it("arte do cliente nao e da bancada", () => {
+    expect(ehDaBancada(arte)).toBe(false);
+    expect(ehDaBancada({ ...arte, origem: null })).toBe(false);
+  });
+
+  it("foto da producao e reconhecida", () => {
+    expect(ehDaBancada(foto)).toBe(true);
+  });
+
+  it("separa as duas coisas, para nao produzirem olhando a foto errada", () => {
+    const r = separarPorOrigem([arte, foto, { ...arte, id: "3" }]);
+    expect(r.arte.map((a) => a.id)).toEqual(["1", "3"]);
+    expect(r.producao.map((a) => a.id)).toEqual(["2"]);
+  });
+
+  it("pedido sem foto de producao devolve lista vazia, e nao quebra", () => {
+    const r = separarPorOrigem([arte]);
+    expect(r.producao).toEqual([]);
+    expect(r.arte).toHaveLength(1);
   });
 });
