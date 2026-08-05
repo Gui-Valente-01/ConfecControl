@@ -1,12 +1,20 @@
 "use client";
 
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useActionFeedback } from "@/components/toast";
 import { centsToCurrency, centsToInput, moneyToCents, priceExpressionToCents } from "@/lib/format";
 import { describeAtypicalPrices, findAtypicalPrices } from "@/lib/price-check";
 import { emptyFormState, type FormState } from "@/lib/form-state";
+import {
+  ETAPAS_PEDIDO,
+  TOTAL_ETAPAS,
+  impedimentoDaEtapa,
+  rotuloProgresso,
+  ultimaEtapaLiberada as liberadoAte,
+  type DadosPedido,
+} from "@/lib/order-steps";
 import { useUnsavedWarning } from "@/components/use-unsaved-warning";
 
 type ClientOption = { id: string; name: string };
@@ -269,17 +277,138 @@ export function OrderForm({
     "Você preencheu este pedido e ainda não salvou. Sair agora descarta o que digitou.",
   );
 
+  // ---- Etapas ----
+  //
+  // Nenhum campo é desmontado ao trocar de etapa: as seções escondidas ficam no
+  // formulário com display:none. Se fossem removidas da tela, o que a pessoa
+  // digitou sumiria do envio — e voltar uma etapa perderia o trabalho.
+  const [etapa, setEtapa] = useState(0);
+  const [tentouAvancar, setTentouAvancar] = useState(false);
+
+  const [clientId, setClientId] = useState(defaults?.clientId ?? "");
+  const [prazo, setPrazo] = useState(defaults?.deliveryDate ?? "");
+  const hoje = new Date();
+  const dataPedidoISO = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+
+  const dadosEtapas: DadosPedido = {
+    clientId,
+    itens: items.map((item) => ({
+      descricao: item.description,
+      productId: item.productId,
+      quantidade: Math.floor(Number(item.quantity) || 0),
+    })),
+    prazo,
+    // Na edição o pedido já existe; comparar com hoje acusaria prazo antigo à toa.
+    dataPedido: orderId ? "" : dataPedidoISO,
+    totalInCents,
+    entradaInCents: paidInCents,
+  };
+
+  const impedimento = impedimentoDaEtapa(etapa, dadosEtapas);
+  const ehUltima = etapa === TOTAL_ETAPAS - 1;
+  const clienteEscolhido = clients.find((c) => c.id === clientId);
+
+  // Num pedido que já existe, tudo está preenchido e válido: obrigar a passar
+  // pelas cinco etapas para trocar uma data seria pior do que antes. Aqui a
+  // pessoa pula direto para a etapa que quer — até onde os dados permitem.
+  const liberadaAte = liberadoAte(dadosEtapas);
+  const podeIrPara = (indice: number) => indice <= etapa || indice <= liberadaAte;
+
+  const avancar = () => {
+    if (impedimento) {
+      setTentouAvancar(true);
+      if (impedimento.campo) {
+        const alvo = document.querySelector<HTMLElement>(`[name="${impedimento.campo}"]`);
+        alvo?.scrollIntoView({ block: "center", behavior: "smooth" });
+        alvo?.focus({ preventScroll: true });
+      }
+      return;
+    }
+    setTentouAvancar(false);
+    setEtapa((n) => Math.min(n + 1, TOTAL_ETAPAS - 1));
+  };
+
+  const voltar = () => {
+    setTentouAvancar(false);
+    setEtapa((n) => Math.max(n - 1, 0));
+  };
+
+  // Só a seção da etapa atual aparece. A classe fica num invólucro próprio, e
+  // não no elemento que já tem grid/flex, para as duas regras de display não
+  // brigarem — foi assim que um botão continuou visível quando devia sumir.
+  const secao = (indice: number, classe = "space-y-4") =>
+    etapa === indice ? classe : "hidden";
+
+  const itensValidos = items.filter(
+    (i) => Math.floor(Number(i.quantity) || 0) > 0 && (i.productId || i.description.trim()),
+  );
+  const servicosValidos = services.filter((s) => s.name.trim().length > 0);
+
   return (
     <form
       className="space-y-4"
       action={formAction}
       onSubmit={(event) => {
+        // Enter no meio do formulário não pode salvar um pedido pela metade:
+        // só a última etapa envia de verdade.
+        if (!ehUltima) {
+          event.preventDefault();
+          avancar();
+          return;
+        }
         // Não bloqueia: o preço fora da curva pode ser proposital. Só obriga a
         // olhar uma vez, que é o que falta para a vírgula errada não passar.
         const aviso = describeAtypicalPrices(atypical);
         if (aviso && !window.confirm(aviso)) event.preventDefault();
       }}
     >
+      {/* Onde estou e quanto falta. */}
+      <nav aria-label="Etapas do pedido" className="rounded-xl border border-[#d9e1dd] bg-white p-3">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          {ETAPAS_PEDIDO.map((passo, indice) => {
+            const feita = indice < etapa;
+            const atual = indice === etapa;
+            return (
+              <li key={passo.chave} className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  // Voltar sempre pode. Pular para frente só até onde os dados
+                  // já preenchidos permitem — senão driblaria a conferência.
+                  onClick={() => podeIrPara(indice) && setEtapa(indice)}
+                  disabled={!podeIrPara(indice)}
+                  aria-current={atual ? "step" : undefined}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm transition ${
+                    atual
+                      ? "bg-[#087f7d] font-semibold text-white"
+                      : feita
+                        ? "text-[#05605e] hover:bg-[#e8f6f3]"
+                        : "cursor-not-allowed text-[#b6c2bb]"
+                  }`}
+                >
+                  <span
+                    className={`flex size-5 items-center justify-center rounded-full text-[11px] font-bold ${
+                      atual ? "bg-white text-[#087f7d]" : feita ? "bg-[#087f7d] text-white" : "bg-[#e6ebe8] text-[#8a9890]"
+                    }`}
+                  >
+                    {feita ? <Check size={12} aria-hidden="true" /> : indice + 1}
+                  </span>
+                  <span className={atual ? "" : "hidden sm:inline"}>{passo.titulo}</span>
+                </button>
+                {indice < TOTAL_ETAPAS - 1 ? (
+                  <span className="text-[#c7d3ce]" aria-hidden="true">
+                    ›
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+        <p className="mt-2 text-xs text-[#66756d]">
+          <strong className="font-semibold text-[#405047]">{rotuloProgresso(etapa)}</strong>
+          {" — "}
+          {ETAPAS_PEDIDO[etapa].ajuda}
+        </p>
+      </nav>
       {orderId ? <input type="hidden" name="id" value={orderId} /> : null}
       <input type="hidden" name="items" value={itemsJson} />
       <input type="hidden" name="services" value={servicesJson} />
@@ -289,21 +418,31 @@ export function OrderForm({
         ))}
       </datalist>
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Cliente</span>
-        <select
-          name="clientId"
-          required
-          defaultValue={defaults?.clientId ?? ""}
-          className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
-        >
-          <option value="">Selecione</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>{client.name}</option>
-          ))}
-        </select>
-      </label>
+      {/* ETAPA 1 — Cliente */}
+      <div className={secao(0)}>
+        <label className="block">
+          <span className="text-sm font-medium text-[#405047]">
+            Cliente <span className="text-[#9f2f42]">*</span>
+          </span>
+          <select
+            name="clientId"
+            value={clientId}
+            onChange={(e) => setClientId(e.target.value)}
+            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] bg-white px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+          >
+            <option value="">Selecione o cliente</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>{client.name}</option>
+            ))}
+          </select>
+          <span className="mt-1.5 block text-xs text-[#66756d]">
+            O cliente precisa estar cadastrado antes. Se não estiver na lista, cadastre em Mais → Clientes.
+          </span>
+        </label>
+      </div>
 
+      {/* ETAPA 2 — Peças e serviços */}
+      <div className={secao(1)}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-[#405047]">Itens do pedido</span>
@@ -473,48 +612,125 @@ export function OrderForm({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      </div>
+
+      {/* ETAPA 3 — Prazo e produção */}
+      <div className={secao(2)}>
         <label className="block">
           <span className="text-sm font-medium text-[#405047]">Prazo de entrega</span>
           <input
             name="deliveryDate"
             type="date"
-            defaultValue={defaults?.deliveryDate ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            value={prazo}
+            onChange={(e) => setPrazo(e.target.value)}
+            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
           />
+          <span className="mt-1.5 block text-xs text-[#66756d]">
+            Pode ficar em branco se ainda não combinou a data. É esse prazo que faz o pedido aparecer
+            como atrasado no Início.
+          </span>
         </label>
+
+        <label className="block">
+          <span className="text-sm font-medium text-[#405047]">Observações internas</span>
+          <textarea
+            name="notes"
+            defaultValue={defaults?.internalNotes ?? ""}
+            className="mt-1 min-h-24 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:text-sm"
+            placeholder="Ex.: arte aprovada em 28/07; entregar em duas remessas."
+          />
+          <span className="mt-1.5 block text-xs text-[#66756d]">
+            Só a sua equipe vê. O cliente não enxerga isso no portal.
+          </span>
+        </label>
+      </div>
+
+      {/* ETAPA 4 — Pagamento */}
+      <div className={secao(3)}>
+        <label className="block">
+          <span className="text-sm font-medium text-[#405047]">Entrada / valor já pago (R$)</span>
+          <input
+            name="paid"
+            value={paid}
+            onChange={(event) => setPaid(event.target.value)}
+            inputMode="decimal"
+            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+            placeholder="1.000,00"
+          />
+          <span className="mt-1.5 block text-xs text-[#66756d]">
+            Quanto o cliente já pagou agora. Deixe em branco se não pagou nada ainda — o saldo aparece
+            no Financeiro para você cobrar depois.
+          </span>
+        </label>
+
         <label className="block">
           <span className="text-sm font-medium text-[#405047]">Forma de pagamento</span>
           <input
             name="paymentMethod"
             defaultValue={defaults?.paymentMethod ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
             placeholder="Pix, cartão, boleto..."
           />
         </label>
       </div>
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Entrada / valor pago (R$)</span>
-        <input
-          name="paid"
-          value={paid}
-          onChange={(event) => setPaid(event.target.value)}
-          inputMode="decimal"
-          className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
-          placeholder="1.000,00"
-        />
-      </label>
+      {/* ETAPA 5 — Revisão: o resumo do que será salvo. */}
+      <div className={secao(4)}>
+        <div className="rounded-xl border border-[#d9e1dd] bg-white p-4">
+          <h3 className="font-semibold text-[#1c2420]">Confira antes de salvar</h3>
 
-      <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Observações internas</span>
-        <textarea
-          name="notes"
-          defaultValue={defaults?.internalNotes ?? ""}
-          className="mt-1 min-h-24 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
-        />
-      </label>
+          <dl className="mt-3 space-y-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt className="text-[#63736b]">Cliente</dt>
+              <dd className="text-right font-medium">{clienteEscolhido?.name ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-[#63736b]">Prazo</dt>
+              <dd className="text-right font-medium">
+                {prazo ? prazo.split("-").reverse().join("/") : "sem prazo combinado"}
+              </dd>
+            </div>
+          </dl>
 
+          <div className="mt-3 border-t border-[#eef2ef] pt-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#8a9890]">
+              {itensValidos.length === 1 ? "1 peça" : `${itensValidos.length} peças`}
+            </p>
+            <ul className="mt-1.5 space-y-1 text-sm">
+              {itensValidos.map((item) => (
+                <li key={item.key} className="flex justify-between gap-3">
+                  <span className="min-w-0">
+                    {item.description.trim() || products.find((p) => p.id === item.productId)?.name || "Peça"}
+                    <span className="text-[#8a9890]"> × {Math.floor(Number(item.quantity) || 0)}</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums text-[#66756d]">
+                    {centsToCurrency(Math.round((Number(item.unitPrice) || 0) * 100) * Math.floor(Number(item.quantity) || 0))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {servicosValidos.length > 0 ? (
+              <>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#8a9890]">Serviços</p>
+                <ul className="mt-1.5 space-y-1 text-sm">
+                  {servicosValidos.map((s) => (
+                    <li key={s.key} className="flex justify-between gap-3">
+                      <span className="min-w-0">{s.name}</span>
+                      <span className="shrink-0 tabular-nums text-[#66756d]">
+                        {centsToCurrency(priceExpressionToCents(s.price))}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* O total acompanha em todas as etapas: é o número que a pessoa confere
+          o tempo todo enquanto monta o pedido. */}
       <div className="rounded-lg bg-[#eef4f1] px-3 py-2.5 text-sm">
         {servicesInCents > 0 ? (
           <>
@@ -560,7 +776,45 @@ export function OrderForm({
         <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p>
       ) : null}
 
-      <SubmitButton label={submitLabel} />
+      {/* Por que não dá para continuar. Aparece só depois de tentar: avisar
+          antes da pessoa fazer nada é reclamar de um erro que ainda não houve. */}
+      {impedimento && tentouAvancar ? (
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-lg border border-[#ead49c] bg-[#fffcf3] px-3 py-2.5 text-sm text-[#7b5a0b]"
+        >
+          <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
+          {impedimento.motivo}
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-[#eef2ef] pt-4">
+        {etapa > 0 ? (
+          <button
+            type="button"
+            onClick={voltar}
+            className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+          >
+            <ArrowLeft size={16} aria-hidden="true" />
+            Voltar
+          </button>
+        ) : null}
+
+        <div className="flex-1" />
+
+        {ehUltima ? (
+          <SubmitButton label={submitLabel} />
+        ) : (
+          <button
+            type="button"
+            onClick={avancar}
+            className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#087f7d] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]"
+          >
+            Continuar
+            <ArrowRight size={16} aria-hidden="true" />
+          </button>
+        )}
+      </div>
     </form>
   );
 }
