@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { DbDashboard } from "@/components/db-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
+import { PrimeirosPassos } from "@/components/primeiros-passos";
 import { getSessionUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
 import { canManageOrders, canSeeFinance } from "@/lib/roles";
@@ -13,7 +14,7 @@ export default async function Home() {
   // Visitante sem sessão vê a página de apresentação; usuário logado vê o painel.
   const user = await getSessionUser();
   if (!user) return <LandingPage />;
-  const [orders, stages, materials, products] = await Promise.all([
+  const [orders, stages, materials, products, pedidosMovidos, recebimentos] = await Promise.all([
     prisma.order.findMany({
       where: { companyId: user.companyId },
       orderBy: { createdAt: "desc" },
@@ -47,6 +48,9 @@ export default async function Home() {
         bom: { select: { material: { select: { name: true, costPerUnitInCents: true } } } },
       },
     }),
+    // Para os primeiros passos: já moveu algum pedido de etapa? já recebeu?
+    prisma.productionHistory.count({ where: { order: { companyId: user.companyId } } }),
+    prisma.payment.count({ where: { order: { companyId: user.companyId } } }),
   ]);
 
   // Peça com custo incompleto faz a margem do relatório mentir: ou não tem
@@ -78,6 +82,16 @@ export default async function Home() {
 
   return (
     <AppShell eyebrow="Hoje" title="Painel da produção" user={user}>
+      {/* Some sozinha quando os cinco passos estiverem feitos. */}
+      <PrimeirosPassos
+        contagens={{
+          pecas: products.length,
+          materiais: materials.length,
+          pedidos: orders.length,
+          pedidosMovidos,
+          recebimentos,
+        }}
+      />
       <DbDashboard
         orders={orders}
         stages={stages}
