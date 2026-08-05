@@ -78,11 +78,17 @@ export function rotuloAnexo(anexo: Anexo): string {
   return ROTULOS[tipo];
 }
 
-/** O que dizer sobre um arquivo que a tela não consegue mostrar. */
+/**
+ * O que acontece ao tocar no arquivo.
+ *
+ * O PDF é desenhado pelo próprio navegador dentro do visualizador. Já o
+ * arquivo de arte nenhum navegador abre: ali o visualizador oferece o download,
+ * e o texto avisa isso antes, para a pessoa não tocar esperando ver a arte.
+ */
 export function comoAbrir(anexo: Anexo): string {
   const tipo = classificarAnexo(anexo);
-  if (tipo === "pdf") return "Toque para abrir o PDF.";
-  if (tipo === "arte") return "Não abre no navegador. Baixe para abrir no programa de arte.";
+  if (tipo === "pdf") return "Toque para ver o PDF aqui.";
+  if (tipo === "arte") return "Não abre no navegador. Toque para baixar e abrir no programa de arte.";
   return "Toque para baixar.";
 }
 

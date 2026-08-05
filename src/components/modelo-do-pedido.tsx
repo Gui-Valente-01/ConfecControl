@@ -1,5 +1,10 @@
+"use client";
+
+import Image from "next/image";
 import { FileText, ImageOff, Palette, Paperclip } from "lucide-react";
+import { useState } from "react";
 import { classificarAnexo, comoAbrir, rotuloAnexo, separarAnexos, type Anexo } from "@/lib/anexos";
+import { VisualizadorAnexo } from "@/components/visualizador-anexo";
 
 // O modelo que o funcionário precisa ver antes de produzir.
 //
@@ -7,6 +12,10 @@ import { classificarAnexo, comoAbrir, rotuloAnexo, separarAnexos, type Anexo } f
 // Illustrator. Foto aparece na tela; o que o navegador não abre vira um cartão
 // dizendo o que é e como abrir — em vez de um quadrado quebrado, que era o que
 // acontecia quando um PDF caía dentro de uma <img>.
+//
+// A miniatura passa pelo next/image de propósito: antes o arquivo original era
+// baixado inteiro para virar um quadradinho de 80px, e uma foto de celular de
+// 6 MB custava 6 MB de internet só para isso.
 
 const ICONE = {
   pdf: FileText,
@@ -26,6 +35,8 @@ export function ModeloDoPedido({
   compacto?: boolean;
 }) {
   const { imagens, arquivos } = separarAnexos(anexos);
+  // Índice do anexo aberto no visualizador; null = fechado.
+  const [vendo, setVendo] = useState<number | null>(null);
 
   if (anexos.length === 0) {
     return (
@@ -38,6 +49,11 @@ export function ModeloDoPedido({
 
   const imagensVisiveis = compacto ? imagens.slice(0, 3) : imagens;
   const sobrando = imagens.length - imagensVisiveis.length;
+  const lado = compacto ? 80 : 160;
+
+  // O visualizador percorre TODOS os anexos, e não só as imagens: quem abriu a
+  // foto e quer ver o PDF da arte não precisa fechar e procurar na lista.
+  const posicaoNaLista = (anexo: Anexo) => anexos.findIndex((a) => a.id === anexo.id);
 
   return (
     <div className="space-y-2">
@@ -45,27 +61,36 @@ export function ModeloDoPedido({
         <ul className="flex flex-wrap gap-2">
           {imagensVisiveis.map((anexo) => (
             <li key={anexo.id}>
-              {/* Abre em aba nova, em tamanho cheio: na bancada a pessoa
-                  precisa dar zoom na arte para conferir detalhe. */}
-              <a
-                href={anexo.url}
-                target="_blank"
-                rel="noopener"
-                title={`Ver ${anexo.name} em tamanho maior`}
+              <button
+                type="button"
+                onClick={() => setVendo(posicaoNaLista(anexo))}
+                title={`Ver ${anexo.name} maior`}
+                aria-label={`Ver a arte ${anexo.name} do pedido ${numeroPedido} em tamanho maior`}
                 className="block overflow-hidden rounded-lg border border-[#d9e1dd] transition hover:border-[#087f7d]"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={anexo.url}
                   alt={`Modelo do pedido ${numeroPedido}: ${anexo.name}`}
-                  className={compacto ? "size-20 object-cover" : "h-40 w-40 object-cover"}
+                  width={lado}
+                  height={lado}
+                  // A miniatura é pequena e aparece logo de cara na bancada:
+                  // carregar sob demanda faria a arte piscar ao rolar a lista.
+                  className="object-cover"
+                  style={{ width: lado, height: lado }}
                 />
-              </a>
+              </button>
             </li>
           ))}
           {sobrando > 0 ? (
-            <li className="flex size-20 items-center justify-center rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] text-xs font-semibold text-[#66756d]">
-              +{sobrando}
+            <li>
+              <button
+                type="button"
+                onClick={() => setVendo(posicaoNaLista(imagens[imagensVisiveis.length]))}
+                className="flex size-20 items-center justify-center rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] text-xs font-semibold text-[#66756d] transition hover:border-[#087f7d]"
+                aria-label={`Ver as outras ${sobrando} artes do pedido ${numeroPedido}`}
+              >
+                +{sobrando}
+              </button>
             </li>
           ) : null}
         </ul>
@@ -77,11 +102,10 @@ export function ModeloDoPedido({
             const Icone = ICONE[classificarAnexo(anexo)];
             return (
               <li key={anexo.id}>
-                <a
-                  href={anexo.url}
-                  target="_blank"
-                  rel="noopener"
-                  className="flex min-h-11 items-center gap-2.5 rounded-lg border border-[#d9e1dd] bg-white px-2.5 py-2 transition hover:border-[#087f7d] hover:bg-[#f8faf9]"
+                <button
+                  type="button"
+                  onClick={() => setVendo(posicaoNaLista(anexo))}
+                  className="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-[#d9e1dd] bg-white px-2.5 py-2 text-left transition hover:border-[#087f7d] hover:bg-[#f8faf9]"
                 >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#eef4f1] text-[#405047]">
                     <Icone size={16} aria-hidden="true" />
@@ -92,7 +116,7 @@ export function ModeloDoPedido({
                       {rotuloAnexo(anexo)} · {comoAbrir(anexo)}
                     </span>
                   </span>
-                </a>
+                </button>
               </li>
             );
           })}
@@ -101,9 +125,16 @@ export function ModeloDoPedido({
 
       {imagens.length === 0 ? (
         <p className="text-xs text-[#8a9890]">
-          Nenhum arquivo dá para ver aqui na tela. Baixe acima para abrir no programa certo.
+          Nenhum arquivo dá para ver aqui na tela. Toque acima para abrir ou baixar.
         </p>
       ) : null}
+
+      <VisualizadorAnexo
+        anexos={anexos}
+        aberto={vendo}
+        onFechar={() => setVendo(null)}
+        numeroPedido={numeroPedido}
+      />
     </div>
   );
 }

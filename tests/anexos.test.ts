@@ -100,8 +100,8 @@ describe("comoAbrir", () => {
     expect(comoAbrir(anexo("logo.cdr", null))).toContain("Não abre no navegador");
   });
 
-  it("PDF abre direto", () => {
-    expect(comoAbrir(anexo("arte.pdf", "application/pdf"))).toContain("abrir o PDF");
+  it("PDF e desenhado pelo navegador dentro do visualizador", () => {
+    expect(comoAbrir(anexo("arte.pdf", "application/pdf"))).toContain("ver o PDF aqui");
   });
 });
 
