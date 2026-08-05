@@ -4,6 +4,16 @@ import { AppShell } from "@/components/app-shell";
 import { MetricCard } from "@/components/metric-card";
 import { compararValores, periodoAnterior, textoVariacao } from "@/lib/comparacao";
 import { agruparRentabilidade, lerMargem, noPrejuizo, ordenarPorLucro } from "@/lib/rentabilidade";
+import {
+  calcularPontualidade,
+  calcularProdutividade,
+  calcularTempoPorEtapa,
+  calcularTempoTotal,
+  gargalo,
+  lerDias,
+  lerPontualidade,
+  resumirProblemas,
+} from "@/lib/producao-analytics";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
@@ -37,7 +47,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   // número. "R$ 23 mil" sozinho não diz se foi um bom mês.
   const anterior = periodoAnterior({ de: validFrom, ate: validTo });
 
-  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, materials] = await Promise.all([
+  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, materials, historico, tarefasFeitas, saidasMaterial] = await Promise.all([
     prisma.order.findMany({
       where: { companyId, orderDate: { gte: validFrom, lte: validTo } },
       select: {
@@ -95,6 +105,29 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     prisma.material.findMany({
       where: { companyId },
       select: { id: true, name: true, unit: true, currentQuantity: true, minimumQuantity: true },
+    }),
+    // Histórico de etapa: é o que revela onde o pedido fica parado e quanto
+    // tempo leva do começo ao fim. O dado já era gravado e nunca foi lido.
+    prisma.productionHistory.findMany({
+      where: { order: { companyId } },
+      orderBy: { changedAt: "asc" },
+      select: {
+        orderId: true,
+        changedAt: true,
+        fromStage: { select: { name: true } },
+        toStage: { select: { name: true } },
+        order: { select: { number: true, orderDate: true, deliveryDate: true } },
+      },
+    }),
+    // Tarefas de bancada concluídas no período: produtividade e problemas.
+    prisma.bancadaTask.findMany({
+      where: { companyId, status: "DONE", doneAt: { gte: validFrom, lte: validTo } },
+      select: { pickedByName: true, stageName: true, pickedAt: true, doneAt: true, noteKind: true, note: true },
+    }),
+    // Saída de material no período: quanto a produção consumiu.
+    prisma.stockMovement.findMany({
+      where: { material: { companyId }, type: "OUT", createdAt: { gte: validFrom, lte: validTo } },
+      select: { quantity: true, materialId: true },
     }),
   ]);
 
@@ -229,6 +262,73 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
 
   // A lista que não existia: o que saiu por menos do que custou.
   const pecasNoPrejuizo = noPrejuizo(rentPorPeca);
+
+  // ---- Produção: o lado que o relatório não media ----
+  //
+  // Numa empresa que vive de prazo, faturamento sem tempo de produção é metade
+  // do quadro. Tudo aqui sai de dado que já era gravado e nunca foi lido.
+
+  const movimentos = historico.map((h) => ({
+    orderId: h.orderId,
+    de: h.fromStage?.name ?? null,
+    para: h.toStage?.name ?? "",
+    quando: h.changedAt,
+  }));
+  const temposEtapa = calcularTempoPorEtapa(movimentos);
+  const etapaGargalo = gargalo(temposEtapa);
+
+  // Entrega = o momento em que o pedido chegou numa etapa final. É o que existe
+  // de mais próximo de uma "data de entrega real" sem inventar coluna nova.
+  const NOMES_FINAIS = ["entregue", "pronto"];
+  const entregas = historico.filter((h) => NOMES_FINAIS.includes((h.toStage?.name ?? "").toLowerCase()));
+
+  const entreguesNoPeriodo = entregas.filter((h) => h.changedAt >= validFrom && h.changedAt <= validTo);
+  const pontualidade = calcularPontualidade(
+    entreguesNoPeriodo.map((h) => ({
+      numero: h.order.number,
+      prazo: h.order.deliveryDate,
+      entregueEm: h.changedAt,
+    })),
+  );
+
+  const tempoTotal = calcularTempoTotal(
+    entreguesNoPeriodo.map((h) => ({ inicio: h.order.orderDate, fim: h.changedAt })),
+  );
+
+  const produtividade = calcularProdutividade(
+    tarefasFeitas
+      .filter((t): t is typeof t & { doneAt: Date } => t.doneAt !== null)
+      .map((t) => ({
+        pessoa: t.pickedByName,
+        etapa: t.stageName,
+        pegouEm: t.pickedAt,
+        concluiuEm: t.doneAt,
+      })),
+  );
+
+  const problemas = resumirProblemas(
+    tarefasFeitas
+      .filter((t) => t.noteKind !== "NONE")
+      .map((t) => ({
+        tipo: t.noteKind,
+        etapa: t.stageName,
+        pessoa: t.pickedByName,
+        quando: t.doneAt ?? t.pickedAt,
+        nota: t.note,
+      })),
+  );
+
+  // Consumo de material no período, avaliado pelo preço de cadastro.
+  const materialPreco = new Map(materials.map((m) => [m.id, m]));
+  const consumoPorMaterial = new Map<string, number>();
+  for (const saida of saidasMaterial) {
+    consumoPorMaterial.set(saida.materialId, (consumoPorMaterial.get(saida.materialId) ?? 0) + Number(saida.quantity));
+  }
+  const consumoRows = [...consumoPorMaterial.entries()]
+    .map(([id, qtd]) => ({ nome: materialPreco.get(id)?.name ?? "Material removido", unidade: materialPreco.get(id)?.unit ?? "", quantidade: qtd }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+
+  const tarefasConcluidas = produtividade.reduce((s, p) => s + p.concluidas, 0);
 
   // Estado atual (independe do período)
   const lateOrders = allOrders
@@ -433,6 +533,136 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
           </div>
         </SectionCard>
       </section>
+
+      {/* ---- PRODUÇÃO ---- */}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Produção">
+        <MetricCard
+          label="Entregue no prazo"
+          value={pontualidade.percentualNoPrazo === null ? "—" : `${pontualidade.percentualNoPrazo}%`}
+          note={lerPontualidade(pontualidade.percentualNoPrazo)}
+          icon={CalendarRange}
+          tone={
+            pontualidade.percentualNoPrazo === null
+              ? "neutral"
+              : pontualidade.percentualNoPrazo >= 80
+                ? "primary"
+                : "danger"
+          }
+        />
+        <MetricCard
+          label="Tempo médio do pedido"
+          value={lerDias(tempoTotal.medianaDias)}
+          note={
+            tempoTotal.maisRapido === null
+              ? "nenhum pedido concluído no período"
+              : `mais rápido ${lerDias(tempoTotal.maisRapido)} · mais lento ${lerDias(tempoTotal.maisLento)}`
+          }
+          icon={Clock}
+          tone="primary"
+        />
+        <MetricCard
+          label="Onde o pedido mais espera"
+          value={etapaGargalo?.etapa ?? "—"}
+          note={
+            etapaGargalo
+              ? `${lerDias(etapaGargalo.mediaDias)} em média, em ${etapaGargalo.passagens === 1 ? "1 pedido" : `${etapaGargalo.passagens} pedidos`}`
+              : "sem movimentação registrada"
+          }
+          icon={AlertTriangle}
+          tone={etapaGargalo ? "warning" : "neutral"}
+        />
+        <MetricCard
+          label="Trabalhos concluídos"
+          value={String(tarefasConcluidas)}
+          note={problemas.total > 0 ? `${problemas.total} com falta ou sobra` : "nenhum problema registrado"}
+          icon={Trophy}
+          tone={problemas.total > 0 ? "warning" : "primary"}
+        />
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        <SectionCard eyebrow="Prazo" title="Tempo em cada etapa">
+          <p className="mb-3 text-sm text-[#66756d]">
+            Onde o pedido fica parado. A etapa do topo é a que mais segura a produção — é nela que o prazo
+            se perde.
+          </p>
+          {temposEtapa.length === 0 ? (
+            <EmptyHint icon={Clock} text="Nenhum pedido mudou de etapa ainda." />
+          ) : (
+            <ul className="divide-y divide-[#eef2ef]">
+              {temposEtapa.slice(0, 6).map((etapa) => (
+                <li key={etapa.etapa} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0">
+                  <span className="min-w-0 flex-1 font-medium text-[#405047]">{etapa.etapa}</span>
+                  <span className="text-xs text-[#8a9890]">{etapa.passagens === 1 ? "1 passagem" : `${etapa.passagens} passagens`}</span>
+                  <span className="font-semibold tabular-nums text-[#405047]">{lerDias(etapa.mediaDias)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+
+        <SectionCard eyebrow="Equipe" title="Trabalhos concluídos por pessoa">
+          {produtividade.length === 0 ? (
+            <EmptyHint icon={Users} text="Nenhum trabalho concluído na bancada no período." />
+          ) : (
+            <ul className="divide-y divide-[#eef2ef]">
+              {produtividade.slice(0, 6).map((pessoa) => (
+                <li key={pessoa.pessoa} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2.5 first:pt-0 last:pb-0">
+                  <span className="min-w-0 flex-1 font-medium text-[#405047]">{pessoa.pessoa}</span>
+                  <span className="text-xs text-[#8a9890]">
+                    {lerDias(pessoa.horasMedias / 24)} por trabalho
+                  </span>
+                  <span className="font-semibold tabular-nums text-[#05605e]">{pessoa.concluidas}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
+      </section>
+
+      {problemas.total > 0 || consumoRows.length > 0 ? (
+        <section className="grid gap-6 lg:grid-cols-2">
+          {problemas.total > 0 ? (
+            <SectionCard eyebrow="Chão de fábrica" title="Faltas e sobras anotadas">
+              <p className="mb-3 text-sm text-[#66756d]">
+                Anotado por quem estava produzindo. Falta repetida na mesma etapa costuma ser ficha técnica
+                errada, e não descuido.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-[#f1c0c9] bg-[#fff5f7] p-3">
+                  <p className="text-2xl font-semibold tabular-nums text-[#9f2f42]">{problemas.faltas}</p>
+                  <p className="text-xs text-[#7d2434]">faltou material</p>
+                </div>
+                <div className="rounded-lg border border-[#ead49c] bg-[#fffcf3] p-3">
+                  <p className="text-2xl font-semibold tabular-nums text-[#7b5a0b]">{problemas.sobras}</p>
+                  <p className="text-xs text-[#7b5a0b]">sobrou material</p>
+                </div>
+              </div>
+              {problemas.etapaCritica ? (
+                <p className="mt-3 text-sm text-[#66756d]">
+                  Mais frequente em <strong className="text-[#405047]">{problemas.etapaCritica.etapa}</strong> (
+                  {problemas.etapaCritica.ocorrencias === 1 ? "1 vez" : `${problemas.etapaCritica.ocorrencias} vezes`}).
+                </p>
+              ) : null}
+            </SectionCard>
+          ) : null}
+
+          {consumoRows.length > 0 ? (
+            <SectionCard eyebrow="Estoque" title="Material consumido no período">
+              <ul className="divide-y divide-[#eef2ef]">
+                {consumoRows.slice(0, 6).map((linha) => (
+                  <li key={linha.nome} className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                    <span className="min-w-0 flex-1 font-medium text-[#405047]">{linha.nome}</span>
+                    <span className="font-semibold tabular-nums text-[#405047]">
+                      {linha.quantidade.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} {linha.unidade}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+          ) : null}
+        </section>
+      ) : null}
 
       {/* O que dá dinheiro de verdade. Vem antes de "mais vendidas" de
           propósito: vender muito e lucrar pouco é o erro que essa tela
