@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
+import { registrarAviso } from "@/app/avisos/actions";
 import { prisma } from "@/lib/prisma";
 import { isStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
@@ -28,7 +29,7 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
   // Garante que o pedido pertence a empresa do usuário logado.
   const order = await prisma.order.findFirst({
     where: { id: orderId, companyId },
-    select: { id: true, currentStageId: true, currentStage: { select: { name: true } } },
+    select: { id: true, number: true, currentStageId: true, currentStage: { select: { name: true } } },
   });
   if (!order) return { error: "Pedido não encontrado." };
 
@@ -76,6 +77,18 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
+  const nomeEtapa = nextStage.name.toLowerCase();
+  const tipoAviso =
+    nomeEtapa.includes("entregue") ? "PEDIDO_ENTREGUE" : nomeEtapa.includes("pronto") ? "PEDIDO_PRONTO" : "ETAPA_MUDOU";
+  await registrarAviso({
+    companyId,
+    orderId,
+    tipo: tipoAviso,
+    titulo: `Pedido #${order.number} — ${nextStage.name}`,
+    mensagem: `Saiu de ${currentStage.name} e entrou em ${nextStage.name}.`,
+  });
+  revalidatePath("/avisos");
+
   return { success: `Pedido movido para ${nextStage.name}.` };
 }
 

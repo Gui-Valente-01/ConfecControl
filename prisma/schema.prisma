@@ -77,6 +77,7 @@ model Company {
   orderRequests    OrderRequest[]
   mesas            Mesa[]
   bancadaTasks     BancadaTask[]
+  avisos           Aviso[]
 
   @@map("empresas")
 }
@@ -140,9 +141,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bancadaTasks BancadaTask[]
-  mesas        Mesa[]        @relation("mesaResponsible")
+  mesas        Mesa[]         @relation("mesaResponsible")
+  avisosLidos  AvisoLeitura[]
 
   @@index([companyId])
   @@map("usuarios")
@@ -381,6 +383,7 @@ model Order {
   history        ProductionHistory[]
   payments       Payment[]
   attachments    Attachment[]
+  avisos         Aviso[]
   stockMovements StockMovement[]
   bancadaTasks   BancadaTask[]
   services       OrderService[]
@@ -543,4 +546,46 @@ model Attachment {
 
   @@index([orderId])
   @@map("anexos")
+}
+
+// Aviso para a equipe: o que o sistema percebe sozinho (pedido novo, mudou de
+// etapa) e o que uma pessoa precisa pedir (a cor, uma foto, ajuda, um recado).
+//
+// O segundo grupo hoje acontece por WhatsApp e some: alguem pergunta "qual a
+// cor do 1042?" no grupo, respondem tres horas depois, e nada fica no pedido.
+model Aviso {
+  id        String   @id @default(cuid())
+  companyId String
+  orderId   String?
+  tipo      String
+  urgente   Boolean  @default(false)
+  titulo    String
+  mensagem  String?  @db.Text
+  // Nome de quem gerou. Vazio = o proprio sistema.
+  criadoPor String?
+  createdAt DateTime @default(now())
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  // Apagar o pedido leva os avisos dele junto: fora do pedido nao fazem sentido.
+  order    Order?         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  leituras AvisoLeitura[]
+
+  @@index([companyId, createdAt])
+  @@index([orderId])
+  @@map("avisos")
+}
+
+// Quem ja leu o que. Uma linha por pessoa e aviso: o contador do sino e
+// individual, senao um funcionario abrindo a lista zeraria o aviso de todos.
+model AvisoLeitura {
+  avisoId String
+  userId  String
+  lidoEm  DateTime @default(now())
+
+  aviso Aviso @relation(fields: [avisoId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([avisoId, userId])
+  @@index([userId])
+  @@map("avisos_leitura")
 }

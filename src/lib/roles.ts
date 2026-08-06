@@ -28,10 +28,11 @@ const roleRoutes: Record<UserRole, string[] | "all"> = {
     // O Gerente exclui material e terceirizada, então precisa poder desfazer.
     // Apagar de vez continua só do Dono, dentro da própria tela.
     "/lixeira",
+    "/avisos",
   ],
-  PRODUCTION: ["/", "/pedidos", "/producao", "/estoque", "/bancada"],
-  FINANCE: ["/", "/clientes", "/pedidos", "/financeiro", "/relatorios"],
-  SALES: ["/", "/clientes", "/produtos", "/pedidos", "/solicitacoes"],
+  PRODUCTION: ["/", "/pedidos", "/producao", "/estoque", "/bancada", "/avisos"],
+  FINANCE: ["/", "/clientes", "/pedidos", "/financeiro", "/relatorios", "/avisos"],
+  SALES: ["/", "/clientes", "/produtos", "/pedidos", "/solicitacoes", "/avisos"],
 };
 
 export function canAccessRoute(role: UserRole, href: string) {

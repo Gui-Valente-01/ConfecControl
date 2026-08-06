@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
+import { registrarAviso } from "@/app/avisos/actions";
 import { prisma } from "@/lib/prisma";
 import { storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 import { explicarRecusa, mesaAceitaEtapa, mesasCompativeis } from "@/lib/mesa-rules";
@@ -164,6 +165,21 @@ export async function completeTaskAction(_prev: FormState, formData: FormData): 
   revalidatePath("/pedidos");
   revalidatePath("/producao");
   revalidatePath("/bancada");
+  const nomeFinal = nextStage.name.toLowerCase();
+  await registrarAviso({
+    companyId: user.companyId,
+    orderId: task.orderId,
+    tipo: nomeFinal.includes("entregue")
+      ? "PEDIDO_ENTREGUE"
+      : nomeFinal.includes("pronto")
+        ? "PEDIDO_PRONTO"
+        : "ETAPA_MUDOU",
+    titulo: `Pedido #${task.order.number} — ${nextStage.name}`,
+    mensagem: `${user.name} concluiu ${currentStage.name} e o pedido entrou em ${nextStage.name}.`,
+    criadoPor: user.name,
+  });
+  revalidatePath("/avisos");
+
   return { success: `Pedido #${task.order.number} concluído e movido para ${nextStage.name}.` };
 }
 

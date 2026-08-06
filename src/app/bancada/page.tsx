@@ -6,6 +6,7 @@ import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";
 import { formatDateTime, formatShortDate } from "@/lib/format";
+import { ChamadoBancada } from "@/components/chamado-bancada";
 import { FotoDaBancada } from "@/components/foto-da-bancada";
 import { ModeloDoPedido } from "@/components/modelo-do-pedido";
 import { primeiraImagem } from "@/lib/anexos";
@@ -143,6 +144,7 @@ export default async function BancadaPage() {
                   {/* Só em quem está com a mão no trabalho: é o escopo que a
                       ação do servidor também exige. */}
                   <FotoDaBancada taskId={task.id} numeroPedido={task.order.number} />
+                  <ChamadoBancada orderId={task.orderId} numeroPedido={task.order.number} />
                 </div>
 
                 {/* Esta tela é usada em pé, no celular, com a mão ocupada. Os

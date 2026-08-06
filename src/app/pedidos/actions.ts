@@ -12,6 +12,7 @@ import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
 import { computeStockConsumption } from "@/lib/production";
+import { registrarAviso } from "@/app/avisos/actions";
 import { prisma, type TransactionClient } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
@@ -122,7 +123,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   const companyId = await requireCompanyId();
 
   // Confirma que o cliente pertence a empresa do usuário.
-  const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true } });
+  const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true, name: true } });
   if (!client) return { error: "Cliente inválido." };
 
   // Completa descrição de itens que vieram so com produto selecionado (apenas produtos da empresa).
@@ -151,10 +152,10 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   // Cria pedido, itens, pagamento e baixa de estoque numa única transação.
   // O número é gerado dentro da transação; se houver corrida (P2002 no
   // @@unique [companyId, number]), tenta de novo com o próximo número.
-  let createdNumber: number | null = null;
+  let criado: { id: string; number: number } | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     try {
-      createdNumber = await prisma.$transaction(async (tx) => {
+      criado = await prisma.$transaction(async (tx) => {
         const last = await tx.order.findFirst({
           where: { companyId },
           orderBy: { number: "desc" },
@@ -211,7 +212,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
         });
 
         await consumeStockForOrder(tx, created.id, number, companyId, normalizedItems);
-        return number;
+        return { id: created.id, number };
       });
       break;
     } catch (e) {
@@ -222,7 +223,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
     }
   }
 
-  if (createdNumber === null) {
+  if (criado === null) {
     return { error: "Não foi possível gerar o número do pedido. Tente novamente." };
   }
 
@@ -231,7 +232,16 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   revalidatePath("/producao");
   revalidatePath("/financeiro");
   revalidatePath("/estoque");
-  return { success: `Pedido #${createdNumber} criado.` };
+  const pedidoCriado: { id: string; number: number } = criado;
+  await registrarAviso({
+    companyId,
+    orderId: pedidoCriado.id,
+    tipo: "PEDIDO_CRIADO",
+    titulo: `Pedido #${pedidoCriado.number} entrou`,
+    mensagem: `${client.name} — ${items.length === 1 ? "1 item" : `${items.length} itens`}.`,
+  });
+
+  return { success: `Pedido #${pedidoCriado.number} criado.` };
 }
 
 // Baixa automática de materiais conforme a ficha tecnica (BOM) dos produtos do pedido.

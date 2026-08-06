@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   BarChart3,
+  BellRing,
   BookOpen,
   ChevronDown,
   ClipboardList,
@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import type { UserRole } from "@prisma/client";
 import { logoutAction } from "@/app/login/actions";
+import { SinoAvisos } from "@/components/sino-avisos";
 import { planAllowsRoute } from "@/lib/features";
 import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
 
@@ -45,6 +46,7 @@ import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
 // quando, e vai para "Mais".
 const navPrincipal = [
   { label: "Início", href: "/", icon: LayoutDashboard },
+  { label: "Avisos", href: "/avisos", icon: BellRing },
   { label: "Pedidos", href: "/pedidos", icon: ClipboardList },
   { label: "Produção", href: "/producao", icon: Factory },
   { label: "Financeiro", href: "/financeiro", icon: CreditCard },
@@ -317,16 +319,7 @@ export function AppShell({
                     />
                   </form>
                 ) : null}
-                {canAccessRoute(user.role, "/relatorios") && planAllowsRoute(user.features, "/relatorios") ? (
-                  <Link
-                    href="/relatorios"
-                    className="flex size-10 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#1c2420] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
-                    aria-label="Ver alertas e relatórios"
-                    title="Alertas e relatórios"
-                  >
-                    <Bell size={18} aria-hidden="true" />
-                  </Link>
-                ) : null}
+                <SinoAvisos />
                 {headerAction ? (
                   <Link
                     href={headerAction.href}
