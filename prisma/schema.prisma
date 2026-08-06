@@ -78,6 +78,7 @@ model Company {
   mesas            Mesa[]
   bancadaTasks     BancadaTask[]
   avisos           Aviso[]
+  pushInscricoes   PushInscricao[]
 
   @@map("empresas")
 }
@@ -141,10 +142,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  bancadaTasks BancadaTask[]
-  mesas        Mesa[]         @relation("mesaResponsible")
-  avisosLidos  AvisoLeitura[]
+  company        Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bancadaTasks   BancadaTask[]
+  mesas          Mesa[]          @relation("mesaResponsible")
+  avisosLidos    AvisoLeitura[]
+  pushInscricoes PushInscricao[]
 
   @@index([companyId])
   @@map("usuarios")
@@ -588,4 +590,32 @@ model AvisoLeitura {
   @@id([avisoId, userId])
   @@index([userId])
   @@map("avisos_leitura")
+}
+
+// Aparelho inscrito para receber notificacao (Web Push).
+//
+// Uma linha por APARELHO, e nao por pessoa: quem usa o sistema no celular e no
+// computador tem duas, e as duas devem tocar. O endpoint e o endereco que o
+// servico do navegador (Google, Apple) da para entregar a mensagem.
+model PushInscricao {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  // Endereco unico do aparelho no servico de push. Unico no banco porque o
+  // navegador reaproveita o mesmo endpoint ao reinscrever.
+  endpoint  String   @unique @db.Text
+  // Chaves da criptografia ponta a ponta: sem elas o aparelho nao consegue
+  // abrir a mensagem. Quem envia nao le o que ja mandou.
+  p256dh    String
+  auth      String
+  // Para a pessoa reconhecer o aparelho numa lista, se um dia precisar.
+  aparelho  String?
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([userId])
+  @@map("push_inscricoes")
 }

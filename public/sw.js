@@ -53,3 +53,54 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+// ---------------------------------------------------------------------------
+// Notificacao no celular (Web Push)
+// ---------------------------------------------------------------------------
+//
+// O push chega mesmo com o sistema fechado: quem esta na oficina nao fica com
+// a tela aberta o dia inteiro.
+
+self.addEventListener("push", (event) => {
+  let dados = { titulo: "ConfecControl", corpo: "Novo aviso.", urgente: false, url: "/avisos" };
+  try {
+    if (event.data) dados = { ...dados, ...event.data.json() };
+  } catch {
+    // Mensagem malformada nao pode impedir o aviso de aparecer.
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(dados.titulo, {
+      body: dados.corpo,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      // Urgente vibra e fica na tela ate a pessoa tocar; o resto some sozinho.
+      // Numa oficina barulhenta, vibrar e o que faz a pessoa perceber.
+      vibrate: dados.urgente ? [200, 100, 200, 100, 200] : [100],
+      requireInteraction: Boolean(dados.urgente),
+      tag: dados.urgente ? undefined : "confeccontrol-aviso",
+      data: { url: dados.url || "/avisos" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const destino = event.notification.data?.url || "/avisos";
+
+  event.waitUntil(
+    (async () => {
+      const abas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      // Se o sistema ja esta aberto, reaproveita a aba em vez de abrir outra:
+      // no celular, cada toque abrindo aba nova vira uma pilha de abas.
+      for (const aba of abas) {
+        if (aba.url.includes(self.location.origin)) {
+          await aba.focus();
+          if ("navigate" in aba) await aba.navigate(destino);
+          return;
+        }
+      }
+      await self.clients.openWindow(destino);
+    })(),
+  );
+});

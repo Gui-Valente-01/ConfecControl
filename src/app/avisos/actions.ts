@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { eChamado, eTipoAviso, textoDoAviso, urgenciaPadrao, type TipoAviso } from "@/lib/avisos";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
+import { enviarParaEmpresa } from "@/lib/push";
 
 /**
  * Registra um aviso. Usada pelo sistema e pelos chamados da bancada.
@@ -21,6 +22,8 @@ export async function registrarAviso(input: {
   mensagem?: string | null;
   urgente?: boolean;
   criadoPor?: string | null;
+  /** Quem gerou: não recebe a própria notificação. */
+  exceptUserId?: string | null;
 }): Promise<void> {
   try {
     await prisma.aviso.create({
@@ -34,6 +37,20 @@ export async function registrarAviso(input: {
         criadoPor: input.criadoPor ?? null,
       },
     });
+    // O push sai depois de gravar: se a notificação falhar, o aviso já está
+    // salvo e a pessoa vê no sino de qualquer jeito.
+    await enviarParaEmpresa(
+      input.companyId,
+      {
+        titulo: input.titulo,
+        corpo: textoDoAviso(input.tipo, input.mensagem),
+        urgente: input.urgente ?? urgenciaPadrao(input.tipo),
+        url: input.orderId ? `/pedidos/${input.orderId}` : "/avisos",
+      },
+      // Quem gerou não recebe: ser notificado do próprio pedido de ajuda faz
+      // a pessoa achar que o sistema está confuso.
+      input.exceptUserId ?? null,
+    );
   } catch {
     // Aviso é acessório: se falhar, não pode derrubar o que a pessoa estava
     // fazendo. Perder o aviso é ruim; perder o pedido é muito pior.
@@ -69,6 +86,7 @@ export async function criarChamadoAction(_prev: FormState, formData: FormData): 
     // O tipo já nasce urgente quando é pedido de ajuda; a marcação só soma.
     urgente: urgenteMarcado || urgenciaPadrao(tipoBruto),
     criadoPor: user.name,
+    exceptUserId: user.id,
   });
 
   revalidatePath("/avisos");

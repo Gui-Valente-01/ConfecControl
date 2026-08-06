@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Bell, BellOff, CheckCheck, Palette, Camera, HandHelping, MessageSquare, ArrowRight } from "lucide-react";
 import { marcarTodosLidosAction } from "@/app/avisos/actions";
 import { AppShell } from "@/components/app-shell";
+import { AtivarNotificacoes } from "@/components/ativar-notificacoes";
 import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
 import { requireRouteUser } from "@/lib/auth";
@@ -57,6 +58,10 @@ export default async function AvisosPage() {
 
   return (
     <AppShell eyebrow="Equipe" title="Avisos" user={user} search={false}>
+      {/* Some sozinho em aparelho que nao suporta; no iPhone vira o passo a
+          passo de instalacao, sem o qual a Apple nao entrega notificacao. */}
+      <AtivarNotificacoes />
+
       <SectionCard
         eyebrow="Comunicação"
         title={naoLidos > 0 ? `${naoLidos} não lido${naoLidos === 1 ? "" : "s"}` : "Tudo lido"}
