@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, CheckCircle2, ClipboardList, Package } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardList } from "lucide-react";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -78,16 +78,21 @@ export function DbDashboard({ orders, stages, materials, productsWithoutCost, pl
     custoIncompleto: productsWithoutCost,
   };
 
+  // Só entra aqui o que NÃO está na faixa de avisos logo acima. "Atrasados" e
+  // "Estoque baixo" moravam nos dois lugares: o mesmo número duas vezes na
+  // mesma tela faz a pessoa procurar a diferença entre eles, e não existe.
   const stats = [
     { label: "Pedidos em aberto", value: String(openOrders), note: "acompanhados no quadro", icon: ClipboardList, tone: "primary" as const },
-    { label: "Atrasados", value: String(contagens.atrasados), note: "prioridade alta", icon: AlertTriangle, tone: "danger" as const },
     showFinance
       ? { label: "Faturamento previsto", value: centsToCurrency(totalRevenue), note: "somando pedidos reais", icon: CheckCircle2, tone: "warning" as const }
       : null,
-    plan.estoque
-      ? { label: "Estoque baixo", value: String(lowStock.length), note: "materiais precisam reposição", icon: Package, tone: "info" as const }
-      : null,
   ].filter((stat): stat is NonNullable<typeof stat> => stat !== null);
+
+  // A grade acompanha a quantidade: com quatro colunas fixas, dois cartões
+  // deixavam metade da linha vazia e a tela parecia quebrada. E quem não vê
+  // financeiro fica com um cartão só — esticado de ponta a ponta ele vira uma
+  // faixa, então ganha largura de cartão mesmo.
+  const colunasResumo = stats.length === 1 ? "max-w-sm" : "sm:grid-cols-2";
 
   return (
     <>
@@ -98,7 +103,7 @@ export function DbDashboard({ orders, stages, materials, productsWithoutCost, pl
         podeCriarPedido={podeCriarPedido}
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Resumo">
+      <section className={`grid gap-4 ${colunasResumo}`} aria-label="Resumo">
         {stats.map((stat) => (
           <MetricCard key={stat.label} {...stat} />
         ))}
