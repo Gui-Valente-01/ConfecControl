@@ -1,6 +1,6 @@
 // Lista de primeiros passos. Sem React e sem banco, para permitir teste.
 //
-// Empresa recém-criada abre o sistema num painel vazio: sem peça, sem material,
+// Empresa recém-criada abre o sistema num painel vazio: sem peça, sem estoque,
 // sem pedido. A pessoa não sabe se está funcionando ou se ela é que não achou
 // onde mexer. Esta lista diz a ordem, e cada passo marca sozinho quando o dado
 // aparece — não há "concluir" para clicar, porque o que vale é o cadastro
@@ -10,14 +10,15 @@
 
 export type ContagensIniciais = {
   pecas: number;
-  materiais: number;
+  /** Peças com alguma quantidade lançada na prateleira. */
+  pecasComEstoque: number;
   pedidos: number;
   pedidosMovidos: number;
   recebimentos: number;
 };
 
 export type Passo = {
-  chave: "pecas" | "materiais" | "pedido" | "producao" | "pagamento";
+  chave: "pecas" | "estoque" | "pedido" | "producao" | "pagamento";
   titulo: string;
   /** Por que fazer isso, em uma linha. */
   porque: string;
@@ -35,11 +36,11 @@ export function montarPassos(c: ContagensIniciais): Passo[] {
       feito: c.pecas > 0,
     },
     {
-      chave: "materiais",
-      titulo: "Cadastre os materiais",
-      porque: "Malha, linha, aba. É o que permite o sistema avisar quando algo está acabando.",
+      chave: "estoque",
+      titulo: "Conte o que tem na prateleira",
+      porque: "Quantas peças de cada uma você tem hoje. É o que permite o sistema avisar quando está acabando.",
       href: "/estoque",
-      feito: c.materiais > 0,
+      feito: c.pecasComEstoque > 0,
     },
     {
       chave: "pedido",

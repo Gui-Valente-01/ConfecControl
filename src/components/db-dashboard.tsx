@@ -34,10 +34,9 @@ type DashboardOrder = {
   items: { description: string; quantity: number }[];
 };
 
-type DashboardMaterial = {
+type DashboardProduct = {
   id: string;
   name: string;
-  unit: string;
   currentQuantity: number;
   minimumQuantity: number;
 };
@@ -51,18 +50,20 @@ type DashboardPlan = {
 type DbDashboardProps = {
   orders: DashboardOrder[];
   stages: DashboardStage[];
-  materials: DashboardMaterial[];
-  /** Peças cujo custo está incompleto: sem custo, ou com material sem preço. */
+  products: DashboardProduct[];
+  /** Peças sem custo digitado: a venda delas entra como lucro cheio. */
   productsWithoutCost: number;
   plan: DashboardPlan;
   showFinance: boolean;
   podeCriarPedido: boolean;
 };
 
-export function DbDashboard({ orders, stages, materials, productsWithoutCost, plan, showFinance, podeCriarPedido }: DbDashboardProps) {
+export function DbDashboard({ orders, stages, products, productsWithoutCost, plan, showFinance, podeCriarPedido }: DbDashboardProps) {
   const now = new Date();
   const openOrders = orders.filter((order) => !["READY", "DELIVERED", "CANCELED"].includes(order.status)).length;
-  const lowStock = materials.filter((item) => item.currentQuantity <= item.minimumQuantity);
+  // Mínimo zero significa "não guardo na prateleira": avisar que acabou
+  // seria ruído todo dia.
+  const lowStock = products.filter((p) => p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity);
   const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmountInCents, 0);
 
   // As contagens usam exatamente as mesmas regras da lista de pedidos, para o
@@ -146,21 +147,21 @@ export function DbDashboard({ orders, stages, materials, productsWithoutCost, pl
         ) : null}
 
         {plan.estoque ? (
-        <SectionCard eyebrow="Estoque" title="Materiais baixos">
+        <SectionCard eyebrow="Estoque" title="Peças acabando">
           {lowStock.length === 0 ? (
-            <p className="text-sm text-[#66756d]">Nenhum material abaixo do mínimo.</p>
+            <p className="text-sm text-[#66756d]">Nenhuma peça abaixo do mínimo.</p>
           ) : (
             <div className="space-y-4">
-              {lowStock.slice(0, 4).map((material) => {
-                const percentage = material.minimumQuantity > 0 ? Math.min(100, Math.round((material.currentQuantity / material.minimumQuantity) * 100)) : 100;
+              {lowStock.slice(0, 4).map((peca) => {
+                const percentual = peca.minimumQuantity > 0 ? Math.min(100, Math.round((peca.currentQuantity / peca.minimumQuantity) * 100)) : 100;
                 return (
-                  <div key={material.id}>
+                  <div key={peca.id}>
                     <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="font-medium">{material.name}</span>
-                      <span className="text-[#63736b]">{material.currentQuantity}/{material.minimumQuantity} {material.unit}</span>
+                      <span className="font-medium">{peca.name}</span>
+                      <span className="text-[#63736b]">{peca.currentQuantity}/{peca.minimumQuantity} un.</span>
                     </div>
                     <div className="mt-2 h-2 rounded-full bg-[#edf2ef]">
-                      <div className="h-2 rounded-full bg-[#c43f54]" style={{ width: `${percentage}%` }} />
+                      <div className="h-2 rounded-full bg-[#c43f54]" style={{ width: `${percentual}%` }} />
                     </div>
                   </div>
                 );

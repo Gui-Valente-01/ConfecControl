@@ -7,44 +7,30 @@ export type ConsumptionItem = {
   quantity: number;
 };
 
-export type BomLine = {
-  productId: string;
-  materialId: string;
-  quantityPerUnit: number;
-};
-
 /**
- * Quanto de cada material um pedido consome.
+ * Quanto sai do estoque de cada PEÇA quando um pedido é lançado.
  *
- * Percorre os itens do pedido e, para cada um, aplica a ficha técnica da peça
- * (quanto ela gasta por unidade). O mesmo material pode vir de peças
- * diferentes, então os valores se somam.
+ * O estoque passou a ser da peça pronta, não do material: a confecção compra
+ * a peça e presta o serviço em cima dela. Controlar matéria-prima exigia
+ * manter preço e consumo de cada material em dia, e o que ninguém mantém
+ * acaba fazendo o custo sair por baixo.
  *
- * Item sem peça do catálogo (produto avulso) não consome nada: não há ficha.
+ * Duas linhas do mesmo pedido podem apontar para a mesma peça (tamanhos
+ * diferentes, por exemplo), então as quantidades se somam.
+ *
+ * Item sem peça do catálogo não baixa nada: não há o que descontar.
  */
-export function computeStockConsumption(items: ConsumptionItem[], boms: BomLine[]): Map<string, number> {
-  const consumption = new Map<string, number>();
-  if (boms.length === 0) return consumption;
-
-  // Agrupa a ficha por peça para não varrer a lista inteira a cada item.
-  const bomByProduct = new Map<string, BomLine[]>();
-  for (const bom of boms) {
-    const list = bomByProduct.get(bom.productId);
-    if (list) list.push(bom);
-    else bomByProduct.set(bom.productId, [bom]);
-  }
+export function computeProductConsumption(items: ConsumptionItem[]): Map<string, number> {
+  const consumo = new Map<string, number>();
 
   for (const item of items) {
     if (!item.productId || item.quantity <= 0) continue;
-    for (const bom of bomByProduct.get(item.productId) ?? []) {
-      const qty = bom.quantityPerUnit * item.quantity;
-      if (qty <= 0) continue;
-      consumption.set(bom.materialId, (consumption.get(bom.materialId) ?? 0) + qty);
-    }
+    consumo.set(item.productId, (consumo.get(item.productId) ?? 0) + item.quantity);
   }
 
-  return consumption;
+  return consumo;
 }
+
 
 export type Stage = {
   id: string;
@@ -104,34 +90,4 @@ export function isTaskStageOutdated(
 ): boolean {
   if (!etapaPega) return false;
   return etapaPega !== (etapaAtual ?? null);
-}
-
-export type ProductCostInfo = {
-  id: string;
-  bom: { materialName: string; materialPriceInCents: number }[];
-};
-
-/**
- * Peças cujo custo está incompleto, e quais materiais faltam precificar.
- *
- * É mais perigoso do que custo zerado: a peça mostra um número, mas ele está
- * por baixo — e o lucro no relatório aparece maior do que é de verdade. O dono
- * então precifica em cima de uma margem que não existe.
- */
-export function findIncompleteCosts(products: ProductCostInfo[]): {
-  productIds: Set<string>;
-  materialNames: string[];
-} {
-  const productIds = new Set<string>();
-  const materialNames = new Set<string>();
-
-  for (const product of products) {
-    for (const line of product.bom) {
-      if (line.materialPriceInCents > 0) continue;
-      productIds.add(product.id);
-      materialNames.add(line.materialName);
-    }
-  }
-
-  return { productIds, materialNames: [...materialNames] };
 }

@@ -46,7 +46,7 @@ describe("montarTarefas", () => {
     expect(tarefas.map((t) => t.chave)).not.toContain("receber");
   });
 
-  it("empresa sem modulo de estoque nao recebe cartao de material acabando", () => {
+  it("empresa sem modulo de estoque nao recebe cartao de peca acabando", () => {
     const tarefas = montarTarefas({ ...zerado, estoqueBaixo: 4 }, true, false);
     expect(tarefas.map((t) => t.chave)).not.toContain("estoque");
   });
@@ -104,7 +104,7 @@ describe("montarTarefas", () => {
     }
   });
 
-  it("a versao curta concorda com o numero: nada de '1 materiais acabando'", () => {
+  it("a versao curta concorda com o numero: nada de '1 pecas acabando'", () => {
     const um: ContagensDoDia = {
       atrasados: 1,
       hoje: 1,
@@ -117,7 +117,7 @@ describe("montarTarefas", () => {
     const singular = Object.fromEntries(montarTarefas(um, true, true).map((t) => [t.chave, t.curto]));
     expect(singular.atrasados).toBe("atrasado");
     expect(singular.prontos).toBe("pronto para entrega");
-    expect(singular.estoque).toBe("material acabando");
+    expect(singular.estoque).toBe("peça acabando");
     expect(singular.custo).toBe("peça sem custo");
 
     const dois = Object.fromEntries(
@@ -129,7 +129,7 @@ describe("montarTarefas", () => {
     );
     expect(dois.atrasados).toBe("atrasados");
     expect(dois.prontos).toBe("prontos para entrega");
-    expect(dois.estoque).toBe("materiais acabando");
+    expect(dois.estoque).toBe("peças acabando");
     expect(dois.custo).toBe("peças sem custo");
   });
 });

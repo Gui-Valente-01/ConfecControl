@@ -119,95 +119,74 @@ export async function deleteMaterialAction(_prev: FormState, formData: FormData)
 
 const movementTypes: StockMovementType[] = ["IN", "OUT", "ADJUSTMENT"];
 
+/**
+ * Entrada, saída ou acerto de estoque de uma PEÇA pronta.
+ *
+ * IN soma (chegou mercadoria), OUT subtrai (saiu fora de pedido: perda,
+ * amostra, brinde) e ADJUSTMENT grava o saldo contado na prateleira — que é
+ * o que a pessoa faz quando o número da tela não bate com a realidade.
+ */
 export async function registerStockMovementAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const denied = await ensureCanManageStock();
   if (denied) return denied;
-  const materialId = String(formData.get("materialId") ?? "");
+  const productId = String(formData.get("productId") ?? "");
   const typeRaw = String(formData.get("type") ?? "");
-  const quantity = quantityFromText(String(formData.get("quantity") ?? ""));
+  // Peça se conta em unidades inteiras: "2,5 bonés" não existe.
+  const quantity = Math.round(quantityFromText(String(formData.get("quantity") ?? "")));
   const note = String(formData.get("note") ?? "").trim();
 
-  if (!materialId || !movementTypes.includes(typeRaw as StockMovementType) || quantity < 0) {
+  if (!productId || !movementTypes.includes(typeRaw as StockMovementType) || quantity < 0) {
     return { error: "Dados do movimento inválidos. Confira o tipo e a quantidade." };
   }
   const type = typeRaw as StockMovementType;
 
   const companyId = await requireCompanyId();
 
-  const found = await prisma.$transaction(async (tx) => {
-    // Confere que o material pertence a empresa e bloqueia o registro saldo errado.
-    const material = await tx.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } });
-    if (!material) return false;
+  const achou = await prisma.$transaction(async (tx) => {
+    const peca = await tx.product.findFirst({ where: { id: productId, companyId }, select: { id: true } });
+    if (!peca) return false;
 
-    // Atualiza o saldo de forma atômica no banco (evita lost update em movimentos concorrentes).
+    // Saldo alterado no banco, não lido-e-escrito no servidor: dois
+    // lançamentos ao mesmo tempo perderiam um dos dois.
     if (type === "IN") {
-      await tx.material.update({ where: { id: materialId }, data: { currentQuantity: { increment: quantity } } });
+      await tx.product.update({ where: { id: productId }, data: { currentQuantity: { increment: quantity } } });
     } else if (type === "OUT") {
       await tx.$executeRaw`
-        UPDATE "materiais"
+        UPDATE "produtos"
         SET "currentQuantity" = GREATEST(0, "currentQuantity" - ${quantity})
-        WHERE "id" = ${materialId} AND "companyId" = ${companyId}`;
+        WHERE "id" = ${productId} AND "companyId" = ${companyId}`;
     } else {
-      await tx.material.update({ where: { id: materialId }, data: { currentQuantity: quantity } }); // ADJUSTMENT: saldo absoluto
+      await tx.product.update({ where: { id: productId }, data: { currentQuantity: quantity } }); // ADJUSTMENT: saldo contado
     }
 
-    await tx.stockMovement.create({
-      data: { materialId, type, quantity, note: note || null },
-    });
+    await tx.stockMovement.create({ data: { productId, type, quantity, note: note || null } });
     return true;
   });
-  if (!found) return { error: "Material não encontrado." };
+  if (!achou) return { error: "Peça não encontrada." };
 
   revalidateStock();
   return { success: "Movimentação registrada." };
 }
 
-// --------- Ficha tecnica (BOM): materiais que cada produto consome ---------
-
-export async function setProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Define a partir de quantas unidades a peça entra no aviso de "acabando". */
+export async function setProductMinimumAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const denied = await ensureCanManageStock();
   if (denied) return denied;
   const productId = String(formData.get("productId") ?? "");
-  const materialId = String(formData.get("materialId") ?? "");
-  const quantityPerUnit = quantityFromText(String(formData.get("quantityPerUnit") ?? ""));
-
-  if (!productId || !materialId || quantityPerUnit <= 0) {
-    return { error: "Informe o material e a quantidade por peça (maior que zero)." };
-  }
+  const minimum = Math.round(quantityFromText(String(formData.get("minimumQuantity") ?? "")));
+  if (!productId || minimum < 0) return { error: "Quantidade mínima inválida." };
 
   const companyId = await requireCompanyId();
-  const [product, material] = await Promise.all([
-    prisma.product.findFirst({ where: { id: productId, companyId }, select: { id: true } }),
-    prisma.material.findFirst({ where: { id: materialId, companyId }, select: { id: true } }),
-  ]);
-  if (!product || !material) return { error: "Produto ou material inválido." };
-
-  await prisma.productMaterial.upsert({
-    where: { productId_materialId: { productId, materialId } },
-    update: { quantityPerUnit },
-    create: { productId, materialId, quantityPerUnit },
+  const { count } = await prisma.product.updateMany({
+    where: { id: productId, companyId },
+    data: { minimumQuantity: minimum },
   });
+  if (count === 0) return { error: "Peça não encontrada." };
 
-  revalidatePath("/produtos");
-  return { success: "Ficha técnica atualizada." };
+  revalidateStock();
+  return { success: "Mínimo atualizado." };
 }
 
-export async function removeProductMaterialAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const denied = await ensureCanManageStock();
-  if (denied) return denied;
-  const id = String(formData.get("id") ?? "");
-  if (!id) return { error: "Item da ficha técnica não encontrado." };
-
-  const companyId = await requireCompanyId();
-  // Garante que a ficha pertence a um produto da empresa.
-  const link = await prisma.productMaterial.findFirst({
-    where: { id, product: { companyId } },
-    select: { id: true },
-  });
-  if (!link) return { error: "Item da ficha técnica não encontrado." };
-
-  await prisma.productMaterial.delete({ where: { id } });
-
-  revalidatePath("/produtos");
-  return { success: "Item removido da ficha técnica." };
-}
+// A ficha tecnica (BOM) saiu da tela de Pecas junto com o estoque de material:
+// o custo agora vem de um campo so. Os vinculos ja gravados continuam no banco,
+// so nao ha mais como criar ou remover pela interface.

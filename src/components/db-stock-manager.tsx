@@ -1,225 +1,236 @@
-import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Package, Plus, SlidersHorizontal } from "lucide-react";
-import { deleteMaterialAction, registerStockMovementAction, updateMaterialAction } from "@/app/estoque/actions";
-import { ConfirmDeleteButton } from "@/components/confirm-delete-button";
-import { InlineEdit } from "@/components/inline-edit";
-import { MaterialCreateForm } from "@/components/material-create-form";
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Package, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { registerStockMovementAction, setProductMinimumAction } from "@/app/estoque/actions";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
-import { StatusBadge } from "@/components/status-badge";
 import { ToastForm } from "@/components/toast-form";
-import { describeDeletion } from "@/lib/deletion";
-import { centsToCurrency, centsToInput, formatDateTime } from "@/lib/format";
+import { centsToCurrency, formatDateTime } from "@/lib/format";
 import type { StockMovementType } from "@prisma/client";
 
-type DbMaterial = {
+// Estoque da PEÇA PRONTA.
+//
+// Quem usa isto é a confecção que compra a peça e presta serviço em cima dela
+// (estampa, bordado). A pergunta que a tela responde é "quantos bonés brancos
+// eu tenho na prateleira agora?" — não quanto tecido sobrou.
+
+type Peca = {
   id: string;
   name: string;
   category: string | null;
-  unit: string;
+  size: string | null;
+  color: string | null;
   currentQuantity: number;
   minimumQuantity: number;
-  costPerUnitInCents: number;
-  supplier: string | null;
-  _count: { usedBy: number; movements: number };
+  costInCents: number;
 };
 
-type DbMovement = {
+type Movimento = {
   id: string;
   type: StockMovementType;
   quantity: number;
   note: string | null;
   createdAt: Date;
-  materialName: string;
-  unit: string;
+  produtoNome: string;
   orderNumber: number | null;
 };
 
-type DbStockManagerProps = {
-  materials: DbMaterial[];
-  movements: DbMovement[];
-  canEdit: boolean;
+type Props = {
+  pecas: Peca[];
+  movimentos: Movimento[];
   canManage: boolean;
 };
 
-const movementLabels: Record<StockMovementType, string> = {
+const rotuloMovimento: Record<StockMovementType, string> = {
   IN: "Entrada",
   OUT: "Saída",
-  ADJUSTMENT: "Ajuste",
+  ADJUSTMENT: "Acerto",
 };
 
-export function DbStockManager({ materials, movements, canEdit, canManage }: DbStockManagerProps) {
-  const lowItems = materials.filter((item) => item.currentQuantity <= item.minimumQuantity);
-  const supplierCount = new Set(materials.map((item) => item.supplier).filter(Boolean)).size;
+/** Nome completo da peça: "Camisa Polo · M · Branca". */
+function descrever(p: Peca) {
+  return [p.name, p.size, p.color].filter(Boolean).join(" · ");
+}
+
+export function DbStockManager({ pecas, movimentos, canManage }: Props) {
+  // Só entra no aviso quem tem mínimo definido: peça com mínimo 0 e estoque 0
+  // não está "acabando", é peça que a confecção não guarda em prateleira.
+  const acabando = pecas.filter((p) => p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity);
+  const totalPecas = pecas.reduce((s, p) => s + p.currentQuantity, 0);
+  const valorParado = pecas.reduce((s, p) => s + p.currentQuantity * p.costInCents, 0);
 
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-3">
-        <MetricCard label="Materiais cadastrados" value={String(materials.length)} note="tecidos, linhas e aviamentos" icon={Package} tone="info" />
-        <MetricCard label="Estoque baixo" value={String(lowItems.length)} note="precisam reposição" icon={AlertTriangle} tone={lowItems.length > 0 ? "danger" : "neutral"} />
-        <MetricCard label="Fornecedores" value={String(supplierCount)} note="vinculados ao estoque" icon={Package} tone="primary" />
+      <section className="grid gap-4 md:grid-cols-3" aria-label="Resumo do estoque">
+        <MetricCard
+          label="Peças na prateleira"
+          value={String(totalPecas)}
+          note="somando todas as peças"
+          icon={Package}
+          tone="info"
+        />
+        <MetricCard
+          label="Acabando"
+          value={String(acabando.length)}
+          note="chegaram no mínimo"
+          icon={AlertTriangle}
+          tone={acabando.length > 0 ? "danger" : "neutral"}
+        />
+        <MetricCard
+          label="Valor parado"
+          value={centsToCurrency(valorParado)}
+          note="custo do que está guardado"
+          icon={SlidersHorizontal}
+          tone="primary"
+        />
       </section>
 
-      {lowItems.length > 0 ? (
-        <div className="flex items-start gap-3 rounded-lg border border-[#f1c0c9] bg-[#fff0f2] p-4">
-          <AlertTriangle className="mt-0.5 shrink-0 text-[#9f2f42]" size={18} aria-hidden="true" />
-          <div>
-            <p className="text-sm font-semibold text-[#9f2f42]">Materiais abaixo do mínimo</p>
-            <p className="mt-1 text-sm text-[#66756d]">{lowItems.map((item) => item.name).join(", ")}</p>
-          </div>
+      {acabando.length > 0 ? (
+        <div className="rounded-lg border border-[#ead49c] bg-[#fff7dd] p-4">
+          <p className="flex items-center gap-2 font-semibold text-[#7b5a0b]">
+            <AlertTriangle size={18} aria-hidden="true" />
+            {acabando.length === 1 ? "1 peça acabando" : `${acabando.length} peças acabando`}
+          </p>
+          <p className="mt-1 text-sm text-[#7b5a0b]">
+            {acabando.map((p) => descrever(p)).join(" · ")} — compre antes de faltar no meio de um pedido.
+          </p>
         </div>
       ) : null}
 
-      <section className={`grid gap-6 ${canManage ? "xl:grid-cols-[1fr_360px]" : ""}`}>
-        <SectionCard eyebrow="Almoxarifado" title="Materiais">
-          {materials.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-              <Package className="mx-auto text-[#5b68d8]" size={28} aria-hidden="true" />
-              <h3 className="mt-3 font-semibold">Nenhum material cadastrado</h3>
-              <p className="mt-2 text-sm text-[#66756d]">Cadastre tecidos, linhas e aviamentos para controlar estoque.</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {materials.map((item) => {
-                const low = item.currentQuantity <= item.minimumQuantity;
-                const percent = item.minimumQuantity > 0 ? Math.min(100, Math.round((item.currentQuantity / item.minimumQuantity) * 100)) : 100;
-                return (
-                  <article key={item.id} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm transition hover:border-[#c7d3ce]">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex gap-3">
-                        <div className="flex size-11 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5b68d8]">
-                          <Package size={20} aria-hidden="true" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <p className="mt-1 text-sm text-[#66756d]">{item.category || "Material"} - {item.supplier || "Fornecedor não informado"}</p>
-                        </div>
-                      </div>
-                      {canManage ? (
-                        <ConfirmDeleteButton
-                          action={deleteMaterialAction}
-                          id={item.id}
-                          title="Remover material"
-                          message={describeDeletion({
-                            tipo: "o material",
-                            nome: item.name,
-                            apaga: [
-                              {
-                                count: item._count.usedBy,
-                                singular: "peça que usa esse material na ficha técnica",
-                                plural: "peças que usam esse material na ficha técnica",
-                              },
-                              {
-                                count: item._count.movements,
-                                singular: "movimentação de estoque no histórico",
-                                plural: "movimentações de estoque no histórico",
-                              },
-                            ],
-                          })}
-                        />
-                      ) : null}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between text-sm">
-                      <span className="text-[#63736b]">Atual / mínimo</span>
-                      <strong>{item.currentQuantity}/{item.minimumQuantity} {item.unit}</strong>
-                    </div>
-                    <div className="mt-2 h-2 rounded-full bg-[#edf2ef]">
-                      <div className={`h-2 rounded-full ${low ? "bg-[#c43f54]" : "bg-[#087f7d]"}`} style={{ width: `${percent}%` }} />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <StatusBadge tone={low ? "warn" : "good"}>{low ? "Repor estoque" : "Estoque ok"}</StatusBadge>
-                      {item.costPerUnitInCents > 0 ? (
-                        <span className="text-sm text-[#66756d]">
-                          <strong className="font-semibold text-[#1c2420] tabular-nums">{centsToCurrency(item.costPerUnitInCents)}</strong>
-                          <span className="text-xs"> / {item.unit}</span>
-                        </span>
-                      ) : (
-                        <span className="text-xs text-[#9aa8a0]">sem preço cadastrado</span>
-                      )}
-                    </div>
-
-                    {canEdit ? (
-                      <InlineEdit
-                        action={updateMaterialAction}
-                        id={item.id}
-                        fields={[
-                          { name: "name", label: "Material", defaultValue: item.name, required: true },
-                          { name: "category", label: "Categoria", defaultValue: item.category ?? "" },
-                          { name: "unit", label: "Unidade", defaultValue: item.unit },
-                          { name: "min", label: "Estoque mínimo", defaultValue: String(item.minimumQuantity) },
-                          { name: "cost", label: `Preço por ${item.unit} (R$)`, defaultValue: centsToInput(item.costPerUnitInCents) },
-                          { name: "supplier", label: "Fornecedor", defaultValue: item.supplier ?? "" },
-                        ]}
-                      />
-                    ) : null}
-
-                    {canManage ? (
-                      <ToastForm action={registerStockMovementAction} className="mt-3 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-3">
-                        <input type="hidden" name="materialId" value={item.id} />
-                        <label className="w-24">
-                          <span className="text-xs text-[#63736b]">Tipo</span>
-                          <select name="type" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
-                            <option value="IN">Entrada</option>
-                            <option value="OUT">Saída</option>
-                            <option value="ADJUSTMENT">Ajuste</option>
-                          </select>
-                        </label>
-                        <label className="w-20">
-                          <span className="text-xs text-[#63736b]">Qtd.</span>
-                          <input name="quantity" type="number" min="0" step="0.01" required className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="0" />
-                        </label>
-                        <label className="min-w-28 flex-1">
-                          <span className="text-xs text-[#63736b]">Observação</span>
-                          <input name="note" className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" placeholder="opcional" />
-                        </label>
-                        <button className="inline-flex h-9 items-center gap-1 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e]" title="Registrar movimentação">
-                          <Plus size={14} aria-hidden="true" />
-                          Lançar
-                        </button>
-                      </ToastForm>
-                    ) : null}
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </SectionCard>
-
-        {canManage ? (
-          <SectionCard eyebrow="Novo material" title="Cadastrar estoque">
-            <MaterialCreateForm />
-          </SectionCard>
-        ) : null}
-      </section>
-
-      <SectionCard eyebrow="Movimentações" title="Histórico de estoque">
-        {movements.length === 0 ? (
-          <p className="text-sm text-[#66756d]">Nenhuma movimentação registrada ainda.</p>
+      <SectionCard
+        eyebrow="Prateleira"
+        title="Peças prontas"
+        action={
+          <Link
+            href="/produtos"
+            className="inline-flex h-10 items-center rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+          >
+            Cadastrar peça
+          </Link>
+        }
+      >
+        {pecas.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
+            <Package size={24} className="mx-auto text-[#8a9890]" aria-hidden="true" />
+            <h3 className="mt-2 font-semibold">Nenhuma peça cadastrada</h3>
+            <p className="mt-1 text-sm text-[#66756d]">
+              O estoque acompanha as peças do seu catálogo. Cadastre uma peça em Produtos e ela aparece aqui.
+            </p>
+          </div>
         ) : (
-          <ul className="divide-y divide-[#edf2ef]">
-            {movements.map((movement) => {
-              const tone = movement.type === "IN" ? "good" : movement.type === "OUT" ? "warn" : "neutral";
-              const Icon = movement.type === "IN" ? ArrowUpCircle : movement.type === "OUT" ? ArrowDownCircle : SlidersHorizontal;
-              const sign = movement.type === "IN" ? "+" : movement.type === "OUT" ? "-" : "=";
-              return (
-                <li key={movement.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="flex items-center gap-3">
-                    <Icon size={18} className="shrink-0 text-[#63736b]" aria-hidden="true" />
-                    <div>
-                      <p className="text-sm font-medium">{movement.materialName}</p>
-                      <p className="text-xs text-[#8a9890]">
-                        {formatDateTime(movement.createdAt)}
-                        {movement.orderNumber ? ` - pedido #${movement.orderNumber}` : ""}
-                        {movement.note ? ` - ${movement.note}` : ""}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">{sign}{movement.quantity} {movement.unit}</span>
-                    <StatusBadge tone={tone}>{movementLabels[movement.type]}</StatusBadge>
-                  </div>
-                </li>
-              );
-            })}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead>
+                <tr className="border-b border-[#d9e1dd] text-left text-[#63736b]">
+                  <th className="py-2 pr-3 font-medium">Peça</th>
+                  <th className="py-2 pr-3 font-medium">Tenho</th>
+                  <th className="py-2 pr-3 font-medium">Avisar quando chegar em</th>
+                  {canManage ? <th className="py-2 font-medium">Lançar</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {pecas.map((p) => {
+                  const baixa = p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity;
+                  return (
+                    <tr key={p.id} className="border-b border-[#eef2ef] last:border-0 align-top">
+                      <td className="py-3 pr-3">
+                        <span className="font-semibold text-[#1c2420]">{descrever(p)}</span>
+                        {p.category ? <span className="block text-xs text-[#8a9890]">{p.category}</span> : null}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <span className={`text-lg font-bold tabular-nums ${baixa ? "text-[#9f2f42]" : "text-[#05605e]"}`}>
+                          {p.currentQuantity}
+                        </span>
+                        {baixa ? <span className="ml-2 text-xs font-semibold text-[#9f2f42]">acabando</span> : null}
+                      </td>
+                      <td className="py-3 pr-3">
+                        {canManage ? (
+                          <ToastForm action={setProductMinimumAction} className="flex items-center gap-2">
+                            <input type="hidden" name="productId" value={p.id} />
+                            <input
+                              type="number"
+                              name="minimumQuantity"
+                              min={0}
+                              defaultValue={p.minimumQuantity}
+                              aria-label={`Mínimo de ${descrever(p)}`}
+                              className="h-10 w-24 rounded-lg border border-[#c7d3ce] px-2"
+                            />
+                            <button className="h-10 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+                              Salvar
+                            </button>
+                          </ToastForm>
+                        ) : (
+                          <span className="tabular-nums">{p.minimumQuantity}</span>
+                        )}
+                      </td>
+                      {canManage ? (
+                        <td className="py-3">
+                          <ToastForm action={registerStockMovementAction} className="flex flex-wrap items-center gap-2">
+                            <input type="hidden" name="productId" value={p.id} />
+                            <select
+                              name="type"
+                              aria-label={`Tipo de movimento de ${descrever(p)}`}
+                              className="h-10 rounded-lg border border-[#c7d3ce] px-2"
+                            >
+                              <option value="IN">Chegou</option>
+                              <option value="OUT">Saiu</option>
+                              <option value="ADJUSTMENT">Contei e tenho</option>
+                            </select>
+                            <input
+                              type="number"
+                              name="quantity"
+                              min={0}
+                              placeholder="qtd"
+                              required
+                              aria-label={`Quantidade de ${descrever(p)}`}
+                              className="h-10 w-24 rounded-lg border border-[#c7d3ce] px-2"
+                            />
+                            <button className="h-10 rounded-lg bg-[#087f7d] px-3 text-sm font-semibold text-white transition hover:bg-[#05605e]">
+                              Lançar
+                            </button>
+                          </ToastForm>
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </SectionCard>
+
+      <SectionCard eyebrow="Histórico" title="Últimas movimentações">
+        {movimentos.length === 0 ? (
+          <p className="py-6 text-center text-sm text-[#66756d]">
+            Nenhuma movimentação ainda. Ao lançar um pedido, a peça sai daqui sozinha.
+          </p>
+        ) : (
+          <ul className="divide-y divide-[#eef2ef]">
+            {movimentos.map((m) => (
+              <li key={m.id} className="flex items-center gap-3 py-3">
+                <span
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
+                    m.type === "IN" ? "bg-[#e8f6f3] text-[#05605e]" : "bg-[#fff0f2] text-[#9f2f42]"
+                  }`}
+                >
+                  {m.type === "IN" ? (
+                    <ArrowUpCircle size={17} aria-hidden="true" />
+                  ) : (
+                    <ArrowDownCircle size={17} aria-hidden="true" />
+                  )}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#1c2420]">
+                    {rotuloMovimento[m.type]} · {m.quantity} un. · {m.produtoNome}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#8a9890]">
+                    {formatDateTime(m.createdAt)}
+                    {m.orderNumber ? ` · pedido #${m.orderNumber}` : ""}
+                    {m.note ? ` · ${m.note}` : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </SectionCard>

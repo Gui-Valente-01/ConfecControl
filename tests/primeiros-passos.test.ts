@@ -10,7 +10,7 @@ import {
 
 const zerado: ContagensIniciais = {
   pecas: 0,
-  materiais: 0,
+  pecasComEstoque: 0,
   pedidos: 0,
   pedidosMovidos: 0,
   recebimentos: 0,
@@ -18,7 +18,7 @@ const zerado: ContagensIniciais = {
 
 const tudo: ContagensIniciais = {
   pecas: 3,
-  materiais: 5,
+  pecasComEstoque: 5,
   pedidos: 2,
   pedidosMovidos: 1,
   recebimentos: 4,
@@ -27,7 +27,7 @@ const tudo: ContagensIniciais = {
 describe("montarPassos", () => {
   it("sao cinco passos, na ordem que faz sentido fazer", () => {
     const passos = montarPassos(zerado);
-    expect(passos.map((p) => p.chave)).toEqual(["pecas", "materiais", "pedido", "producao", "pagamento"]);
+    expect(passos.map((p) => p.chave)).toEqual(["pecas", "estoque", "pedido", "producao", "pagamento"]);
   });
 
   it("empresa nova nao tem nada feito", () => {
@@ -42,9 +42,9 @@ describe("montarPassos", () => {
   });
 
   it("marca sozinho conforme o dado aparece: nao ha 'concluir' para clicar", () => {
-    const passos = montarPassos({ ...zerado, pecas: 1, materiais: 2 });
+    const passos = montarPassos({ ...zerado, pecas: 1, pecasComEstoque: 2 });
     expect(passos.find((p) => p.chave === "pecas")?.feito).toBe(true);
-    expect(passos.find((p) => p.chave === "materiais")?.feito).toBe(true);
+    expect(passos.find((p) => p.chave === "estoque")?.feito).toBe(true);
     expect(passos.find((p) => p.chave === "pedido")?.feito).toBe(false);
   });
 
@@ -62,7 +62,7 @@ describe("proximoPasso", () => {
   });
 
   it("pula o que ja esta feito", () => {
-    expect(proximoPasso(montarPassos({ ...zerado, pecas: 2, materiais: 1 }))?.chave).toBe("pedido");
+    expect(proximoPasso(montarPassos({ ...zerado, pecas: 2, pecasComEstoque: 1 }))?.chave).toBe("pedido");
   });
 
   it("nada pendente devolve null", () => {
@@ -70,9 +70,9 @@ describe("proximoPasso", () => {
   });
 
   it("pega o primeiro pendente mesmo com um posterior ja feito", () => {
-    // Quem cadastrou peça e já recebeu dinheiro ainda precisa do material.
+    // Quem cadastrou peça e já recebeu dinheiro ainda não contou a prateleira.
     const passos = montarPassos({ ...zerado, pecas: 1, recebimentos: 3 });
-    expect(proximoPasso(passos)?.chave).toBe("materiais");
+    expect(proximoPasso(passos)?.chave).toBe("estoque");
   });
 });
 
@@ -93,7 +93,7 @@ describe("deveMostrar", () => {
 describe("rotuloProgresso", () => {
   it("diz quanto ja foi e quanto e o total", () => {
     expect(rotuloProgresso(montarPassos(zerado))).toBe("0 de 5 concluídos");
-    expect(rotuloProgresso(montarPassos({ ...zerado, pecas: 1, materiais: 1, pedidos: 1 }))).toBe("3 de 5 concluídos");
+    expect(rotuloProgresso(montarPassos({ ...zerado, pecas: 1, pecasComEstoque: 1, pedidos: 1 }))).toBe("3 de 5 concluídos");
     expect(rotuloProgresso(montarPassos(tudo))).toBe("5 de 5 concluídos");
   });
 });

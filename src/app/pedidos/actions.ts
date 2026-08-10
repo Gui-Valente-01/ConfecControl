@@ -11,7 +11,7 @@ import { requireCompanyId, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
-import { computeStockConsumption } from "@/lib/production";
+import { computeProductConsumption } from "@/lib/production";
 import { registrarAviso } from "@/app/avisos/actions";
 import { prisma, type TransactionClient } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
@@ -254,33 +254,21 @@ async function consumeStockForOrder(
   companyId: string,
   items: ParsedItem[],
 ) {
-  const productIds = Array.from(new Set(items.map((item) => item.productId).filter((id): id is string => Boolean(id))));
-  if (productIds.length === 0) return;
+  const consumo = computeProductConsumption(items);
+  if (consumo.size === 0) return;
 
-  const boms = await tx.productMaterial.findMany({
-    where: { productId: { in: productIds }, material: { companyId } },
-    select: { productId: true, materialId: true, quantityPerUnit: true },
-  });
-  if (boms.length === 0) return;
-
-  const consumption = computeStockConsumption(
-    items,
-    boms.map((bom) => ({
-      productId: bom.productId,
-      materialId: bom.materialId,
-      quantityPerUnit: Number(bom.quantityPerUnit),
-    })),
-  );
-
-  for (const [materialId, qty] of consumption) {
+  for (const [productId, qty] of consumo) {
     if (qty <= 0) continue;
-    const affected = await tx.$executeRaw`
-      UPDATE "materiais"
+    // GREATEST(0, ...) evita estoque negativo: vender peça que acabou é
+    // comum e legítimo (encomenda), e travar o pedido por isso seria pior
+    // do que mostrar zero.
+    const afetadas = await tx.$executeRaw`
+      UPDATE "produtos"
       SET "currentQuantity" = GREATEST(0, "currentQuantity" - ${qty})
-      WHERE "id" = ${materialId} AND "companyId" = ${companyId}`;
-    if (affected > 0) {
+      WHERE "id" = ${productId} AND "companyId" = ${companyId}`;
+    if (afetadas > 0) {
       await tx.stockMovement.create({
-        data: { materialId, orderId, type: "OUT", quantity: qty, note: `Baixa automática do pedido #${orderNumber}` },
+        data: { productId, orderId, type: "OUT", quantity: qty, note: `Baixa automática do pedido #${orderNumber}` },
       });
     }
   }
@@ -289,15 +277,24 @@ async function consumeStockForOrder(
 // Devolve ao estoque tudo que foi baixado automaticamente por este pedido
 // e remove os movimentos correspondentes. Usado ao editar ou excluir pedido.
 async function reverseStockForOrder(tx: TransactionClient, orderId: string) {
-  const movements = await tx.stockMovement.findMany({
+  const movimentos = await tx.stockMovement.findMany({
     where: { orderId, type: "OUT" },
-    select: { materialId: true, quantity: true },
+    select: { materialId: true, productId: true, quantity: true },
   });
-  for (const m of movements) {
-    await tx.material.update({
-      where: { id: m.materialId },
-      data: { currentQuantity: { increment: m.quantity } },
-    });
+  for (const m of movimentos) {
+    // Pedido antigo baixou material; pedido novo baixa peça. Devolver cada um
+    // ao lugar certo mantém correto o histórico anterior à mudança.
+    if (m.productId) {
+      await tx.product.update({
+        where: { id: m.productId },
+        data: { currentQuantity: { increment: Number(m.quantity) } },
+      });
+    } else if (m.materialId) {
+      await tx.material.update({
+        where: { id: m.materialId },
+        data: { currentQuantity: { increment: m.quantity } },
+      });
+    }
   }
   await tx.stockMovement.deleteMany({ where: { orderId, type: "OUT" } });
 }

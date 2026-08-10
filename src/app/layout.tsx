@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ConfecControl",
   description:
-    "Pedidos, produção, estoque de tecido e cobranças da sua confecção em um lugar só, do corte à entrega.",
+    "Pedidos, produção, estoque de peças e cobranças da sua confecção em um lugar só, do corte à entrega.",
   applicationName: "ConfecControl",
   appleWebApp: {
     capable: true,

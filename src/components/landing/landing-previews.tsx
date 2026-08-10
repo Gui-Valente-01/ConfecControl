@@ -85,9 +85,9 @@ export function MiniBoard() {
 // Estoque com alerta de mínimo (como na tela /estoque).
 export function MiniStock() {
   const rows = [
-    { name: "Malha PV branca", qty: "12 kg", low: true },
-    { name: "Linha 120 preta", qty: "84 cones", low: false },
-    { name: "Botão 18 mm", qty: "3.400 un.", low: false },
+    { name: "Camiseta gola careca", qty: "12 un.", low: true },
+    { name: "Camisa polo", qty: "84 un.", low: false },
+    { name: "Boné trucker", qty: "340 un.", low: false },
   ];
   return (
     <div className="overflow-hidden rounded-xl border border-[#d9e1dd] bg-white shadow-sm">

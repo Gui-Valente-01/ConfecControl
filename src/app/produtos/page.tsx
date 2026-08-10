@@ -7,23 +7,15 @@ export const dynamic = "force-dynamic";
 
 export default async function ProdutosPage() {
   const user = await requireRouteUser("/produtos");
-  const [products, materials, services] = await Promise.all([
+  const [products, services] = await Promise.all([
     prisma.product.findMany({
       where: { companyId: user.companyId },
       orderBy: { createdAt: "desc" },
       include: {
-        bom: {
-          orderBy: { createdAt: "asc" },
-          include: { material: { select: { name: true, unit: true, costPerUnitInCents: true } } },
-        },
-        // Peça já usada em pedido não pode ser excluída: o botão explica o motivo.
-        _count: { select: { items: true } },
+        // Peça já usada em pedido não pode ser excluída: o botão explica o
+        // motivo. Os movimentos entram na conta do que some junto.
+        _count: { select: { items: true, movements: true } },
       },
-    }),
-    prisma.material.findMany({
-      where: { companyId: user.companyId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, unit: true },
     }),
     prisma.service.findMany({
       where: { companyId: user.companyId, active: true },
@@ -41,12 +33,8 @@ export default async function ProdutosPage() {
     costInCents: product.costInCents,
     averageProductionDays: product.averageProductionDays,
     kind: product.kind,
-    bom: product.bom.map((entry) => ({
-      id: entry.id,
-      materialId: entry.materialId,
-      quantityPerUnit: Number(entry.quantityPerUnit),
-      material: entry.material,
-    })),
+    currentQuantity: product.currentQuantity,
+    minimumQuantity: product.minimumQuantity,
     _count: product._count,
   }));
 
@@ -54,7 +42,6 @@ export default async function ProdutosPage() {
     <AppShell eyebrow="Catálogo" title="Peças" actionLabel="Nova peça" user={user}>
       <DbProductsManager
         products={mappedProducts}
-        materials={materials}
         services={services}
         canEdit={user.role === "ADMIN"}
       />

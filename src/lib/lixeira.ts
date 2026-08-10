@@ -31,8 +31,8 @@ export function rotuloTipo(tipo: TipoLixeira): string {
  */
 const CASCATA: Record<TipoLixeira, string | null> = {
   cliente: null,
-  peca: "a ficha técnica dela",
-  material: "a ficha técnica das peças que o usam e todo o histórico de estoque",
+  peca: "todo o histórico de entrada e saída dela",
+  material: "a ficha técnica antiga das peças que o usam e o histórico de estoque dele",
   terceirizada: null,
   servico: null,
 };

@@ -86,7 +86,7 @@ export type Tarefa = {
    * Versão curta para a faixa compacta: "atrasados", "para hoje".
    *
    * Acompanha singular e plural igual ao título: na faixa ele vem colado no
-   * número, e "1 materiais acabando" faz a pessoa reler para entender.
+   * número, e "1 peças acabando" faz a pessoa reler para entender.
    */
   curto: string;
   /** O que fazer com isso. Uma linha, em linguagem de oficina. */
@@ -199,8 +199,8 @@ export function montarTarefas(
           {
             chave: "estoque",
             quantidade: c.estoqueBaixo,
-            titulo: c.estoqueBaixo === 1 ? "material acabando" : "materiais acabando",
-            curto: c.estoqueBaixo === 1 ? "material acabando" : "materiais acabando",
+            titulo: c.estoqueBaixo === 1 ? "peça acabando" : "peças acabando",
+            curto: c.estoqueBaixo === 1 ? "peça acabando" : "peças acabando",
             acao: "Está abaixo do mínimo. Compre antes de faltar no meio do pedido.",
             href: "/estoque",
             icone: PackageCheck,
@@ -293,7 +293,7 @@ export function TarefasDoDia({
           <CheckCircle2 size={17} className="shrink-0" aria-hidden="true" />
           <span>
             <strong className="font-semibold">Tudo em dia.</strong> Nenhum pedido atrasado, nada parado
-            esperando material e nenhum material acabando.
+            esperando material e nenhuma peça acabando.
           </span>
         </p>
       ) : detalhado ? (

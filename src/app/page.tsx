@@ -5,7 +5,6 @@ import { PrimeirosPassos } from "@/components/primeiros-passos";
 import { getSessionUser } from "@/lib/auth";
 import { planHasFeature } from "@/lib/features";
 import { canManageOrders, canSeeFinance } from "@/lib/roles";
-import { findIncompleteCosts } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +13,7 @@ export default async function Home() {
   // Visitante sem sessão vê a página de apresentação; usuário logado vê o painel.
   const user = await getSessionUser();
   if (!user) return <LandingPage />;
-  const [orders, stages, materials, products, pedidosMovidos, recebimentos] = await Promise.all([
+  const [orders, stages, products, pedidosMovidos, recebimentos] = await Promise.all([
     prisma.order.findMany({
       where: { companyId: user.companyId },
       orderBy: { createdAt: "desc" },
@@ -36,16 +35,15 @@ export default async function Home() {
         },
       },
     }),
-    prisma.material.findMany({
-      where: { companyId: user.companyId },
-      orderBy: { createdAt: "desc" },
-    }),
+
     prisma.product.findMany({
       where: { companyId: user.companyId },
       select: {
         id: true,
+        name: true,
         costInCents: true,
-        bom: { select: { material: { select: { name: true, costPerUnitInCents: true } } } },
+        currentQuantity: true,
+        minimumQuantity: true,
       },
     }),
     // Para os primeiros passos: já moveu algum pedido de etapa? já recebeu?
@@ -53,25 +51,10 @@ export default async function Home() {
     prisma.payment.count({ where: { order: { companyId: user.companyId } } }),
   ]);
 
-  // Peça com custo incompleto faz a margem do relatório mentir: ou não tem
-  // ficha nem custo digitado, ou usa material que ainda está sem preço.
-  const { productIds: comMaterialSemPreco } = findIncompleteCosts(
-    products.map((p) => ({
-      id: p.id,
-      bom: p.bom.map((entry) => ({
-        materialName: entry.material.name,
-        materialPriceInCents: entry.material.costPerUnitInCents,
-      })),
-    })),
-  );
-  const productsWithoutCost = products.filter(
-    (p) => comMaterialSemPreco.has(p.id) || (p.bom.length === 0 && p.costInCents === 0),
-  ).length;
-  const mappedMaterials = materials.map((material) => ({
-    ...material,
-    currentQuantity: Number(material.currentQuantity),
-    minimumQuantity: Number(material.minimumQuantity),
-  }));
+  // Peça sem custo digitado faz a margem do relatório mentir: a venda entra
+  // como lucro cheio. Desde que o estoque virou de peça pronta, o custo vem
+  // de um campo só, então a checagem é direta.
+  const productsWithoutCost = products.filter((p) => p.costInCents === 0).length;
 
   const showFinance = canSeeFinance(user.role);
   const plan = {
@@ -86,7 +69,7 @@ export default async function Home() {
       <PrimeirosPassos
         contagens={{
           pecas: products.length,
-          materiais: materials.length,
+          pecasComEstoque: products.filter((p) => p.currentQuantity > 0).length,
           pedidos: orders.length,
           pedidosMovidos,
           recebimentos,
@@ -95,7 +78,7 @@ export default async function Home() {
       <DbDashboard
         orders={orders}
         stages={stages}
-        materials={mappedMaterials}
+        products={products}
         productsWithoutCost={productsWithoutCost}
         plan={plan}
         showFinance={showFinance}

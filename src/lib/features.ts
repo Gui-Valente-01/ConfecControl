@@ -19,7 +19,7 @@ export const sellableFeatures: {
   route: string;
 }[] = [
   { key: "producao", label: "Quadro de produção", description: "Kanban por etapa: corte, costura, acabamento, entrega.", route: "/producao" },
-  { key: "estoque", label: "Estoque e ficha técnica", description: "Materiais, baixa automática por pedido e alerta de mínimo.", route: "/estoque" },
+  { key: "estoque", label: "Estoque de peças", description: "Quantidade na prateleira, baixa automática por pedido e alerta de mínimo.", route: "/estoque" },
   { key: "financeiro", label: "Financeiro", description: "Contas a receber, entradas, saldos e pagamentos.", route: "/financeiro" },
   { key: "relatorios", label: "Relatórios", description: "Faturamento, lucro e rankings de clientes e peças.", route: "/relatorios" },
   { key: "terceirizadas", label: "Terceirizadas", description: "Cadastro e envio de pedidos para facções parceiras.", route: "/terceirizadas" },

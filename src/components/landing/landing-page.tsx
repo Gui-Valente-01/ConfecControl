@@ -12,8 +12,8 @@ import { Reveal } from "./reveal";
 
 const pains = [
   {
-    quote: "O tecido acabou no meio do corte.",
-    fix: "Cada peça tem ficha técnica. Ao lançar o pedido, o sistema baixa o material do estoque e avisa quando chegar no mínimo, antes de faltar.",
+    quote: "Vendi o que não tinha na prateleira.",
+    fix: "Cada peça mostra quantas você tem. Ao lançar o pedido, o sistema baixa do estoque e avisa quando chega no mínimo, antes de faltar.",
   },
   {
     quote: "A cliente ligou cobrando um pedido que ninguém lembrava.",
@@ -27,8 +27,8 @@ const pains = [
 
 const steps = [
   {
-    title: "Cadastre clientes, peças e materiais",
-    body: "Uma vez só. A ficha técnica de cada peça diz quanto tecido e aviamento ela consome.",
+    title: "Cadastre clientes e peças",
+    body: "Uma vez só. Cada peça guarda o preço, o custo e quantas você tem na prateleira.",
   },
   {
     title: "Lance os pedidos em aberto",
@@ -123,7 +123,7 @@ export function LandingPage() {
               O caderno de pedidos não avisa quando a entrega atrasa.
             </h1>
             <p className="lp-hero-item mt-5 max-w-md text-lg leading-relaxed text-[#63736b]" style={{ animationDelay: "110ms" }}>
-              O ConfecControl avisa. Pedidos, produção, estoque de tecido e cobrança no mesmo lugar, do corte à entrega.
+              O ConfecControl avisa. Pedidos, produção, estoque de peças e cobrança no mesmo lugar, do corte à entrega.
             </p>
             <div className="lp-hero-item mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "220ms" }}>
               <PrimaryCta />
@@ -176,7 +176,7 @@ export function LandingPage() {
                 <div>
                   <h3 className="text-lg font-semibold">Estoque que baixa sozinho</h3>
                   <p className="mt-1.5 max-w-md text-sm leading-relaxed text-[#63736b]">
-                    Cada pedido consome tecido e aviamento conforme a ficha técnica. Quando um material chega no mínimo, aparece o alerta de reposição.
+                    Cada pedido desconta as peças que saíram. Quando uma peça chega no mínimo que você definiu, aparece o alerta de reposição.
                   </p>
                 </div>
                 <MiniStock />
@@ -199,9 +199,9 @@ export function LandingPage() {
             <Reveal className="md:col-span-4">
               <div className="h-full rounded-2xl border border-[#cfe4e0] bg-[#e8f6f3] p-6">
                 <Ruler size={20} className="text-[#0f696b]" aria-hidden="true" />
-                <h3 className="mt-3 text-lg font-semibold">Ficha técnica por peça</h3>
+                <h3 className="mt-3 text-lg font-semibold">Custo e preço por peça</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-[#405047]">
-                  Consumo de material, preço padrão, custo e prazo médio de cada modelo. O lucro por pedido sai calculado nos relatórios.
+                  Preço padrão, custo e prazo médio de cada modelo. O lucro por pedido sai calculado nos relatórios.
                 </p>
               </div>
             </Reveal>

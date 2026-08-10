@@ -33,7 +33,7 @@ export default async function LoginPage() {
               Controle visual para confecções que vivem de prazo.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-8 text-[#c8d6cf]">
-              Acompanhe pedidos, etapas da produção, materiais e pagamentos em telas simples para o dono e para a equipe.
+              Acompanhe pedidos, etapas da produção, estoque e pagamentos em telas simples para o dono e para a equipe.
             </p>
             <div className="mt-10 grid max-w-xl gap-3 sm:grid-cols-3">
               {["Produção", "Estoque", "Financeiro"].map((item) => (

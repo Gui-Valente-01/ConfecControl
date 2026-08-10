@@ -20,7 +20,6 @@ import { centsToCurrency, formatShortDate } from "@/lib/format";
 import { isOrderLate, orderStatusLabels } from "@/lib/status";
 import { requireRouteUser } from "@/lib/auth";
 import { computeBalance } from "@/lib/payments";
-import { findIncompleteCosts } from "@/lib/production";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +46,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   // número. "R$ 23 mil" sozinho não diz se foi um bom mês.
   const anterior = periodoAnterior({ de: validFrom, ate: validTo });
 
-  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, materials, historico, tarefasFeitas, saidasMaterial] = await Promise.all([
+  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, historico, tarefasFeitas, saidasPecas] = await Promise.all([
     prisma.order.findMany({
       where: { companyId, orderDate: { gte: validFrom, lte: validTo } },
       select: {
@@ -79,7 +78,8 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         name: true,
         costInCents: true,
         kind: true,
-        bom: { select: { quantityPerUnit: true, material: { select: { name: true, costPerUnitInCents: true } } } },
+        currentQuantity: true,
+        minimumQuantity: true,
       },
     }),
     // Pendência é SALDO: total do pedido menos o que já entrou. Antes somava o
@@ -102,10 +102,6 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       orderBy: { position: "asc" },
       include: { _count: { select: { currentOrders: true } } },
     }),
-    prisma.material.findMany({
-      where: { companyId },
-      select: { id: true, name: true, unit: true, currentQuantity: true, minimumQuantity: true },
-    }),
     // Histórico de etapa: é o que revela onde o pedido fica parado e quanto
     // tempo leva do começo ao fim. O dado já era gravado e nunca foi lido.
     prisma.productionHistory.findMany({
@@ -124,23 +120,20 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       where: { companyId, status: "DONE", doneAt: { gte: validFrom, lte: validTo } },
       select: { pickedByName: true, stageName: true, pickedAt: true, doneAt: true, noteKind: true, note: true },
     }),
-    // Saída de material no período: quanto a produção consumiu.
+    // Saída de peça no período: quanto saiu da prateleira.
     prisma.stockMovement.findMany({
-      where: { material: { companyId }, type: "OUT", createdAt: { gte: validFrom, lte: validTo } },
-      select: { quantity: true, materialId: true },
+      where: { product: { companyId }, type: "OUT", createdAt: { gte: validFrom, lte: validTo } },
+      select: { quantity: true, productId: true },
     }),
   ]);
 
-  // Custo por peça = materiais da ficha + outros custos digitados no produto.
-  const productCost = new Map(
-    products.map((p) => {
-      const materialCost = p.bom.reduce(
-        (sum, entry) => sum + Math.round(Number(entry.quantityPerUnit) * entry.material.costPerUnitInCents),
-        0,
-      );
-      return [p.id, materialCost + p.costInCents];
-    }),
-  );
+  // Custo por peça = o valor digitado no cadastro da peça.
+  //
+  // Antes vinha da ficha técnica (soma dos materiais). Foi removido porque
+  // exigia manter o preço de cada material em dia, e o que ninguém mantém
+  // acaba fazendo o custo sair por baixo — o lucro do relatório aparecia
+  // maior do que era, que é o erro mais caro possível aqui.
+  const productCost = new Map(products.map((p) => [p.id, p.costInCents]));
   const productKind = new Map(products.map((p) => [p.id, p.kind]));
   const productName = new Map(products.map((p) => [p.id, p.name]));
 
@@ -192,18 +185,6 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   // Custo incompleto é pior do que custo zerado: a peça tem número, mas ele está
   // por baixo, e o lucro aparece maior do que é. Acontece quando um material da
   // ficha ainda não tem preço cadastrado no estoque.
-  const { productIds: productsMissingPrice, materialNames: materialsMissingPrice } = findIncompleteCosts(
-    products.map((p) => ({
-      id: p.id,
-      bom: p.bom.map((entry) => ({
-        materialName: entry.material.name,
-        materialPriceInCents: entry.material.costPerUnitInCents,
-      })),
-    })),
-  );
-  const itemsWithPartialCost = rangeItems.filter(
-    (item) => item.productId && productsMissingPrice.has(item.productId),
-  ).length;
 
   // Produtos mais vendidos (no período)
   const productSales = new Map<string, { label: string; quantity: number; revenue: number }>();
@@ -318,14 +299,14 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
       })),
   );
 
-  // Consumo de material no período, avaliado pelo preço de cadastro.
-  const materialPreco = new Map(materials.map((m) => [m.id, m]));
-  const consumoPorMaterial = new Map<string, number>();
-  for (const saida of saidasMaterial) {
-    consumoPorMaterial.set(saida.materialId, (consumoPorMaterial.get(saida.materialId) ?? 0) + Number(saida.quantity));
+  // Quais peças mais saíram da prateleira no período.
+  const consumoPorPeca = new Map<string, number>();
+  for (const saida of saidasPecas) {
+    if (!saida.productId) continue;
+    consumoPorPeca.set(saida.productId, (consumoPorPeca.get(saida.productId) ?? 0) + Number(saida.quantity));
   }
-  const consumoRows = [...consumoPorMaterial.entries()]
-    .map(([id, qtd]) => ({ nome: materialPreco.get(id)?.name ?? "Material removido", unidade: materialPreco.get(id)?.unit ?? "", quantidade: qtd }))
+  const consumoRows = [...consumoPorPeca.entries()]
+    .map(([id, qtd]) => ({ nome: productName.get(id) ?? "Peça removida", quantidade: qtd }))
     .sort((a, b) => b.quantidade - a.quantidade);
 
   const tarefasConcluidas = produtividade.reduce((s, p) => s + p.concluidas, 0);
@@ -338,7 +319,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     .map((order) => ({ order, balance: computeBalance(order.totalAmountInCents, order.payments) }))
     .filter((row) => row.balance > 0);
   const pendingTotal = pendingRows.reduce((sum, row) => sum + row.balance, 0);
-  const lowStock = materials.filter((m) => Number(m.currentQuantity) <= Number(m.minimumQuantity));
+  const lowStock = products.filter((p) => p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity);
   const maxStageCount = Math.max(1, ...stages.map((s) => s._count.currentOrders));
 
   // Produção por responsável (pedidos ainda em andamento)
@@ -423,23 +404,21 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
         </form>
       </SectionCard>
 
-      {itemsWithPartialCost > 0 ? (
+      {itemsWithoutCost > 0 ? (
         <div className="rounded-lg border border-[#ead49c] bg-[#fff7dd] p-4">
           <div className="flex gap-3">
             <AlertTriangle size={20} className="mt-0.5 shrink-0 text-[#a06a1c]" aria-hidden="true" />
             <div className="min-w-0">
               <p className="font-semibold text-[#7b5a0b]">O lucro abaixo pode estar maior do que o real.</p>
               <p className="mt-1 text-sm text-[#7b5a0b]">
-                {itemsWithPartialCost} venda(s) do período usam peças com material sem preço cadastrado:{" "}
-                <strong>{materialsMissingPrice.slice(0, 5).join(", ")}</strong>
-                {materialsMissingPrice.length > 5 ? ` e mais ${materialsMissingPrice.length - 5}` : ""}. Enquanto faltar,
-                o custo sai por baixo e a margem parece melhor do que é.
+                {itemsWithoutCost} venda(s) do período usam peças sem custo cadastrado. Sem o custo, a venda
+                entra como lucro cheio e a margem parece melhor do que é.
               </p>
               <Link
-                href="/estoque"
+                href="/produtos"
                 className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ead49c] bg-white px-3 text-sm font-semibold text-[#7b5a0b] transition hover:bg-[#fffdf7]"
               >
-                Cadastrar preços no estoque
+                Cadastrar o custo das peças
                 <ArrowRight size={15} aria-hidden="true" />
               </Link>
             </div>
@@ -468,12 +447,6 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
             </article>
           ))}
         </div>
-        {itemsWithoutCost > 0 ? (
-          <p className="mt-3 flex items-center gap-2 text-sm text-[#85620e]">
-            <AlertTriangle size={15} aria-hidden="true" />
-            {itemsWithoutCost} item(ns) sem custo cadastrado entram como lucro cheio. Preencha o custo dos produtos para um valor mais exato.
-          </p>
-        ) : null}
       </SectionCard>
 
       <section className="grid gap-6 lg:grid-cols-2">
@@ -648,13 +621,13 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
           ) : null}
 
           {consumoRows.length > 0 ? (
-            <SectionCard eyebrow="Estoque" title="Material consumido no período">
+            <SectionCard eyebrow="Estoque" title="Peças que mais saíram">
               <ul className="divide-y divide-[#eef2ef]">
                 {consumoRows.slice(0, 6).map((linha) => (
                   <li key={linha.nome} className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
                     <span className="min-w-0 flex-1 font-medium text-[#405047]">{linha.nome}</span>
                     <span className="font-semibold tabular-nums text-[#405047]">
-                      {linha.quantidade.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} {linha.unidade}
+                      {linha.quantidade.toLocaleString("pt-BR", { maximumFractionDigits: 0 })} un.
                     </span>
                   </li>
                 ))}
@@ -873,13 +846,13 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
             <EmptyHint icon={Package} text="Estoque saudável, nada abaixo do mínimo." />
           ) : (
             <ul className="space-y-2">
-              {lowStock.map((material) => (
-                <li key={material.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#f1c0c9] bg-[#fff0f2] px-3 py-2 text-sm">
+              {lowStock.map((peca) => (
+                <li key={peca.id} className="flex items-center justify-between gap-3 rounded-lg border border-[#f1c0c9] bg-[#fff0f2] px-3 py-2 text-sm">
                   <span className="flex items-center gap-2 font-medium">
                     <AlertTriangle size={14} className="text-[#9f2f42]" aria-hidden="true" />
-                    {material.name}
+                    {peca.name}
                   </span>
-                  <span className="text-[#63736b]">{Number(material.currentQuantity)}/{Number(material.minimumQuantity)} {material.unit}</span>
+                  <span className="text-[#63736b]">{peca.currentQuantity}/{peca.minimumQuantity} un.</span>
                 </li>
               ))}
             </ul>
