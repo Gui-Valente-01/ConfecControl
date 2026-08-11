@@ -93,15 +93,18 @@ export function SeletorDeTema({ tom = "escuro" }: { tom?: Tom } = {}) {
     window.dispatchEvent(new CustomEvent<Tema>(TEMA_EVENTO, { detail: novo }));
   };
 
-  const compacto = tom === "escuro";
+  // No menu o seletor e so tres icones lado a lado: ali o espaco e do nome da
+  // pessoa e do botao de sair. Na tela da conta ele pode se explicar por
+  // extenso, que e onde alguem vai procurar a opcao.
+  const soIcones = tom === "escuro";
 
   return (
-    <div className={compacto ? "mt-3" : ""}>
-      <p className={`mb-1.5 text-xs font-medium ${estilo.rotulo}`}>Tema</p>
+    <div className={soIcones ? "mt-3 flex justify-center" : ""}>
+      {soIcones ? null : <p className={`mb-1.5 text-xs font-medium ${estilo.rotulo}`}>Tema</p>}
       <div
         role="group"
         aria-label="Tema do sistema"
-        className={`flex gap-1 rounded-lg border p-1 ${estilo.caixa}`}
+        className={`flex gap-0.5 rounded-lg border p-0.5 ${estilo.caixa} ${soIcones ? "" : "gap-1 p-1"}`}
       >
         {temaOpcoes.map((opcao) => {
           const Icone = ICONE[opcao.valor];
@@ -112,29 +115,30 @@ export function SeletorDeTema({ tom = "escuro" }: { tom?: Tom } = {}) {
               type="button"
               onClick={() => escolher(opcao.valor)}
               aria-pressed={ativo}
+              aria-label={opcao.rotulo}
               title={opcao.rotulo}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md font-semibold transition ${
-                compacto ? "h-8 text-xs" : "h-11 text-sm"
+              className={`flex items-center justify-center rounded-md font-semibold transition ${
+                soIcones ? "size-7" : "h-10 flex-1 gap-1.5 text-sm"
               } ${
                 ativo
-                  ? compacto
+                  ? soIcones
                     ? "bg-white text-ink"
                     : "bg-primary text-white"
                   : estilo.inativo
               }`}
             >
-              <Icone size={compacto ? 14 : 16} aria-hidden="true" />
-              {opcao.rotulo}
+              <Icone size={soIcones ? 14 : 16} aria-hidden="true" />
+              {soIcones ? null : opcao.rotulo}
             </button>
           );
         })}
       </div>
-      {!compacto ? (
+      {soIcones ? null : (
         <p className="mt-2 text-sm text-muted">
           No automático, o sistema acompanha o tema do seu celular ou computador. A escolha vale
           só neste aparelho.
         </p>
-      ) : null}
+      )}
     </div>
   );
 }
