@@ -201,12 +201,22 @@ body {
   box-sizing: border-box;
 }
 
-button,
-a,
-input,
-select,
-textarea {
-  font: inherit;
+/* Botao e campo nascem com a fonte do navegador; isto faz eles usarem a fonte
+   da pagina.
+
+   Precisa estar dentro de @layer base. Fora de camada, esta regra venceria
+   qualquer text-sm/font-bold escrito na tela -- e nao por especificidade, mas
+   porque CSS sem camada ganha de CSS em camada, que e onde o Tailwind coloca
+   os utilitarios. Era o que deixava TODO botao e link do sistema em 16px e
+   peso normal, ignorando o tamanho pedido. */
+@layer base {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 html {
@@ -217,25 +227,29 @@ html {
   background: rgba(8, 127, 125, 0.18);
 }
 
-input,
-select,
-textarea {
-  background-color: var(--cc-surface);
-  color: var(--foreground);
-  /* Campo de formulário tem largura mínima própria, de mais ou menos 20
-     caracteres — com a fonte de 16px do celular isso dá 273px. Num aparelho de
-     320px, o cartão do formulário não conseguia encolher abaixo disso e a tela
-     inteira passava a rolar para o lado.
+/* Tambem em @layer base, pelo mesmo motivo do bloco acima: fora de camada,
+   estas cores venceriam um bg-canvas ou text-muted escrito no campo. */
+@layer base {
+  input,
+  select,
+  textarea {
+    background-color: var(--cc-surface);
+    color: var(--foreground);
+    /* Campo de formulário tem largura mínima própria, de mais ou menos 20
+       caracteres — com a fonte de 16px do celular isso dá 273px. Num aparelho
+       de 320px, o cartão do formulário não conseguia encolher abaixo disso e a
+       tela inteira passava a rolar para o lado.
 
-     Zerar aqui vale para todos os formulários de uma vez. O tamanho continua
-     vindo das classes (w-full, h-11...): isto só permite encolher quando a
-     tela é estreita, em vez de empurrar a página. */
-  min-width: 0;
-}
+       Zerar aqui vale para todos os formulários de uma vez. O tamanho continua
+       vindo das classes (w-full, h-11...): isto só permite encolher quando a
+       tela é estreita, em vez de empurrar a página. */
+    min-width: 0;
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--color-muted);
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted);
+  }
 }
 
 :focus-visible {
