@@ -5,10 +5,10 @@ type StatusBadgeProps = {
 
 export function StatusBadge({ children, tone = "neutral" }: StatusBadgeProps) {
   const tones = {
-    good: "border-[#bfe4dc] bg-[#e8f6f3] text-[#05605e]",
-    warn: "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]",
-    neutral: "border-[#d9e1dd] bg-[#eef4f1] text-[#405047]",
-    dark: "border-[#111a16] bg-[#111a16] text-white",
+    good: "border-primary/30 bg-primary-soft text-primary-dark",
+    warn: "border-danger-line bg-danger-soft text-danger-dark",
+    neutral: "border-line bg-tint text-body",
+    dark: "border-ink bg-ink text-white",
   };
 
   return (

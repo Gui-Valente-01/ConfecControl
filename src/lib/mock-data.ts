@@ -44,32 +44,32 @@ export const stats = [
     label: "Pedidos em aberto",
     value: "38",
     note: "12 vencem nesta semana",
-    accent: "bg-[#087f7d]",
+    accent: "bg-primary",
   },
   {
     label: "Atrasados",
     value: "5",
     note: "prioridade alta",
-    accent: "bg-[#c43f54]",
+    accent: "bg-danger",
   },
   {
     label: "Faturamento previsto",
     value: "R$ 42,8 mil",
     note: "+18% vs. mês anterior",
-    accent: "bg-[#c88a2b]",
+    accent: "bg-warning",
   },
   {
     label: "Estoque baixo",
     value: "9",
     note: "materiais precisam reposicao",
-    accent: "bg-[#5b68d8]",
+    accent: "bg-info",
   },
 ];
 
 export const production: ProductionColumn[] = [
   {
     title: "Recebido",
-    color: "border-t-[#5b68d8]",
+    color: "border-t-info",
     orders: [
       { code: "#1028", client: "Bella Uniformes", item: "Camisetas polo", qty: 120, due: "12 jun" },
       { code: "#1032", client: "Atelie Nora", item: "Bones bordados", qty: 80, due: "Hoje" },
@@ -77,7 +77,7 @@ export const production: ProductionColumn[] = [
   },
   {
     title: "Corte",
-    color: "border-t-[#087f7d]",
+    color: "border-t-primary",
     orders: [
       { code: "#1017", client: "Studio Fit", item: "Leggings", qty: 240, due: "14 jun" },
       { code: "#1022", client: "Marca Areia", item: "Camisas linho", qty: 60, due: "15 jun" },
@@ -85,7 +85,7 @@ export const production: ProductionColumn[] = [
   },
   {
     title: "Costura",
-    color: "border-t-[#c88a2b]",
+    color: "border-t-warning",
     orders: [
       { code: "#1009", client: "Escola Prisma", item: "Uniformes", qty: 310, due: "Atrasado" },
       { code: "#1014", client: "Loja Savana", item: "Vestidos", qty: 45, due: "16 jun" },
@@ -93,14 +93,14 @@ export const production: ProductionColumn[] = [
   },
   {
     title: "Acabamento",
-    color: "border-t-[#c43f54]",
+    color: "border-t-danger",
     orders: [
       { code: "#0998", client: "Clinica Vitta", item: "Jalecos", qty: 95, due: "Atrasado" },
     ],
   },
   {
     title: "Pronto",
-    color: "border-t-[#111a16]",
+    color: "border-t-ink",
     orders: [
       { code: "#0995", client: "Clube Norte", item: "Agasalhos", qty: 70, due: "Retirada" },
     ],

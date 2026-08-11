@@ -36,13 +36,13 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
       <SectionCard
         eyebrow="Catálogo"
         title="Peças cadastradas"
-        action={<div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{products.length} peças</div>}
+        action={<div className="rounded-lg border border-line bg-tint px-3 py-2 text-sm font-semibold text-body">{products.length} peças</div>}
       >
         {products.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-            <Shirt className="mx-auto text-[#087f7d]" size={28} aria-hidden="true" />
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
+            <Shirt className="mx-auto text-primary" size={28} aria-hidden="true" />
             <h3 className="mt-3 font-semibold">Nenhuma peça cadastrada</h3>
-            <p className="mt-2 text-sm text-[#66756d]">Cadastre suas peças para usar nos pedidos.</p>
+            <p className="mt-2 text-sm text-muted">Cadastre suas peças para usar nos pedidos.</p>
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
@@ -55,10 +55,10 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
               // Mínimo zero é "não guardo na prateleira": não vira alerta.
               const acabando = product.minimumQuantity > 0 && product.currentQuantity <= product.minimumQuantity;
               return (
-              <article key={product.id} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm transition hover:border-[#c7d3ce]">
+              <article key={product.id} className="rounded-lg border border-line bg-surface p-4 shadow-sm transition hover:border-line-strong">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex gap-3">
-                    <div className="flex size-12 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
+                    <div className="flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary-dark">
                       <Shirt size={22} aria-hidden="true" />
                     </div>
                     <div>
@@ -68,13 +68,13 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
                           className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
                             product.kind === "SERVICE"
                               ? "border-[#c6d2f0] bg-[#eef1ff] text-[#3a48b0]"
-                              : "border-[#bfe0d9] bg-[#e8f6f3] text-[#05605e]"
+                              : "border-primary/30 bg-primary-soft text-primary-dark"
                           }`}
                         >
                           {product.kind === "SERVICE" ? "Serviço na peça do cliente" : "Peça própria"}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-[#66756d]">{product.category || "Sem categoria"}</p>
+                      <p className="mt-1 text-sm text-muted">{product.category || "Sem categoria"}</p>
                     </div>
                   </div>
                   <ConfirmDeleteButton
@@ -99,15 +99,15 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
 
                 <dl className="mt-4 space-y-2 text-sm">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[#63736b]">Tecido</dt>
+                    <dt className="text-muted">Tecido</dt>
                     <dd className="font-medium">{product.fabric || "A definir"}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[#63736b]">Valor padrão</dt>
+                    <dt className="text-muted">Valor padrão</dt>
                     <dd className="font-medium">{centsToCurrency(product.standardPriceInCents)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[#63736b]">Prazo médio</dt>
+                    <dt className="text-muted">Prazo médio</dt>
                     <dd className="font-medium">{product.averageProductionDays ? `${product.averageProductionDays} dias` : "A definir"}</dd>
                   </div>
                 </dl>
@@ -132,36 +132,36 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
                     Antes esta caixa somava o material da ficha técnica e o
                     relatório não somava — a mesma peça mostrava dois lucros
                     diferentes, e a pessoa não tinha como saber qual valia. */}
-                <div className="mt-4 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-[#405047]">
+                <div className="mt-4 rounded-lg border border-line bg-canvas p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-body">
                     <Boxes size={15} aria-hidden="true" />
                     Estoque e margem
                   </div>
 
                   <div className="mt-2.5 flex items-center justify-between text-sm">
-                    <span className="text-[#66756d]">Na prateleira</span>
-                    <span className={`font-semibold tabular-nums ${acabando ? "text-[#9f2f42]" : ""}`}>
+                    <span className="text-muted">Na prateleira</span>
+                    <span className={`font-semibold tabular-nums ${acabando ? "text-danger-dark" : ""}`}>
                       {product.currentQuantity} un.
                       {product.minimumQuantity > 0 ? (
-                        <span className="ml-1 text-xs font-medium text-[#8a9890]">mín. {product.minimumQuantity}</span>
+                        <span className="ml-1 text-xs font-medium text-soft">mín. {product.minimumQuantity}</span>
                       ) : null}
                     </span>
                   </div>
 
                   {product.costInCents === 0 ? (
-                    <p className="mt-2.5 rounded bg-[#fff7dd] px-2 py-1 text-xs text-[#7b5a0b]">
+                    <p className="mt-2.5 rounded bg-warning-soft px-2 py-1 text-xs text-warning-ink">
                       Sem custo digitado: a venda desta peça entra no relatório como lucro cheio. Use &ldquo;Editar&rdquo; e preencha o custo por peça.
                     </p>
                   ) : (
-                    <div className="mt-2.5 border-t border-[#d9e1dd] pt-2.5 text-sm">
-                      <div className="flex items-center justify-between text-[#66756d]">
+                    <div className="mt-2.5 border-t border-line pt-2.5 text-sm">
+                      <div className="flex items-center justify-between text-muted">
                         <span>Custo por peça</span>
                         <span className="tabular-nums">{centsToCurrency(product.costInCents)}</span>
                       </div>
                       {product.standardPriceInCents > 0 ? (
                         <div className="mt-1 flex items-center justify-between">
-                          <span className="text-[#66756d]">Lucro por peça</span>
-                          <span className={`font-semibold tabular-nums ${lucro > 0 ? "text-[#05605e]" : "text-[#9f2f42]"}`}>
+                          <span className="text-muted">Lucro por peça</span>
+                          <span className={`font-semibold tabular-nums ${lucro > 0 ? "text-primary-dark" : "text-danger-dark"}`}>
                             {centsToCurrency(lucro)} <span className="text-xs font-medium">({margem}%)</span>
                           </span>
                         </div>

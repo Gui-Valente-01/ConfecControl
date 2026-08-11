@@ -68,7 +68,7 @@ export default async function AvisosPage() {
         action={
           naoLidos > 0 ? (
             <ToastForm action={marcarTodosLidosAction}>
-              <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+              <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-body transition hover:bg-canvas">
                 <CheckCheck size={15} aria-hidden="true" />
                 Marcar tudo como lido
               </button>
@@ -77,16 +77,16 @@ export default async function AvisosPage() {
         }
       >
         {lista.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-            <BellOff size={24} className="mx-auto text-[#8a9890]" aria-hidden="true" />
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
+            <BellOff size={24} className="mx-auto text-soft" aria-hidden="true" />
             <h3 className="mt-2 font-semibold">Nenhum aviso ainda</h3>
-            <p className="mt-1 text-sm text-[#66756d]">
+            <p className="mt-1 text-sm text-muted">
               Os avisos aparecem sozinhos quando um pedido entra, muda de etapa ou fica pronto — e quando
               alguém pede cor, foto ou ajuda na bancada.
             </p>
           </div>
         ) : (
-          <ul className="divide-y divide-[#eef2ef]">
+          <ul className="divide-y divide-divider">
             {lista.map((aviso) => {
               const Icone = ICONE[aviso.tipo];
               const desc = descreverTipo(aviso.tipo);
@@ -98,8 +98,8 @@ export default async function AvisosPage() {
                     <span
                       className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
                         aviso.urgente && !aviso.lido
-                          ? "bg-[#fde8ec] text-[#9f2f42]"
-                          : "bg-[#eef4f1] text-[#405047]"
+                          ? "bg-danger-soft text-danger-dark"
+                          : "bg-tint text-body"
                       }`}
                     >
                       <Icone size={17} aria-hidden="true" />
@@ -107,25 +107,25 @@ export default async function AvisosPage() {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="font-semibold text-[#1c2420]">{aviso.titulo}</span>
+                        <span className="font-semibold text-fg">{aviso.titulo}</span>
                         {/* Urgência não depende só de cor: tem palavra. */}
                         {aviso.urgente && !aviso.lido ? (
-                          <span className="rounded-md border border-[#f1c0c9] bg-[#fff0f2] px-1.5 py-0.5 text-[10px] font-bold uppercase text-[#9f2f42]">
+                          <span className="rounded-md border border-danger-line bg-danger-soft px-1.5 py-0.5 text-[10px] font-bold uppercase text-danger-dark">
                             Urgente
                           </span>
                         ) : null}
-                        <span className="text-xs text-[#8a9890]">{desc.rotulo}</span>
+                        <span className="text-xs text-soft">{desc.rotulo}</span>
                       </div>
 
-                      <p className="mt-0.5 text-sm leading-6 text-[#66756d]">{aviso.mensagem}</p>
+                      <p className="mt-0.5 text-sm leading-6 text-muted">{aviso.mensagem}</p>
 
-                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-[#8a9890]">
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-soft">
                         <span>{tempoRelativo(aviso.createdAt)}</span>
                         {aviso.criadoPor ? <span>· {aviso.criadoPor}</span> : null}
                         {aviso.orderId ? (
                           <Link
                             href={`/pedidos/${aviso.orderId}`}
-                            className="font-semibold text-[#087f7d] underline underline-offset-2"
+                            className="font-semibold text-primary underline underline-offset-2"
                           >
                             abrir o pedido
                           </Link>

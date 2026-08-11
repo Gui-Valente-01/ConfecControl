@@ -42,8 +42,8 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
   }, [aberto]);
 
   return (
-    <div className="mt-2 border-t border-[#eef2ef] pt-2">
-      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8a9890]">
+    <div className="mt-2 border-t border-divider pt-2">
+      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-soft">
         Precisa de algo?
       </p>
 
@@ -59,8 +59,8 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
               aria-expanded={ativo}
               className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg border px-2.5 text-sm font-semibold transition ${
                 ativo
-                  ? "border-[#087f7d] bg-[#e8f6f3] text-[#05605e]"
-                  : "border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
+                  ? "border-primary bg-primary-soft text-primary-dark"
+                  : "border-line-strong bg-surface text-body hover:bg-canvas"
               }`}
             >
               <Icone size={15} aria-hidden="true" />
@@ -71,12 +71,12 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
       </div>
 
       {aberto ? (
-        <form action={formAction} className="mt-2 rounded-lg border border-[#c7d3ce] bg-[#f8faf9] p-2.5">
+        <form action={formAction} className="mt-2 rounded-lg border border-line-strong bg-canvas p-2.5">
           <input type="hidden" name="orderId" value={orderId} />
           <input type="hidden" name="tipo" value={aberto} />
 
           <label className="block">
-            <span className="text-xs font-medium text-[#405047]">
+            <span className="text-xs font-medium text-body">
               {descreverTipo(aberto).rotulo} — pedido #{numeroPedido}
             </span>
             <textarea
@@ -84,7 +84,7 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
               name="mensagem"
               rows={2}
               placeholder={descreverTipo(aberto).padrao}
-              className="mt-1 w-full rounded-lg border border-[#c7d3ce] px-2.5 py-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:text-sm"
+              className="mt-1 w-full rounded-lg border border-line-strong px-2.5 py-2 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:text-sm"
             />
           </label>
 
@@ -92,9 +92,9 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
             {/* Pedido de ajuda já nasce urgente: a marca aparece travada, para
                 a pessoa saber que vai chegar como urgente de qualquer jeito. */}
             {urgenciaPadrao(aberto) ? (
-              <span className="text-xs font-semibold text-[#9f2f42]">Vai como urgente</span>
+              <span className="text-xs font-semibold text-danger-dark">Vai como urgente</span>
             ) : (
-              <label className="flex items-center gap-1.5 text-xs font-medium text-[#405047]">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-body">
                 <input type="checkbox" name="urgente" className="size-4" />
                 Marcar como urgente
               </label>
@@ -104,12 +104,12 @@ export function ChamadoBancada({ orderId, numeroPedido }: { orderId: string; num
               <button
                 type="button"
                 onClick={() => setAberto(null)}
-                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold text-[#66756d]"
+                className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold text-muted"
               >
                 <X size={14} aria-hidden="true" />
                 Cancelar
               </button>
-              <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-[#087f7d] px-3 text-sm font-semibold text-white transition hover:bg-[#05605e]">
+              <button className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-dark">
                 <Send size={14} aria-hidden="true" />
                 Enviar
               </button>

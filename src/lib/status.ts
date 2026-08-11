@@ -35,10 +35,10 @@ export const orderPriorityRank: Record<OrderPriority, number> = {
 };
 
 export const orderPriorityBadge: Record<OrderPriority, string> = {
-  URGENT: "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]",
-  HIGH: "border-[#ead49c] bg-[#fff7dd] text-[#7b5a0b]",
-  NORMAL: "border-[#d9e1dd] bg-[#eef4f1] text-[#405047]",
-  LOW: "border-[#e0e6e2] bg-[#f3f6f4] text-[#8a9890]",
+  URGENT: "border-danger-line bg-danger-soft text-danger-dark",
+  HIGH: "border-warning-line bg-warning-soft text-warning-ink",
+  NORMAL: "border-line bg-tint text-body",
+  LOW: "border-line bg-canvas text-soft",
 };
 
 // Observação que o funcionário registra ao concluir um trabalho na bancada.
@@ -51,9 +51,9 @@ export const bancadaNoteLabels: Record<string, string> = {
 
 // Só as que merecem destaque; "NONE" não vira etiqueta.
 export const bancadaNoteBadge: Record<string, string> = {
-  SHORTAGE: "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]",
-  SURPLUS: "border-[#ead49c] bg-[#fff7dd] text-[#7b5a0b]",
-  INFO: "border-[#d9e1dd] bg-[#eef4f1] text-[#405047]",
+  SHORTAGE: "border-danger-line bg-danger-soft text-danger-dark",
+  SURPLUS: "border-warning-line bg-warning-soft text-warning-ink",
+  INFO: "border-line bg-tint text-body",
 };
 
 // Considera atrasado: tem prazo vencido e ainda não saiu da produção.

@@ -85,12 +85,12 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
       </section>
 
       {acabando.length > 0 ? (
-        <div className="rounded-lg border border-[#ead49c] bg-[#fff7dd] p-4">
-          <p className="flex items-center gap-2 font-semibold text-[#7b5a0b]">
+        <div className="rounded-lg border border-warning-line bg-warning-soft p-4">
+          <p className="flex items-center gap-2 font-semibold text-warning-ink">
             <AlertTriangle size={18} aria-hidden="true" />
             {acabando.length === 1 ? "1 peça acabando" : `${acabando.length} peças acabando`}
           </p>
-          <p className="mt-1 text-sm text-[#7b5a0b]">
+          <p className="mt-1 text-sm text-warning-ink">
             {acabando.map((p) => descrever(p)).join(" · ")} — compre antes de faltar no meio de um pedido.
           </p>
         </div>
@@ -102,17 +102,17 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
         action={
           <Link
             href="/produtos"
-            className="inline-flex h-10 items-center rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+            className="inline-flex h-10 items-center rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-body transition hover:bg-canvas"
           >
             Cadastrar peça
           </Link>
         }
       >
         {pecas.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-            <Package size={24} className="mx-auto text-[#8a9890]" aria-hidden="true" />
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
+            <Package size={24} className="mx-auto text-soft" aria-hidden="true" />
             <h3 className="mt-2 font-semibold">Nenhuma peça cadastrada</h3>
-            <p className="mt-1 text-sm text-[#66756d]">
+            <p className="mt-1 text-sm text-muted">
               O estoque acompanha as peças do seu catálogo. Cadastre uma peça em Produtos e ela aparece aqui.
             </p>
           </div>
@@ -120,7 +120,7 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="border-b border-[#d9e1dd] text-left text-[#63736b]">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="py-2 pr-3 font-medium">Peça</th>
                   <th className="py-2 pr-3 font-medium">Tenho</th>
                   <th className="py-2 pr-3 font-medium">Avisar quando chegar em</th>
@@ -131,16 +131,16 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
                 {pecas.map((p) => {
                   const baixa = p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity;
                   return (
-                    <tr key={p.id} className="border-b border-[#eef2ef] last:border-0 align-top">
+                    <tr key={p.id} className="border-b border-divider last:border-0 align-top">
                       <td className="py-3 pr-3">
-                        <span className="font-semibold text-[#1c2420]">{descrever(p)}</span>
-                        {p.category ? <span className="block text-xs text-[#8a9890]">{p.category}</span> : null}
+                        <span className="font-semibold text-fg">{descrever(p)}</span>
+                        {p.category ? <span className="block text-xs text-soft">{p.category}</span> : null}
                       </td>
                       <td className="py-3 pr-3">
-                        <span className={`text-lg font-bold tabular-nums ${baixa ? "text-[#9f2f42]" : "text-[#05605e]"}`}>
+                        <span className={`text-lg font-bold tabular-nums ${baixa ? "text-danger-dark" : "text-primary-dark"}`}>
                           {p.currentQuantity}
                         </span>
-                        {baixa ? <span className="ml-2 text-xs font-semibold text-[#9f2f42]">acabando</span> : null}
+                        {baixa ? <span className="ml-2 text-xs font-semibold text-danger-dark">acabando</span> : null}
                       </td>
                       <td className="py-3 pr-3">
                         {canManage ? (
@@ -152,9 +152,9 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
                               min={0}
                               defaultValue={p.minimumQuantity}
                               aria-label={`Mínimo de ${descrever(p)}`}
-                              className="h-10 w-24 rounded-lg border border-[#c7d3ce] px-2"
+                              className="h-10 w-24 rounded-lg border border-line-strong px-2"
                             />
-                            <button className="h-10 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+                            <button className="h-10 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-body transition hover:bg-canvas">
                               Salvar
                             </button>
                           </ToastForm>
@@ -169,7 +169,7 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
                             <select
                               name="type"
                               aria-label={`Tipo de movimento de ${descrever(p)}`}
-                              className="h-10 rounded-lg border border-[#c7d3ce] px-2"
+                              className="h-10 rounded-lg border border-line-strong px-2"
                             >
                               <option value="IN">Chegou</option>
                               <option value="OUT">Saiu</option>
@@ -182,9 +182,9 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
                               placeholder="qtd"
                               required
                               aria-label={`Quantidade de ${descrever(p)}`}
-                              className="h-10 w-24 rounded-lg border border-[#c7d3ce] px-2"
+                              className="h-10 w-24 rounded-lg border border-line-strong px-2"
                             />
-                            <button className="h-10 rounded-lg bg-[#087f7d] px-3 text-sm font-semibold text-white transition hover:bg-[#05605e]">
+                            <button className="h-10 rounded-lg bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-dark">
                               Lançar
                             </button>
                           </ToastForm>
@@ -201,16 +201,16 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
 
       <SectionCard eyebrow="Histórico" title="Últimas movimentações">
         {movimentos.length === 0 ? (
-          <p className="py-6 text-center text-sm text-[#66756d]">
+          <p className="py-6 text-center text-sm text-muted">
             Nenhuma movimentação ainda. Ao lançar um pedido, a peça sai daqui sozinha.
           </p>
         ) : (
-          <ul className="divide-y divide-[#eef2ef]">
+          <ul className="divide-y divide-divider">
             {movimentos.map((m) => (
               <li key={m.id} className="flex items-center gap-3 py-3">
                 <span
                   className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
-                    m.type === "IN" ? "bg-[#e8f6f3] text-[#05605e]" : "bg-[#fff0f2] text-[#9f2f42]"
+                    m.type === "IN" ? "bg-primary-soft text-primary-dark" : "bg-danger-soft text-danger-dark"
                   }`}
                 >
                   {m.type === "IN" ? (
@@ -220,10 +220,10 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-[#1c2420]">
+                  <p className="font-semibold text-fg">
                     {rotuloMovimento[m.type]} · {m.quantity} un. · {m.produtoNome}
                   </p>
-                  <p className="mt-0.5 text-xs text-[#8a9890]">
+                  <p className="mt-0.5 text-xs text-soft">
                     {formatDateTime(m.createdAt)}
                     {m.orderNumber ? ` · pedido #${m.orderNumber}` : ""}
                     {m.note ? ` · ${m.note}` : ""}

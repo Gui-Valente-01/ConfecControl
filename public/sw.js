@@ -5,54 +5,81 @@
 
 const CACHE = "confeccontrol-static-v1";
 
+// Em DESENVOLVIMENTO o service worker se remove sozinho.
+//
+// Ele guarda os arquivos de /_next/static/ e serve do cache primeiro. Em
+// producao isso e seguro, porque cada build gera nomes novos. No dev os nomes
+// se repetem entre reinicios do servidor: o navegador passava a executar JS
+// velho, com IDs de Server Action que nao existiam mais no servidor -- o erro
+// "Server Action was not found". Como o proprio sw.js e buscado direto na rede,
+// esta verificacao desfaz o registro antigo sem ninguem precisar limpar nada
+// pelo DevTools.
+const DEV = ["localhost", "127.0.0.1", "[::1]"].includes(self.location.hostname);
+
 self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    (async () => {
-      const keys = await caches.keys();
-      await Promise.all(
-        keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
-      );
-      await self.clients.claim();
-    })(),
-  );
-});
+if (DEV) {
+  self.addEventListener("activate", (event) => {
+    event.waitUntil(
+      (async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+        await self.registration.unregister();
+        // Recarrega as abas abertas: assim elas saem do controle deste worker e
+        // voltam a buscar tudo na rede, sem ninguem apertar nada.
+        const clients = await self.clients.matchAll({ type: "window" });
+        for (const client of clients) client.navigate(client.url);
+      })(),
+    );
+  });
+} else {
+  self.addEventListener("activate", (event) => {
+    event.waitUntil(
+      (async () => {
+        const keys = await caches.keys();
+        await Promise.all(
+          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)),
+        );
+        await self.clients.claim();
+      })(),
+    );
+  });
 
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  if (req.method !== "GET") return;
+  self.addEventListener("fetch", (event) => {
+    const req = event.request;
+    if (req.method !== "GET") return;
 
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+    const url = new URL(req.url);
+    if (url.origin !== self.location.origin) return;
 
-  const isStatic =
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/icons/") ||
-    url.pathname === "/manifest.webmanifest";
+    const isStatic =
+      url.pathname.startsWith("/_next/static/") ||
+      url.pathname.startsWith("/icons/") ||
+      url.pathname === "/manifest.webmanifest";
 
-  // Tudo que nao for estatico passa direto pela rede (consciente de auth/dados).
-  if (!isStatic) return;
+    // Tudo que nao for estatico passa direto pela rede (consciente de auth/dados).
+    if (!isStatic) return;
 
-  event.respondWith(
-    (async () => {
-      const cached = await caches.match(req);
-      if (cached) return cached;
-      try {
-        const res = await fetch(req);
-        if (res.ok) {
-          const cache = await caches.open(CACHE);
-          cache.put(req, res.clone());
+    event.respondWith(
+      (async () => {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        try {
+          const res = await fetch(req);
+          if (res.ok) {
+            const cache = await caches.open(CACHE);
+            cache.put(req, res.clone());
+          }
+          return res;
+        } catch {
+          return cached || Response.error();
         }
-        return res;
-      } catch {
-        return cached || Response.error();
-      }
-    })(),
-  );
-});
+      })(),
+    );
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Notificacao no celular (Web Push)

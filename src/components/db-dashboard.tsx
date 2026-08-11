@@ -116,11 +116,11 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
         <SectionCard
           eyebrow="Produção"
           title="Quadro por etapa"
-          action={<a href="/producao" className="flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]">Ver produção<ArrowRight size={16} aria-hidden="true" /></a>}
+          action={<a href="/producao" className="flex h-10 items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-body transition hover:bg-canvas">Ver produção<ArrowRight size={16} aria-hidden="true" /></a>}
         >
           <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
             {stages.slice(0, 4).map((stage) => (
-              <section key={stage.id} className="min-h-72 rounded-lg border border-[#d9e1dd] border-t-4 bg-[#f8faf9] p-3" style={{ borderTopColor: stage.color || "#087f7d" }}>
+              <section key={stage.id} className="min-h-72 rounded-lg border border-line border-t-4 bg-canvas p-3" style={{ borderTopColor: stage.color || "#087f7d" }}>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold">{stage.name}</h3>
                   <StatusBadge>{stage.currentOrders.length}</StatusBadge>
@@ -129,13 +129,13 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
                   {stage.currentOrders.slice(0, 3).map((order) => {
                     const firstItem = order.items[0];
                     return (
-                      <article key={order.id} className="rounded-lg border border-[#d9e1dd] bg-white p-3">
+                      <article key={order.id} className="rounded-lg border border-line bg-surface p-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-semibold text-[#63736b]">#{order.number}</span>
+                          <span className="font-mono text-xs font-semibold text-muted">#{order.number}</span>
                           <StatusBadge tone="good">{firstItem?.quantity ?? 0} un.</StatusBadge>
                         </div>
                         <p className="mt-2 text-sm font-semibold">{order.client.name}</p>
-                        <p className="mt-1 text-sm text-[#66756d]">{firstItem?.description || "Pedido sem item"}</p>
+                        <p className="mt-1 text-sm text-muted">{firstItem?.description || "Pedido sem item"}</p>
                       </article>
                     );
                   })}
@@ -149,7 +149,7 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
         {plan.estoque ? (
         <SectionCard eyebrow="Estoque" title="Peças acabando">
           {lowStock.length === 0 ? (
-            <p className="text-sm text-[#66756d]">Nenhuma peça abaixo do mínimo.</p>
+            <p className="text-sm text-muted">Nenhuma peça abaixo do mínimo.</p>
           ) : (
             <div className="space-y-4">
               {lowStock.slice(0, 4).map((peca) => {
@@ -158,10 +158,10 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
                   <div key={peca.id}>
                     <div className="flex items-center justify-between gap-3 text-sm">
                       <span className="font-medium">{peca.name}</span>
-                      <span className="text-[#63736b]">{peca.currentQuantity}/{peca.minimumQuantity} un.</span>
+                      <span className="text-muted">{peca.currentQuantity}/{peca.minimumQuantity} un.</span>
                     </div>
-                    <div className="mt-2 h-2 rounded-full bg-[#edf2ef]">
-                      <div className="h-2 rounded-full bg-[#c43f54]" style={{ width: `${percentual}%` }} />
+                    <div className="mt-2 h-2 rounded-full bg-divider">
+                      <div className="h-2 rounded-full bg-danger" style={{ width: `${percentual}%` }} />
                     </div>
                   </div>
                 );
@@ -173,23 +173,23 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
       </section>
       ) : null}
 
-      <SectionCard eyebrow="Pedidos" title="Acompanhamento geral" action={<Link href="/pedidos" className="flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-medium text-[#405047] transition hover:bg-[#f8faf9]">Ver todos<ArrowRight size={16} aria-hidden="true" /></Link>}>
+      <SectionCard eyebrow="Pedidos" title="Acompanhamento geral" action={<Link href="/pedidos" className="flex h-10 items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-body transition hover:bg-canvas">Ver todos<ArrowRight size={16} aria-hidden="true" /></Link>}>
         {orders.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
             <h3 className="font-semibold">Nenhum pedido ainda</h3>
-            <p className="mt-2 text-sm text-[#66756d]">Crie pedidos para alimentar dashboard, produção e financeiro.</p>
+            <p className="mt-2 text-sm text-muted">Crie pedidos para alimentar dashboard, produção e financeiro.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
               <thead>
-                <tr className="text-[#63736b]">
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pedido</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Cliente</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Produto</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prazo</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Status</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th>
+                <tr className="text-muted">
+                  <th className="border-b border-line pb-3 font-semibold">Pedido</th>
+                  <th className="border-b border-line pb-3 font-semibold">Cliente</th>
+                  <th className="border-b border-line pb-3 font-semibold">Produto</th>
+                  <th className="border-b border-line pb-3 font-semibold">Prazo</th>
+                  <th className="border-b border-line pb-3 font-semibold">Status</th>
+                  <th className="border-b border-line pb-3 text-right font-semibold">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -197,12 +197,12 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
                   const firstItem = order.items[0];
                   return (
                     <tr key={order.id}>
-                      <td className="border-b border-[#edf2ef] py-4 font-mono font-semibold text-[#405047]">#{order.number}</td>
-                      <td className="border-b border-[#edf2ef] py-4 font-medium">{order.client.name}</td>
-                      <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">{firstItem?.description || "Sem item"}</td>
-                      <td className="border-b border-[#edf2ef] py-4"><StatusBadge tone={order.deliveryDate && order.deliveryDate < now ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge></td>
-                      <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">{orderStatusLabels[order.status]}</td>
-                      <td className="border-b border-[#edf2ef] py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
+                      <td className="border-b border-divider py-4 font-mono font-semibold text-body">#{order.number}</td>
+                      <td className="border-b border-divider py-4 font-medium">{order.client.name}</td>
+                      <td className="border-b border-divider py-4 text-muted">{firstItem?.description || "Sem item"}</td>
+                      <td className="border-b border-divider py-4"><StatusBadge tone={order.deliveryDate && order.deliveryDate < now ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge></td>
+                      <td className="border-b border-divider py-4 text-muted">{orderStatusLabels[order.status]}</td>
+                      <td className="border-b border-divider py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
                     </tr>
                   );
                 })}

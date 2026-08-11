@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { ChangePasswordForm } from "@/components/change-password-form";
 import { SectionCard } from "@/components/section-card";
+import { SeletorDeTema } from "@/components/seletor-de-tema";
 import { requireUser } from "@/lib/auth";
 import { roleLabels } from "@/lib/roles";
 
@@ -15,19 +16,19 @@ export default async function ContaPage() {
         <SectionCard eyebrow="Perfil" title="Meus dados">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">Nome</dt>
+              <dt className="text-muted">Nome</dt>
               <dd className="font-medium">{user.name}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">E-mail</dt>
+              <dt className="text-muted">E-mail</dt>
               <dd className="font-medium">{user.email}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">Cargo</dt>
+              <dt className="text-muted">Cargo</dt>
               <dd className="font-medium">{roleLabels[user.role]}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">Empresa</dt>
+              <dt className="text-muted">Empresa</dt>
               <dd className="font-medium">{user.companyName}</dd>
             </div>
           </dl>
@@ -35,6 +36,10 @@ export default async function ContaPage() {
 
         <SectionCard eyebrow="Seguranca" title="Trocar senha">
           <ChangePasswordForm />
+        </SectionCard>
+
+        <SectionCard eyebrow="Aparência" title="Tema do sistema">
+          <SeletorDeTema tom="claro" />
         </SectionCard>
       </section>
     </AppShell>

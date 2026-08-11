@@ -38,14 +38,14 @@ export function MesasManager({
 
   return (
     <SectionCard eyebrow="Bancada" title="Mesas de trabalho">
-      <p className="text-sm text-[#66756d]">
+      <p className="text-sm text-muted">
         Cadastre as mesas (ex.: Silk 1, Silk 2, Bordado) e defina quem responde por cada uma. O funcionário escolhe a
         mesa ao pegar o pedido; o responsável é quem você procura quando aquela estação trava.
       </p>
 
       <div className="mt-4 space-y-2">
         {mesas.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-4 text-center text-sm text-[#66756d]">
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-4 text-center text-sm text-muted">
             Nenhuma mesa cadastrada ainda.
           </div>
         ) : (
@@ -53,31 +53,31 @@ export function MesasManager({
             <ToastForm
               key={mesa.id}
               action={updateMesaAction}
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white p-3 shadow-sm"
+              className="flex flex-wrap items-center gap-2 rounded-lg border border-line bg-surface p-3 shadow-sm"
             >
               <input type="hidden" name="id" value={mesa.id} />
               <input
                 name="name"
                 defaultValue={mesa.name}
                 required
-                className="h-9 min-w-32 flex-1 rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                className="h-9 min-w-32 flex-1 rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
               />
-              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+              <label className="flex items-center gap-1 text-xs text-muted">
                 Pos.
                 <input
                   name="position"
                   type="number"
                   defaultValue={mesa.position}
-                  className="h-9 w-16 rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="h-9 w-16 rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 />
               </label>
-              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+              <label className="flex items-center gap-1 text-xs text-muted">
                 <UserRound size={13} aria-hidden="true" />
                 <span className="sr-only">Responsável pela mesa {mesa.name}</span>
                 <select
                   name="responsibleUserId"
                   defaultValue={mesa.responsibleUserId ?? ""}
-                  className="h-9 min-w-36 rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="h-9 min-w-36 rounded-lg border border-line-strong bg-surface px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 >
                   <option value="">Sem responsável</option>
                   {team.map((member) => (
@@ -87,13 +87,13 @@ export function MesasManager({
               </label>
               {/* Etapa que a mesa atende: é o que impede um pedido de entrar
                   na bancada errada. Em branco, a mesa aceita qualquer pedido. */}
-              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+              <label className="flex items-center gap-1 text-xs text-muted">
                 <Layers size={13} aria-hidden="true" />
                 <span className="sr-only">Etapa atendida pela mesa {mesa.name}</span>
                 <select
                   name="stageId"
                   defaultValue={mesa.stageId ?? ""}
-                  className="h-9 min-w-36 rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="h-9 min-w-36 rounded-lg border border-line-strong bg-surface px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 >
                   <option value="">Aceita qualquer etapa</option>
                   {stages.map((stage) => (
@@ -101,11 +101,11 @@ export function MesasManager({
                   ))}
                 </select>
               </label>
-              <label className="flex items-center gap-1 text-xs text-[#63736b]">
+              <label className="flex items-center gap-1 text-xs text-muted">
                 <input type="checkbox" name="active" defaultChecked={mesa.active} className="size-4" />
                 Ativa
               </label>
-              <button className="h-9 rounded-lg border border-[#c7d3ce] bg-white px-3 text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+              <button className="h-9 rounded-lg border border-line-strong bg-surface px-3 text-xs font-semibold text-body transition hover:bg-canvas">
                 Salvar
               </button>
               {mesa.inUse ? (
@@ -118,22 +118,22 @@ export function MesasManager({
         )}
       </div>
 
-      <form action={formAction} className="mt-4 flex flex-wrap items-end gap-2 border-t border-[#d9e1dd] pt-4">
+      <form action={formAction} className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4">
         <label className="min-w-40 flex-1">
-          <span className="text-sm font-medium text-[#405047]">Nova mesa</span>
+          <span className="text-sm font-medium text-body">Nova mesa</span>
           <input
             name="name"
             required
             placeholder="Ex.: Silk 1"
-            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="mt-1 h-10 w-full rounded-lg border border-line-strong px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
           />
         </label>
-        <SubmitButton className="flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60">
+        <SubmitButton className="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60">
           <Plus size={16} aria-hidden="true" />
           Adicionar
         </SubmitButton>
       </form>
-      {state.error ? <p className="mt-2 rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
+      {state.error ? <p className="mt-2 rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
     </SectionCard>
   );
 }

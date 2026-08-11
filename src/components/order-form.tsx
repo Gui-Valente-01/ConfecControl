@@ -94,7 +94,7 @@ function SubmitButton({ label }: { label: string }) {
     <button
       type="submit"
       disabled={pending}
-      className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60"
+      className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
     >
       <Plus size={17} aria-hidden="true" />
       {pending ? "Salvando..." : label}
@@ -363,7 +363,7 @@ export function OrderForm({
       }}
     >
       {/* Onde estou e quanto falta. */}
-      <nav aria-label="Etapas do pedido" className="rounded-xl border border-[#d9e1dd] bg-white p-3">
+      <nav aria-label="Etapas do pedido" className="rounded-xl border border-line bg-surface p-3">
         <ol className="flex flex-wrap items-center gap-1.5">
           {ETAPAS_PEDIDO.map((passo, indice) => {
             const feita = indice < etapa;
@@ -379,15 +379,15 @@ export function OrderForm({
                   aria-current={atual ? "step" : undefined}
                   className={`inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm transition ${
                     atual
-                      ? "bg-[#087f7d] font-semibold text-white"
+                      ? "bg-primary font-semibold text-white"
                       : feita
-                        ? "text-[#05605e] hover:bg-[#e8f6f3]"
-                        : "cursor-not-allowed text-[#b6c2bb]"
+                        ? "text-primary-dark hover:bg-primary-soft"
+                        : "cursor-not-allowed text-faint"
                   }`}
                 >
                   <span
                     className={`flex size-5 items-center justify-center rounded-full text-[11px] font-bold ${
-                      atual ? "bg-white text-[#087f7d]" : feita ? "bg-[#087f7d] text-white" : "bg-[#e6ebe8] text-[#8a9890]"
+                      atual ? "bg-surface text-primary" : feita ? "bg-primary text-white" : "bg-tint text-soft"
                     }`}
                   >
                     {feita ? <Check size={12} aria-hidden="true" /> : indice + 1}
@@ -395,7 +395,7 @@ export function OrderForm({
                   <span className={atual ? "" : "hidden sm:inline"}>{passo.titulo}</span>
                 </button>
                 {indice < TOTAL_ETAPAS - 1 ? (
-                  <span className="text-[#c7d3ce]" aria-hidden="true">
+                  <span className="text-line-strong" aria-hidden="true">
                     ›
                   </span>
                 ) : null}
@@ -403,8 +403,8 @@ export function OrderForm({
             );
           })}
         </ol>
-        <p className="mt-2 text-xs text-[#66756d]">
-          <strong className="font-semibold text-[#405047]">{rotuloProgresso(etapa)}</strong>
+        <p className="mt-2 text-xs text-muted">
+          <strong className="font-semibold text-body">{rotuloProgresso(etapa)}</strong>
           {" — "}
           {ETAPAS_PEDIDO[etapa].ajuda}
         </p>
@@ -421,21 +421,21 @@ export function OrderForm({
       {/* ETAPA 1 — Cliente */}
       <div className={secao(0)}>
         <label className="block">
-          <span className="text-sm font-medium text-[#405047]">
-            Cliente <span className="text-[#9f2f42]">*</span>
+          <span className="text-sm font-medium text-body">
+            Cliente <span className="text-danger-dark">*</span>
           </span>
           <select
             name="clientId"
             value={clientId}
             onChange={(e) => setClientId(e.target.value)}
-            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] bg-white px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+            className="mt-1 h-11 w-full rounded-lg border border-line-strong bg-surface px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-10 sm:text-sm"
           >
             <option value="">Selecione o cliente</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>{client.name}</option>
             ))}
           </select>
-          <span className="mt-1.5 block text-xs text-[#66756d]">
+          <span className="mt-1.5 block text-xs text-muted">
             O cliente precisa estar cadastrado antes. Se não estiver na lista, cadastre em Mais → Clientes.
           </span>
         </label>
@@ -445,11 +445,11 @@ export function OrderForm({
       <div className={secao(1)}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#405047]">Itens do pedido</span>
+          <span className="text-sm font-semibold text-body">Itens do pedido</span>
           <button
             type="button"
             onClick={addItem}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 py-1.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
+            className="inline-flex items-center gap-1 rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-body transition hover:bg-tint"
           >
             <Plus size={14} aria-hidden="true" />
             Adicionar item
@@ -457,14 +457,14 @@ export function OrderForm({
         </div>
 
         {items.map((item) => (
-          <div key={item.key} className="rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
+          <div key={item.key} className="rounded-lg border border-line bg-canvas p-3">
             <div className="grid gap-2 sm:grid-cols-2">
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Produto</span>
+                <span className="text-xs font-medium text-muted">Produto</span>
                 <select
                   value={item.productId}
                   onChange={(e) => onProductChange(item.key, e.target.value)}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong bg-surface px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 >
                   <option value="">Produto avulso</option>
                   {products.map((product) => (
@@ -473,46 +473,46 @@ export function OrderForm({
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Descrição</span>
+                <span className="text-xs font-medium text-muted">Descrição</span>
                 <input
                   value={item.description}
                   onChange={(e) => updateItem(item.key, { description: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                   placeholder="Ex.: Camiseta polo branca"
                 />
               </label>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-4">
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Tam.</span>
+                <span className="text-xs font-medium text-muted">Tam.</span>
                 <input
                   value={item.size}
                   onChange={(e) => updateItem(item.key, { size: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                   placeholder="M"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Cor</span>
+                <span className="text-xs font-medium text-muted">Cor</span>
                 <input
                   value={item.color}
                   onChange={(e) => updateItem(item.key, { color: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                   placeholder="Branca"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Qtd.</span>
+                <span className="text-xs font-medium text-muted">Qtd.</span>
                 <input
                   type="number"
                   min="1"
                   value={item.quantity}
                   onChange={(e) => updateItem(item.key, { quantity: e.target.value })}
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 />
               </label>
               <label className="block">
-                <span className="text-xs font-medium text-[#63736b]">Preço un. (R$)</span>
+                <span className="text-xs font-medium text-muted">Preço un. (R$)</span>
                 {/* Sem aria-invalid neste campo: preço fora da curva é aviso, não
                     recusa. O valor continua válido e salvável, então não pode usar
                     a marcação (nem o vermelho) de campo errado. */}
@@ -525,15 +525,15 @@ export function OrderForm({
                   data-cc-atypical={atypicalKeys.has(item.key) ? "true" : undefined}
                   className={`mt-1 h-9 w-full rounded-lg border px-2 text-sm outline-none transition focus:ring-4 ${
                     atypicalKeys.has(item.key)
-                      ? "border-[#d9a03a] bg-[#fffaf0] ring-[#d9a03a]/20 focus:border-[#b9821f]"
-                      : "border-[#c7d3ce] ring-[#087f7d]/20 focus:border-[#087f7d]"
+                      ? "border-[#d9a03a] bg-warning-soft ring-[#d9a03a]/20 focus:border-warning"
+                      : "border-line-strong ring-primary/20 focus:border-primary"
                   }`}
                   placeholder="45,00"
                 />
               </label>
             </div>
             {atypicalKeys.has(item.key) ? (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-[#fffaf0] px-2.5 py-2 text-xs leading-5 text-[#8a6516]">
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-2 text-xs leading-5 text-warning-ink">
                 <AlertTriangle size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
                 <span>
                   Esse preço está bem longe do cadastrado para a peça (
@@ -547,7 +547,7 @@ export function OrderForm({
                 <button
                   type="button"
                   onClick={() => removeItem(item.key)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#9f2f42]"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-danger-dark"
                 >
                   <Trash2 size={13} aria-hidden="true" />
                   Remover item
@@ -561,11 +561,11 @@ export function OrderForm({
       {/* Serviços cobrados neste pedido: dois campos, digitados na hora. */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#405047]">Serviços cobrados</span>
+          <span className="text-sm font-semibold text-body">Serviços cobrados</span>
           <button
             type="button"
             onClick={addService}
-            className="inline-flex items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-3 py-1.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
+            className="inline-flex items-center gap-1 rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-body transition hover:bg-tint"
           >
             <Plus size={13} aria-hidden="true" />
             Adicionar serviço
@@ -573,29 +573,29 @@ export function OrderForm({
         </div>
 
         {services.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] px-3 py-2.5 text-xs text-[#66756d]">
+          <p className="rounded-lg border border-dashed border-line-strong bg-canvas px-3 py-2.5 text-xs text-muted">
             Silk, bordado, corte... Some no total do pedido. Deixe vazio se este pedido não tem serviço.
           </p>
         ) : (
           services.map((service) => (
             <div key={service.key} className="flex flex-wrap items-end gap-2">
               <label className="min-w-36 flex-1">
-                <span className="text-xs font-medium text-[#63736b]">Serviço</span>
+                <span className="text-xs font-medium text-muted">Serviço</span>
                 <input
                   list="servicos-sugeridos"
                   value={service.name}
                   onChange={(e) => onServiceName(service.key, e.target.value)}
                   placeholder="Ex.: Silk 3 cores"
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 />
               </label>
               <label className="w-28">
-                <span className="text-xs font-medium text-[#63736b]">Valor (R$)</span>
+                <span className="text-xs font-medium text-muted">Valor (R$)</span>
                 <input
                   value={service.price}
                   onChange={(e) => updateService(service.key, { price: e.target.value })}
                   placeholder="400,00 ou 4x100"
-                  className="mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                  className="mt-1 h-9 w-full rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                 />
               </label>
               <button
@@ -603,7 +603,7 @@ export function OrderForm({
                 onClick={() => removeService(service.key)}
                 title="Remover serviço"
                 aria-label="Remover serviço"
-                className="mb-0.5 inline-flex size-9 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#9f2f42] transition hover:bg-[#fff0f2]"
+                className="mb-0.5 inline-flex size-9 items-center justify-center rounded-lg border border-line-strong bg-surface text-danger-dark transition hover:bg-danger-soft"
               >
                 <Trash2 size={14} aria-hidden="true" />
               </button>
@@ -617,29 +617,29 @@ export function OrderForm({
       {/* ETAPA 3 — Prazo e produção */}
       <div className={secao(2)}>
         <label className="block">
-          <span className="text-sm font-medium text-[#405047]">Prazo de entrega</span>
+          <span className="text-sm font-medium text-body">Prazo de entrega</span>
           <input
             name="deliveryDate"
             type="date"
             value={prazo}
             onChange={(e) => setPrazo(e.target.value)}
-            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+            className="mt-1 h-11 w-full rounded-lg border border-line-strong px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-10 sm:text-sm"
           />
-          <span className="mt-1.5 block text-xs text-[#66756d]">
+          <span className="mt-1.5 block text-xs text-muted">
             Pode ficar em branco se ainda não combinou a data. É esse prazo que faz o pedido aparecer
             como atrasado no Início.
           </span>
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-[#405047]">Observações internas</span>
+          <span className="text-sm font-medium text-body">Observações internas</span>
           <textarea
             name="notes"
             defaultValue={defaults?.internalNotes ?? ""}
-            className="mt-1 min-h-24 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:text-sm"
+            className="mt-1 min-h-24 w-full rounded-lg border border-line-strong px-3 py-2 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:text-sm"
             placeholder="Ex.: arte aprovada em 28/07; entregar em duas remessas."
           />
-          <span className="mt-1.5 block text-xs text-[#66756d]">
+          <span className="mt-1.5 block text-xs text-muted">
             Só a sua equipe vê. O cliente não enxerga isso no portal.
           </span>
         </label>
@@ -648,27 +648,27 @@ export function OrderForm({
       {/* ETAPA 4 — Pagamento */}
       <div className={secao(3)}>
         <label className="block">
-          <span className="text-sm font-medium text-[#405047]">Entrada / valor já pago (R$)</span>
+          <span className="text-sm font-medium text-body">Entrada / valor já pago (R$)</span>
           <input
             name="paid"
             value={paid}
             onChange={(event) => setPaid(event.target.value)}
             inputMode="decimal"
-            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+            className="mt-1 h-11 w-full rounded-lg border border-line-strong px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-10 sm:text-sm"
             placeholder="1.000,00"
           />
-          <span className="mt-1.5 block text-xs text-[#66756d]">
+          <span className="mt-1.5 block text-xs text-muted">
             Quanto o cliente já pagou agora. Deixe em branco se não pagou nada ainda — o saldo aparece
             no Financeiro para você cobrar depois.
           </span>
         </label>
 
         <label className="block">
-          <span className="text-sm font-medium text-[#405047]">Forma de pagamento</span>
+          <span className="text-sm font-medium text-body">Forma de pagamento</span>
           <input
             name="paymentMethod"
             defaultValue={defaults?.paymentMethod ?? ""}
-            className="mt-1 h-11 w-full rounded-lg border border-[#c7d3ce] px-3 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+            className="mt-1 h-11 w-full rounded-lg border border-line-strong px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-10 sm:text-sm"
             placeholder="Pix, cartão, boleto..."
           />
         </label>
@@ -676,24 +676,24 @@ export function OrderForm({
 
       {/* ETAPA 5 — Revisão: o resumo do que será salvo. */}
       <div className={secao(4)}>
-        <div className="rounded-xl border border-[#d9e1dd] bg-white p-4">
-          <h3 className="font-semibold text-[#1c2420]">Confira antes de salvar</h3>
+        <div className="rounded-xl border border-line bg-surface p-4">
+          <h3 className="font-semibold text-fg">Confira antes de salvar</h3>
 
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">Cliente</dt>
+              <dt className="text-muted">Cliente</dt>
               <dd className="text-right font-medium">{clienteEscolhido?.name ?? "—"}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-[#63736b]">Prazo</dt>
+              <dt className="text-muted">Prazo</dt>
               <dd className="text-right font-medium">
                 {prazo ? prazo.split("-").reverse().join("/") : "sem prazo combinado"}
               </dd>
             </div>
           </dl>
 
-          <div className="mt-3 border-t border-[#eef2ef] pt-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[#8a9890]">
+          <div className="mt-3 border-t border-divider pt-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-soft">
               {itensValidos.length === 1 ? "1 peça" : `${itensValidos.length} peças`}
             </p>
             <ul className="mt-1.5 space-y-1 text-sm">
@@ -701,9 +701,9 @@ export function OrderForm({
                 <li key={item.key} className="flex justify-between gap-3">
                   <span className="min-w-0">
                     {item.description.trim() || products.find((p) => p.id === item.productId)?.name || "Peça"}
-                    <span className="text-[#8a9890]"> × {Math.floor(Number(item.quantity) || 0)}</span>
+                    <span className="text-soft"> × {Math.floor(Number(item.quantity) || 0)}</span>
                   </span>
-                  <span className="shrink-0 tabular-nums text-[#66756d]">
+                  <span className="shrink-0 tabular-nums text-muted">
                     {centsToCurrency(Math.round((Number(item.unitPrice) || 0) * 100) * Math.floor(Number(item.quantity) || 0))}
                   </span>
                 </li>
@@ -712,12 +712,12 @@ export function OrderForm({
 
             {servicosValidos.length > 0 ? (
               <>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[#8a9890]">Serviços</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-soft">Serviços</p>
                 <ul className="mt-1.5 space-y-1 text-sm">
                   {servicosValidos.map((s) => (
                     <li key={s.key} className="flex justify-between gap-3">
                       <span className="min-w-0">{s.name}</span>
-                      <span className="shrink-0 tabular-nums text-[#66756d]">
+                      <span className="shrink-0 tabular-nums text-muted">
                         {centsToCurrency(priceExpressionToCents(s.price))}
                       </span>
                     </li>
@@ -731,49 +731,49 @@ export function OrderForm({
 
       {/* O total acompanha em todas as etapas: é o número que a pessoa confere
           o tempo todo enquanto monta o pedido. */}
-      <div className="rounded-lg bg-[#eef4f1] px-3 py-2.5 text-sm">
+      <div className="rounded-lg bg-tint px-3 py-2.5 text-sm">
         {servicesInCents > 0 ? (
           <>
-            <div className="flex items-center justify-between text-[#66756d]">
+            <div className="flex items-center justify-between text-muted">
               <span>Peças</span>
               <span className="tabular-nums">{centsToCurrency(itemsInCents)}</span>
             </div>
-            <div className="flex items-center justify-between text-[#66756d]">
+            <div className="flex items-center justify-between text-muted">
               <span>Serviços</span>
               <span className="tabular-nums">{centsToCurrency(servicesInCents)}</span>
             </div>
           </>
         ) : null}
-        <div className={`flex items-center justify-between ${servicesInCents > 0 ? "mt-1 border-t border-[#d5e0da] pt-1" : ""}`}>
-          <span className="font-medium text-[#405047]">Total do pedido</span>
+        <div className={`flex items-center justify-between ${servicesInCents > 0 ? "mt-1 border-t border-line pt-1" : ""}`}>
+          <span className="font-medium text-body">Total do pedido</span>
           <span className="font-semibold tabular-nums">{centsToCurrency(totalInCents)}</span>
         </div>
         {paidInCents > 0 ? (
-          <div className="mt-1 flex items-center justify-between text-[#66756d]">
+          <div className="mt-1 flex items-center justify-between text-muted">
             <span>Entrada paga</span>
             <span className="tabular-nums">- {centsToCurrency(paidInCents)}</span>
           </div>
         ) : null}
-        <div className="mt-1.5 flex items-center justify-between border-t border-[#d5e0da] pt-1.5">
-          <span className="font-medium text-[#405047]">
+        <div className="mt-1.5 flex items-center justify-between border-t border-line pt-1.5">
+          <span className="font-medium text-body">
             {balanceInCents < 0 ? "Troco / pago a mais" : "Saldo a receber"}
           </span>
-          <span className={`font-semibold tabular-nums ${balanceInCents > 0 ? "text-[#9f2f42]" : "text-[#05605e]"}`}>
+          <span className={`font-semibold tabular-nums ${balanceInCents > 0 ? "text-danger-dark" : "text-primary-dark"}`}>
             {centsToCurrency(Math.abs(balanceInCents))}
           </span>
         </div>
         {balanceInCents === 0 && totalInCents > 0 ? (
-          <p className="mt-1.5 text-xs font-medium text-[#05605e]">Pedido quitado na entrada.</p>
+          <p className="mt-1.5 text-xs font-medium text-primary-dark">Pedido quitado na entrada.</p>
         ) : null}
         {balanceInCents < 0 ? (
-          <p className="mt-1.5 text-xs font-medium text-[#7b5a0b]">
+          <p className="mt-1.5 text-xs font-medium text-warning-ink">
             A entrada está maior que o total do pedido. Confira os valores.
           </p>
         ) : null}
       </div>
 
       {state.error ? (
-        <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p>
+        <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p>
       ) : null}
 
       {/* Por que não dá para continuar. Aparece só depois de tentar: avisar
@@ -781,19 +781,19 @@ export function OrderForm({
       {impedimento && tentouAvancar ? (
         <p
           role="alert"
-          className="flex items-start gap-2 rounded-lg border border-[#ead49c] bg-[#fffcf3] px-3 py-2.5 text-sm text-[#7b5a0b]"
+          className="flex items-start gap-2 rounded-lg border border-warning-line bg-warning-soft px-3 py-2.5 text-sm text-warning-ink"
         >
           <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
           {impedimento.motivo}
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-[#eef2ef] pt-4">
+      <div className="flex flex-wrap items-center gap-2 border-t border-divider pt-4">
         {etapa > 0 ? (
           <button
             type="button"
             onClick={voltar}
-            className="inline-flex h-11 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+            className="inline-flex h-11 items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-canvas"
           >
             <ArrowLeft size={16} aria-hidden="true" />
             Voltar
@@ -808,7 +808,7 @@ export function OrderForm({
           <button
             type="button"
             onClick={avancar}
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#087f7d] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]"
+            className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark"
           >
             Continuar
             <ArrowRight size={16} aria-hidden="true" />

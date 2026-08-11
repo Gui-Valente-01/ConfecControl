@@ -30,23 +30,23 @@ export default async function PortalRequestPage({
   }
 
   return (
-    <div className="min-h-[100dvh] bg-[#f4f6f5] text-[#1c2420]">
+    <div className="min-h-[100dvh] bg-shell text-fg">
       <PortalHeader companyName={client.companyName} clientName={client.name} />
 
       <main className="mx-auto max-w-xl space-y-5 px-4 py-6">
-        <Link href="/portal" className="inline-flex items-center gap-2 text-sm font-semibold text-[#405047] hover:text-[#087f7d]">
+        <Link href="/portal" className="inline-flex items-center gap-2 text-sm font-semibold text-body hover:text-primary">
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar
         </Link>
 
         <div>
           <h1 className="text-xl font-semibold">{referenceLabel ? "Pedir mais dessa peça" : "Nova solicitação"}</h1>
-          <p className="mt-1 text-sm text-[#66756d]">
+          <p className="mt-1 text-sm text-muted">
             A confecção recebe seu pedido, avalia e responde se aceita. Você acompanha tudo por aqui.
           </p>
         </div>
 
-        <div className="rounded-2xl border border-[#d9e1dd] bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
           <RequestForm referenceOrderId={referenceOrderId} referenceLabel={referenceLabel} />
         </div>
       </main>

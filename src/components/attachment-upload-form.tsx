@@ -13,7 +13,7 @@ function UploadButton() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9] disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex h-10 items-center gap-2 rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-60"
     >
       <Upload size={16} aria-hidden="true" />
       {pending ? "Enviando..." : "Enviar"}
@@ -34,7 +34,7 @@ export function AttachmentUploadForm({ orderId }: { orderId: string }) {
         type="file"
         name="file"
         required
-        className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#087f7d] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+        className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
       />
       <UploadButton />
     </form>

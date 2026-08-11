@@ -61,7 +61,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
 
   return (
     <AppShell eyebrow="Operação" title={`Editar pedido #${order.number}`} actionLabel="Novo pedido" user={user}>
-      <Link href={`/pedidos/${order.id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-[#405047] hover:underline">
+      <Link href={`/pedidos/${order.id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-body hover:underline">
         <ArrowLeft size={16} aria-hidden="true" />
         Voltar para o pedido
       </Link>

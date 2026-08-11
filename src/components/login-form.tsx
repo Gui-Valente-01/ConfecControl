@@ -12,42 +12,42 @@ export function LoginForm() {
   return (
     <form className="mt-6 space-y-4" action={formAction}>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">E-mail</span>
+        <span className="text-sm font-medium text-body">E-mail</span>
         <div className="relative mt-1">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]" size={17} aria-hidden="true" />
+          <Mail className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={17} aria-hidden="true" />
           <input
             name="email"
             type="email"
             required
             autoComplete="email"
-            className="h-11 w-full rounded-lg border border-[#c7d3ce] pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="h-11 w-full rounded-lg border border-line-strong pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
             placeholder="voce@suaempresa.com"
           />
         </div>
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Senha</span>
+        <span className="text-sm font-medium text-body">Senha</span>
         <div className="relative mt-1">
-          <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]" size={17} aria-hidden="true" />
+          <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={17} aria-hidden="true" />
           <input
             name="password"
             type="password"
             required
             autoComplete="current-password"
-            className="h-11 w-full rounded-lg border border-[#c7d3ce] pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="h-11 w-full rounded-lg border border-line-strong pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
             placeholder="********"
           />
         </div>
       </label>
 
       {state.error ? (
-        <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p>
+        <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p>
       ) : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center justify-center rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-11 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending ? "Entrando..." : "Entrar no painel"}
       </button>

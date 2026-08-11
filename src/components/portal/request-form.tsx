@@ -12,17 +12,17 @@ type RequestFormProps = {
 };
 
 const field =
-  "mt-1.5 w-full rounded-xl border border-[#c7d3ce] bg-white px-3.5 py-2.5 text-sm text-[#1c2420] outline-none ring-[#087f7d]/20 transition placeholder:text-[#63736b] focus:border-[#087f7d] focus:ring-4";
+  "mt-1.5 w-full rounded-xl border border-line-strong bg-surface px-3.5 py-2.5 text-sm text-fg outline-none ring-primary/20 transition placeholder:text-muted focus:border-primary focus:ring-4";
 
 export function RequestForm({ referenceOrderId, referenceLabel }: RequestFormProps) {
   const [state, formAction, pending] = useActionState(createRequestAction, emptyFormState);
 
   if (state.success) {
     return (
-      <div className="rounded-2xl border border-[#bfe4dc] bg-[#e8f6f3] p-6 text-center">
-        <CheckCircle2 className="mx-auto text-[#05605e]" size={30} aria-hidden="true" />
-        <p className="mt-2 text-sm font-medium text-[#05605e]">{state.success}</p>
-        <Link href="/portal" className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e]">
+      <div className="rounded-2xl border border-primary/30 bg-primary-soft p-6 text-center">
+        <CheckCircle2 className="mx-auto text-primary-dark" size={30} aria-hidden="true" />
+        <p className="mt-2 text-sm font-medium text-primary-dark">{state.success}</p>
+        <Link href="/portal" className="mt-4 inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-dark">
           Voltar aos meus pedidos
         </Link>
       </div>
@@ -34,13 +34,13 @@ export function RequestForm({ referenceOrderId, referenceLabel }: RequestFormPro
       {referenceOrderId ? <input type="hidden" name="referenceOrderId" value={referenceOrderId} /> : null}
 
       {referenceLabel ? (
-        <p className="rounded-lg bg-[#e8f6f3] px-3 py-2.5 text-sm text-[#05605e]">
+        <p className="rounded-lg bg-primary-soft px-3 py-2.5 text-sm text-primary-dark">
           Repetindo a peça do pedido <strong>{referenceLabel}</strong>. Diga a quantidade e ajuste o que precisar.
         </p>
       ) : null}
 
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">O que você precisa?</span>
+        <span className="text-sm font-medium text-body">O que você precisa?</span>
         <textarea
           name="description"
           required
@@ -52,12 +52,12 @@ export function RequestForm({ referenceOrderId, referenceLabel }: RequestFormPro
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Quantidade (opcional)</span>
+        <span className="text-sm font-medium text-body">Quantidade (opcional)</span>
         <input name="quantity" type="number" min="1" inputMode="numeric" className={field} placeholder="Ex.: 50" />
       </label>
 
       <label className="block">
-        <span className="flex items-center gap-1.5 text-sm font-medium text-[#405047]">
+        <span className="flex items-center gap-1.5 text-sm font-medium text-body">
           <ImagePlus size={16} aria-hidden="true" />
           Foto de referência (opcional)
         </span>
@@ -65,17 +65,17 @@ export function RequestForm({ referenceOrderId, referenceLabel }: RequestFormPro
           name="photo"
           type="file"
           accept="image/*"
-          className="mt-1.5 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#087f7d] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+          className="mt-1.5 w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
-        <span className="mt-1 block text-xs text-[#8a9890]">Uma foto ajuda a confecção a entender o modelo (até 8 MB).</span>
+        <span className="mt-1 block text-xs text-soft">Uma foto ajuda a confecção a entender o modelo (até 8 MB).</span>
       </label>
 
-      {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
+      {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
 
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Send size={16} aria-hidden="true" />
         {pending ? "Enviando..." : "Enviar solicitação"}

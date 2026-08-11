@@ -81,25 +81,25 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
       <SectionCard
         eyebrow="Cobrança"
         title="A cobrar"
-        action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(toChargeTotal)}</span>}
+        action={<span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{centsToCurrency(toChargeTotal)}</span>}
       >
         {toCharge.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-            <CheckCircle2 size={24} className="mx-auto text-[#05605e]" aria-hidden="true" />
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
+            <CheckCircle2 size={24} className="mx-auto text-primary-dark" aria-hidden="true" />
             <h3 className="mt-2 font-semibold">Nada a cobrar</h3>
-            <p className="mt-1 text-sm text-[#66756d]">Todos os pedidos estão quitados.</p>
+            <p className="mt-1 text-sm text-muted">Todos os pedidos estão quitados.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] border-separate border-spacing-0 text-left text-sm">
               <thead>
-                <tr className="text-[#63736b]">
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pedido</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Cliente</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prazo</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Situação</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Falta</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Registrar recebimento</th>
+                <tr className="text-muted">
+                  <th className="border-b border-line pb-3 font-semibold">Pedido</th>
+                  <th className="border-b border-line pb-3 font-semibold">Cliente</th>
+                  <th className="border-b border-line pb-3 font-semibold">Prazo</th>
+                  <th className="border-b border-line pb-3 font-semibold">Situação</th>
+                  <th className="border-b border-line pb-3 text-right font-semibold">Falta</th>
+                  <th className="border-b border-line pb-3 text-right font-semibold">Registrar recebimento</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,26 +110,26 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
                     `Olá ${order.client.name}! Passando para lembrar do pedido #${order.number}, com saldo de ${centsToCurrency(balance)}. Qualquer dúvida estou à disposição.`,
                   );
                   return (
-                    <tr key={order.id} className={late > 0 ? "bg-[#fffafa]" : undefined}>
-                      <td className="border-b border-[#edf2ef] py-4 font-mono font-semibold text-[#405047]">#{order.number}</td>
-                      <td className="border-b border-[#edf2ef] py-4 font-medium">{order.client.name}</td>
-                      <td className="border-b border-[#edf2ef] py-4">{formatShortDate(order.deliveryDate)}</td>
-                      <td className="border-b border-[#edf2ef] py-4">
+                    <tr key={order.id} className={late > 0 ? "bg-danger-soft" : undefined}>
+                      <td className="border-b border-divider py-4 font-mono font-semibold text-body">#{order.number}</td>
+                      <td className="border-b border-divider py-4 font-medium">{order.client.name}</td>
+                      <td className="border-b border-divider py-4">{formatShortDate(order.deliveryDate)}</td>
+                      <td className="border-b border-divider py-4">
                         {late > 0 ? (
                           <StatusBadge tone="warn">{late === 1 ? "Atrasado 1 dia" : `Atrasado ${late} dias`}</StatusBadge>
                         ) : (
                           <StatusBadge tone="neutral">{recebido > 0 ? "Parcial" : "Pendente"}</StatusBadge>
                         )}
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4 text-right font-semibold tabular-nums text-[#9f2f42]">
+                      <td className="border-b border-divider py-4 text-right font-semibold tabular-nums text-danger-dark">
                         {centsToCurrency(balance)}
                         {recebido > 0 ? (
-                          <span className="block text-xs font-normal text-[#8a9890]">
+                          <span className="block text-xs font-normal text-soft">
                             já pagou {centsToCurrency(recebido)}
                           </span>
                         ) : null}
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4">
+                      <td className="border-b border-divider py-4">
                         <div className="flex items-center justify-end gap-2">
                           {link ? (
                             <a
@@ -138,7 +138,7 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
                               rel="noopener"
                               title={`Cobrar ${order.client.name} no WhatsApp`}
                               aria-label={`Cobrar ${order.client.name} no WhatsApp pelo pedido ${order.number}`}
-                              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#bfe0d9] bg-[#e8f6f3] px-3 text-sm font-semibold text-[#05605e] transition hover:bg-[#d9efe9]"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-primary/30 bg-primary-soft px-3 text-sm font-semibold text-primary-dark transition hover:bg-primary-soft"
                             >
                               <MessageCircle size={15} aria-hidden="true" />
                               Cobrar
@@ -150,11 +150,11 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
                               name="amount"
                               placeholder={centsToCurrency(balance)}
                               aria-label={`Valor recebido do pedido ${order.number}. Em branco registra o saldo inteiro.`}
-                              className="h-9 w-28 rounded-lg border border-[#c7d3ce] px-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                              className="h-9 w-28 rounded-lg border border-line-strong px-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                             />
                             <button
                               aria-label={`Registrar recebimento do pedido ${order.number}`}
-                              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#087f7d] px-3 text-sm font-semibold text-white transition hover:bg-[#05605e]"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-white transition hover:bg-primary-dark"
                             >
                               <CircleDollarSign size={15} aria-hidden="true" />
                               Recebi
@@ -167,7 +167,7 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
                 })}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-[#8a9890]">
+            <p className="mt-3 text-xs text-soft">
               Deixe o valor em branco para registrar o saldo inteiro, ou digite quanto entrou para lançar um recebimento parcial.
             </p>
           </div>
@@ -178,49 +178,49 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
       <SectionCard
         eyebrow="Histórico"
         title="Recebimentos"
-        action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{receipts.length} lançamento(s)</span>}
+        action={<span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{receipts.length} lançamento(s)</span>}
       >
         {receipts.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center text-sm text-[#66756d]">
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center text-sm text-muted">
             Nenhum recebimento registrado ainda.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm">
               <thead>
-                <tr className="text-[#63736b]">
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Recebido em</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pedido</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Cliente</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">O que foi</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Valor</th>
-                  {canDelete ? <th className="border-b border-[#d9e1dd] pb-3" /> : null}
+                <tr className="text-muted">
+                  <th className="border-b border-line pb-3 font-semibold">Recebido em</th>
+                  <th className="border-b border-line pb-3 font-semibold">Pedido</th>
+                  <th className="border-b border-line pb-3 font-semibold">Cliente</th>
+                  <th className="border-b border-line pb-3 font-semibold">O que foi</th>
+                  <th className="border-b border-line pb-3 text-right font-semibold">Valor</th>
+                  {canDelete ? <th className="border-b border-line pb-3" /> : null}
                 </tr>
               </thead>
               <tbody>
                 {receipts.map((receipt) => (
                   <tr key={receipt.id}>
-                    <td className="border-b border-[#edf2ef] py-4 tabular-nums">
-                      {receipt.paidAt ? formatShortDate(receipt.paidAt) : <span className="text-[#9aa8a0]">sem data</span>}
+                    <td className="border-b border-divider py-4 tabular-nums">
+                      {receipt.paidAt ? formatShortDate(receipt.paidAt) : <span className="text-faint">sem data</span>}
                     </td>
-                    <td className="border-b border-[#edf2ef] py-4 font-mono font-semibold text-[#405047]">#{receipt.order.number}</td>
-                    <td className="border-b border-[#edf2ef] py-4 font-medium">{receipt.order.client.name}</td>
-                    <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">
+                    <td className="border-b border-divider py-4 font-mono font-semibold text-body">#{receipt.order.number}</td>
+                    <td className="border-b border-divider py-4 font-medium">{receipt.order.client.name}</td>
+                    <td className="border-b border-divider py-4 text-muted">
                       {receipt.note ?? "Recebimento"}
-                      {receipt.method ? <span className="block text-xs text-[#8a9890]">{receipt.method}</span> : null}
+                      {receipt.method ? <span className="block text-xs text-soft">{receipt.method}</span> : null}
                     </td>
-                    <td className="border-b border-[#edf2ef] py-4 text-right font-semibold tabular-nums text-[#05605e]">
+                    <td className="border-b border-divider py-4 text-right font-semibold tabular-nums text-primary-dark">
                       {centsToCurrency(receipt.amountInCents)}
                     </td>
                     {canDelete ? (
-                      <td className="border-b border-[#edf2ef] py-4 text-right">
+                      <td className="border-b border-divider py-4 text-right">
                         <ToastForm
                           action={deletePaymentAction}
                           confirm={`Remover o recebimento de ${centsToCurrency(receipt.amountInCents)} do pedido #${receipt.order.number}? O saldo volta a ficar em aberto.`}
                         >
                           <input type="hidden" name="paymentId" value={receipt.id} />
                           <button
-                            className="text-[#9f2f42] transition hover:text-[#7d2434]"
+                            className="text-danger-dark transition hover:text-danger-dark"
                             title={`Remover recebimento do pedido ${receipt.order.number}`}
                             aria-label={`Remover recebimento de ${centsToCurrency(receipt.amountInCents)} do pedido ${receipt.order.number}`}
                           >

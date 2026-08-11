@@ -124,16 +124,16 @@ export function AtivarNotificacoes() {
 
   if (estado === "precisa-instalar") {
     return (
-      <div className="rounded-xl border border-[#bfe0d9] bg-[#f2fbf9] p-4">
-        <p className="flex items-center gap-2 font-semibold text-[#05605e]">
+      <div className="rounded-xl border border-primary/30 bg-primary-soft p-4">
+        <p className="flex items-center gap-2 font-semibold text-primary-dark">
           <Smartphone size={18} aria-hidden="true" />
           Para o iPhone avisar, instale o ConfecControl
         </p>
-        <p className="mt-1 text-sm text-[#3f7d78]">
+        <p className="mt-1 text-sm text-primary-dark">
           No iPhone, a Apple só permite notificação depois que o sistema está na tela de início. Leva 15
           segundos e é uma vez só:
         </p>
-        <ol className="mt-2 space-y-1 text-sm text-[#3f7d78]">
+        <ol className="mt-2 space-y-1 text-sm text-primary-dark">
           <li className="flex items-start gap-2">
             <span className="font-bold">1.</span>
             <span>
@@ -156,12 +156,12 @@ export function AtivarNotificacoes() {
 
   if (estado === "negado") {
     return (
-      <div className="rounded-xl border border-[#ead49c] bg-[#fffcf3] p-4">
-        <p className="flex items-center gap-2 font-semibold text-[#7b5a0b]">
+      <div className="rounded-xl border border-warning-line bg-warning-soft p-4">
+        <p className="flex items-center gap-2 font-semibold text-warning-ink">
           <BellOff size={18} aria-hidden="true" />
           Notificação bloqueada neste aparelho
         </p>
-        <p className="mt-1 text-sm text-[#7b5a0b]">
+        <p className="mt-1 text-sm text-warning-ink">
           A permissão foi recusada. Para liberar, abra os ajustes do navegador neste site e permita
           notificações — o sistema não consegue pedir de novo sozinho.
         </p>
@@ -172,13 +172,13 @@ export function AtivarNotificacoes() {
   const ligado = estado === "ligado";
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#d9e1dd] bg-white p-4">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4">
       <div className="min-w-0">
-        <p className="flex items-center gap-2 font-semibold text-[#1c2420]">
+        <p className="flex items-center gap-2 font-semibold text-fg">
           {ligado ? <Bell size={17} aria-hidden="true" /> : <BellOff size={17} aria-hidden="true" />}
           {ligado ? "Este aparelho avisa" : "Avisar neste aparelho"}
         </p>
-        <p className="mt-0.5 text-sm text-[#66756d]">
+        <p className="mt-0.5 text-sm text-muted">
           {ligado
             ? "Você recebe aviso mesmo com o sistema fechado. Urgente vibra mais."
             : "Receba pedido de ajuda e mudança de pedido direto no celular, sem precisar deixar a tela aberta."}
@@ -190,8 +190,8 @@ export function AtivarNotificacoes() {
         disabled={ocupado}
         className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-lg px-4 text-sm font-semibold transition disabled:opacity-60 ${
           ligado
-            ? "border border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
-            : "bg-[#087f7d] text-white hover:bg-[#05605e]"
+            ? "border border-line-strong bg-surface text-body hover:bg-canvas"
+            : "bg-primary text-white hover:bg-primary-dark"
         }`}
       >
         {ocupado ? "Um momento..." : ligado ? "Desligar" : "Ligar aviso"}

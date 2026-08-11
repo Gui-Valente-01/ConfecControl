@@ -72,7 +72,7 @@ export function DbOrdersManager({
         eyebrow="Fila de pedidos"
         title={filtroTexto ? filtroTexto.titulo : "Pedidos cadastrados"}
         action={
-          <div className="rounded-lg border border-[#d9e1dd] bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">
+          <div className="rounded-lg border border-line bg-tint px-3 py-2 text-sm font-semibold text-body">
             {orders.length === 1 ? "1 pedido" : `${orders.length} pedidos`}
           </div>
         }
@@ -84,8 +84,8 @@ export function DbOrdersManager({
             aria-current={filtro === null ? "page" : undefined}
             className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition ${
               filtro === null
-                ? "border-[#087f7d] bg-[#e8f6f3] text-[#05605e]"
-                : "border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
+                ? "border-primary bg-primary-soft text-primary-dark"
+                : "border-line-strong bg-surface text-body hover:bg-canvas"
             }`}
           >
             Todos ({totalSemFiltro})
@@ -99,8 +99,8 @@ export function DbOrdersManager({
                 aria-current={ativo ? "page" : undefined}
                 className={`inline-flex h-9 items-center rounded-lg border px-3 text-sm font-semibold transition ${
                   ativo
-                    ? "border-[#087f7d] bg-[#e8f6f3] text-[#05605e]"
-                    : "border-[#c7d3ce] bg-white text-[#405047] hover:bg-[#f8faf9]"
+                    ? "border-primary bg-primary-soft text-primary-dark"
+                    : "border-line-strong bg-surface text-body hover:bg-canvas"
                 }`}
               >
                 {atalho.rotulo}
@@ -110,7 +110,7 @@ export function DbOrdersManager({
         </nav>
 
         {filtroTexto ? (
-          <p className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-[#bfe0d9] bg-[#e8f6f3] px-3 py-2.5 text-sm text-[#05605e]">
+          <p className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary-soft px-3 py-2.5 text-sm text-primary-dark">
             <Filter size={15} aria-hidden="true" />
             <span>{filtroTexto.explicacao}</span>
             <Link href="/pedidos" className="font-semibold underline underline-offset-2">
@@ -120,19 +120,19 @@ export function DbOrdersManager({
         ) : null}
 
         {orders.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
+          <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
             {filtroTexto ? (
               <>
-                <CheckCircle2 size={24} className="mx-auto text-[#05605e]" aria-hidden="true" />
+                <CheckCircle2 size={24} className="mx-auto text-primary-dark" aria-hidden="true" />
                 <h3 className="mt-2 font-semibold">{filtroTexto.vazio}</h3>
-                <Link href="/pedidos" className="mt-3 inline-flex text-sm font-semibold text-[#087f7d] underline underline-offset-2">
+                <Link href="/pedidos" className="mt-3 inline-flex text-sm font-semibold text-primary underline underline-offset-2">
                   Ver todos os pedidos
                 </Link>
               </>
             ) : (
               <>
                 <h3 className="font-semibold">Nenhum pedido cadastrado</h3>
-                <p className="mt-2 text-sm text-[#66756d]">Cadastre clientes e peças, depois crie o primeiro pedido real.</p>
+                <p className="mt-2 text-sm text-muted">Cadastre clientes e peças, depois crie o primeiro pedido real.</p>
               </>
             )}
           </div>
@@ -140,16 +140,16 @@ export function DbOrdersManager({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm">
               <thead>
-                <tr className="text-[#63736b]">
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pedido</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prioridade</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Cliente</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Itens</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Prazo</th>
-                  <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Status</th>
-                  {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 font-semibold">Pagamento</th> : null}
-                  {showFinance ? <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Total</th> : null}
-                  <th className="border-b border-[#d9e1dd] pb-3 text-right font-semibold">Ações</th>
+                <tr className="text-muted">
+                  <th className="border-b border-line pb-3 font-semibold">Pedido</th>
+                  <th className="border-b border-line pb-3 font-semibold">Prioridade</th>
+                  <th className="border-b border-line pb-3 font-semibold">Cliente</th>
+                  <th className="border-b border-line pb-3 font-semibold">Itens</th>
+                  <th className="border-b border-line pb-3 font-semibold">Prazo</th>
+                  <th className="border-b border-line pb-3 font-semibold">Status</th>
+                  {showFinance ? <th className="border-b border-line pb-3 font-semibold">Pagamento</th> : null}
+                  {showFinance ? <th className="border-b border-line pb-3 text-right font-semibold">Total</th> : null}
+                  <th className="border-b border-line pb-3 text-right font-semibold">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -158,16 +158,16 @@ export function DbOrdersManager({
                   const extraItems = order.items.length - 1;
                   const late = order.deliveryDate && order.deliveryDate < now && !["READY", "DELIVERED"].includes(order.status);
                   return (
-                    <tr key={order.id} className="transition hover:bg-[#f8faf9]">
-                      <td className="border-b border-[#edf2ef] py-4 font-mono font-semibold text-[#405047]">
+                    <tr key={order.id} className="transition hover:bg-canvas">
+                      <td className="border-b border-divider py-4 font-mono font-semibold text-body">
                         <span className="flex items-center gap-2">
                           {order.priority === "URGENT" || order.priority === "HIGH" ? (
-                            <span className={`inline-block h-6 w-1 rounded-full ${order.priority === "URGENT" ? "bg-[#c43f54]" : "bg-[#c88a2b]"}`} aria-hidden="true" />
+                            <span className={`inline-block h-6 w-1 rounded-full ${order.priority === "URGENT" ? "bg-danger" : "bg-warning"}`} aria-hidden="true" />
                           ) : null}
                           <Link href={`/pedidos/${order.id}`} className="hover:underline">#{order.number}</Link>
                         </span>
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4">
+                      <td className="border-b border-divider py-4">
                         {canPrioritize ? (
                           <PrioritySelect orderId={order.id} value={order.priority} />
                         ) : (
@@ -176,28 +176,28 @@ export function DbOrdersManager({
                           </span>
                         )}
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4 font-medium">{order.client.name}</td>
-                      <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">
+                      <td className="border-b border-divider py-4 font-medium">{order.client.name}</td>
+                      <td className="border-b border-divider py-4 text-muted">
                         {firstItem ? `${firstItem.description} (${firstItem.quantity} un.)` : "Sem item"}
-                        {extraItems > 0 ? <span className="text-[#8a9890]"> +{extraItems}</span> : null}
+                        {extraItems > 0 ? <span className="text-soft"> +{extraItems}</span> : null}
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4">
+                      <td className="border-b border-divider py-4">
                         <StatusBadge tone={late ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge>
                       </td>
-                      <td className="border-b border-[#edf2ef] py-4 text-[#66756d]">{orderStatusLabels[order.status]}</td>
+                      <td className="border-b border-divider py-4 text-muted">{orderStatusLabels[order.status]}</td>
                       {showFinance ? (
-                        <td className="border-b border-[#edf2ef] py-4">
+                        <td className="border-b border-divider py-4">
                           <StatusBadge tone={order.paymentStatus === "PAID" ? "good" : "neutral"}>{paymentStatusLabels[order.paymentStatus]}</StatusBadge>
                         </td>
                       ) : null}
                       {showFinance ? (
-                        <td className="border-b border-[#edf2ef] py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
+                        <td className="border-b border-divider py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
                       ) : null}
-                      <td className="border-b border-[#edf2ef] py-4">
+                      <td className="border-b border-divider py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/pedidos/${order.id}`}
-                            className="inline-flex size-9 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#405047] transition hover:bg-[#eef4f1]"
+                            className="inline-flex size-9 items-center justify-center rounded-lg border border-line-strong bg-surface text-body transition hover:bg-tint"
                             title="Ver detalhes"
                           >
                             <Eye size={16} aria-hidden="true" />
@@ -224,7 +224,7 @@ export function DbOrdersManager({
       {canManage ? (
         <SectionCard eyebrow="Criação" title="Novo pedido">
           {clients.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
+            <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-6 text-center text-sm text-muted">
               Cadastre um cliente antes de criar pedidos.
             </div>
           ) : (

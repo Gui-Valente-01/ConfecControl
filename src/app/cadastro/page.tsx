@@ -11,12 +11,12 @@ export default async function CadastroPage() {
   if (user) redirect("/");
 
   return (
-    <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
+    <main className="min-h-screen bg-shell text-fg">
       <div className="grid min-h-screen lg:grid-cols-[minmax(0,1fr)_480px]">
-        <section className="hidden items-center bg-[#111a16] px-12 py-12 text-white lg:flex">
+        <section className="hidden items-center bg-ink px-12 py-12 text-white lg:flex">
           <div className="max-w-3xl">
             <div className="flex items-center gap-3">
-              <div className="flex size-12 items-center justify-center rounded-lg bg-[#087f7d] text-white shadow-sm">
+              <div className="flex size-12 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
                 <Factory size={24} aria-hidden="true" />
               </div>
               <div>
@@ -42,22 +42,22 @@ export default async function CadastroPage() {
         </section>
 
         <section className="flex items-center justify-center px-6 py-12">
-          <div className="w-full max-w-md rounded-lg border border-[#d9e1dd] bg-white p-6 shadow-[var(--cc-shadow)]">
+          <div className="w-full max-w-md rounded-lg border border-line bg-surface p-6 shadow-[var(--cc-shadow)]">
             <div className="mb-8 flex items-center gap-3 lg:hidden">
-              <div className="flex size-11 items-center justify-center rounded-lg bg-[#087f7d] text-white">
+              <div className="flex size-11 items-center justify-center rounded-lg bg-primary text-white">
                 <Factory size={22} aria-hidden="true" />
               </div>
               <div>
                 <p className="text-xl font-semibold">ConfecControl</p>
-                <p className="text-sm text-[#63736b]">Nova empresa</p>
+                <p className="text-sm text-muted">Nova empresa</p>
               </div>
             </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#63736b]">Nova empresa</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Nova empresa</p>
             <h2 className="mt-1 text-2xl font-semibold">Criar conta</h2>
             <SignupForm />
-            <p className="mt-4 text-center text-sm text-[#66756d]">
+            <p className="mt-4 text-center text-sm text-muted">
               Já tem conta?{" "}
-              <Link href="/login" className="font-semibold text-[#087f7d] hover:text-[#05605e]">Entrar</Link>
+              <Link href="/login" className="font-semibold text-primary hover:text-primary-dark">Entrar</Link>
             </p>
           </div>
         </section>

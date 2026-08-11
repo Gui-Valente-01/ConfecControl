@@ -28,16 +28,16 @@ export function ProductCreateForm() {
   return (
     <form className="space-y-3" action={formAction}>
       <fieldset className="space-y-1.5">
-        <legend className="text-sm font-medium text-[#405047]">Tipo</legend>
+        <legend className="text-sm font-medium text-body">Tipo</legend>
         {kinds.map(([value, label, hint]) => (
           <label
             key={value}
-            className="flex cursor-pointer items-start gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 py-2 transition hover:border-[#087f7d] has-checked:border-[#087f7d] has-checked:bg-[#f4fbfa]"
+            className="flex cursor-pointer items-start gap-2 rounded-lg border border-line-strong bg-surface px-3 py-2 transition hover:border-primary has-checked:border-primary has-checked:bg-primary-soft"
           >
-            <input type="radio" name="kind" value={value} defaultChecked={value === "PRODUCT"} className="mt-0.5 size-4 accent-[#087f7d]" />
+            <input type="radio" name="kind" value={value} defaultChecked={value === "PRODUCT"} className="mt-0.5 size-4 accent-primary" />
             <span>
-              <span className="block text-sm font-medium text-[#1c2420]">{label}</span>
-              <span className="block text-xs text-[#63736b]">{hint}</span>
+              <span className="block text-sm font-medium text-fg">{label}</span>
+              <span className="block text-xs text-muted">{hint}</span>
             </span>
           </label>
         ))}
@@ -45,16 +45,16 @@ export function ProductCreateForm() {
 
       {fields.map(([field, label, placeholder]) => (
         <label key={field} className="block">
-          <span className="text-sm font-medium text-[#405047]">{label}</span>
+          <span className="text-sm font-medium text-body">{label}</span>
           <input
-            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="mt-1 h-10 w-full rounded-lg border border-line-strong px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
             name={field}
             placeholder={placeholder}
             required={field === "name"}
           />
         </label>
       ))}
-      {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
+      {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
       <SubmitButton>
         <Plus size={17} aria-hidden="true" />
         Salvar peça

@@ -31,15 +31,15 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
     // A margem do papel vem do @page (globals.css). Aqui o padding serve só
     // para a visualização na tela, e some na impressão para não somar duas
     // margens e empurrar o conteúdo para o canto.
-    <main className="mx-auto max-w-3xl bg-white p-8 text-[#111a16] print:max-w-none print:p-0 print:text-black">
-      <div className="mb-6 flex items-start justify-between gap-4 border-b-2 border-[#111a16] pb-4 print:mb-4">
+    <main className="mx-auto max-w-3xl bg-white p-8 text-ink print:max-w-none print:p-0 print:text-black">
+      <div className="mb-6 flex items-start justify-between gap-4 border-b-2 border-ink pb-4 print:mb-4">
         <div>
           <h1 className="text-2xl font-bold">{order.company.name}</h1>
-          <p className="text-sm text-[#66756d] print:text-[#333]">Ordem de produção / Recibo</p>
+          <p className="text-sm text-muted print:text-[#333]">Ordem de produção / Recibo</p>
         </div>
         <div className="text-right">
           <p className="text-lg font-bold">Pedido #{order.number}</p>
-          <p className="text-sm text-[#66756d] print:text-[#333]">{formatLongDate(order.orderDate)}</p>
+          <p className="text-sm text-muted print:text-[#333]">{formatLongDate(order.orderDate)}</p>
         </div>
       </div>
 
@@ -72,7 +72,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           <col className="w-[18%]" />
         </colgroup>
         <thead>
-          <tr className="border-b-2 border-[#111a16] text-left">
+          <tr className="border-b-2 border-ink text-left">
             <th className="py-2">Descrição</th>
             <th className="py-2">Tam./Cor</th>
             <th className="py-2 text-right">Qtd.</th>
@@ -82,7 +82,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         </thead>
         <tbody>
           {order.items.map((item) => (
-            <tr key={item.id} className="border-b border-[#d9e1dd] print:border-[#999]">
+            <tr key={item.id} className="border-b border-line print:border-[#999]">
               <td className="py-2 align-top break-words">{item.description}</td>
               <td className="py-2 align-top break-words">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
               <td className="py-2 text-right align-top tabular-nums">{item.quantity}</td>
@@ -91,9 +91,9 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
             </tr>
           ))}
           {order.services.map((service) => (
-            <tr key={service.id} className="border-b border-[#d9e1dd] print:border-[#999]">
+            <tr key={service.id} className="border-b border-line print:border-[#999]">
               <td className="py-2 align-top break-words">
-                {service.name} <span className="text-[#66756d] print:text-[#333]">(serviço)</span>
+                {service.name} <span className="text-muted print:text-[#333]">(serviço)</span>
               </td>
               <td className="py-2 align-top">-</td>
               <td className="py-2 text-right align-top">-</td>
@@ -109,7 +109,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           <tbody>
             <tr><td className="pr-8 font-semibold">Total</td><td className="text-right tabular-nums">{centsToCurrency(order.totalAmountInCents)}</td></tr>
             <tr><td className="pr-8 font-semibold">Pago</td><td className="text-right tabular-nums">{centsToCurrency(order.paidAmountInCents)}</td></tr>
-            <tr className="border-t border-[#111a16]"><td className="pr-8 pt-1 font-bold">Saldo</td><td className="pt-1 text-right font-bold tabular-nums">{centsToCurrency(balance)}</td></tr>
+            <tr className="border-t border-ink"><td className="pr-8 pt-1 font-bold">Saldo</td><td className="pt-1 text-right font-bold tabular-nums">{centsToCurrency(balance)}</td></tr>
             <tr><td className="pr-8 font-semibold">Pagamento</td><td className="text-right">{paymentStatusLabels[order.paymentStatus]}</td></tr>
           </tbody>
         </table>
@@ -122,7 +122,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
         </section>
       ) : null}
 
-      <p className="mt-10 text-center text-xs text-[#8a9890] print:mt-6 print:text-[#555]">Gerado pelo ConfecControl</p>
+      <p className="mt-10 text-center text-xs text-soft print:mt-6 print:text-[#555]">Gerado pelo ConfecControl</p>
     </main>
   );
 }

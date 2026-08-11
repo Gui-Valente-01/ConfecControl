@@ -62,10 +62,10 @@ export function SinoAvisos() {
       href="/avisos"
       aria-label={rotulo}
       title={rotulo}
-      className={`relative flex size-10 items-center justify-center rounded-lg border bg-white shadow-sm transition ${
+      className={`relative flex size-10 items-center justify-center rounded-lg border bg-surface shadow-sm transition ${
         temUrgente
-          ? "border-[#f1c0c9] text-[#9f2f42] hover:bg-[#fff0f2]"
-          : "border-[#d9e1dd] text-[#1c2420] hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+          ? "border-danger-line text-danger-dark hover:bg-danger-soft"
+          : "border-line text-fg hover:border-line-strong hover:bg-canvas"
       }`}
     >
       <Bell size={18} aria-hidden="true" />
@@ -73,7 +73,7 @@ export function SinoAvisos() {
         <span
           aria-hidden="true"
           className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[11px] font-bold text-white ${
-            temUrgente ? "bg-[#9f2f42]" : "bg-[#087f7d]"
+            temUrgente ? "bg-danger" : "bg-primary"
           }`}
         >
           {contagem.total > 9 ? "9+" : contagem.total}

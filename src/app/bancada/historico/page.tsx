@@ -77,7 +77,7 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
 
   const ranking = (rows: { name: string; count: number }[], empty: string) => {
     if (rows.length === 0) {
-      return <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">{empty}</p>;
+      return <p className="rounded-lg border border-dashed border-line-strong bg-canvas p-6 text-center text-sm text-muted">{empty}</p>;
     }
     const max = rows[0].count || 1;
     return (
@@ -85,13 +85,13 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
         {rows.map((row) => (
           <li key={row.name}>
             <div className="flex items-baseline justify-between gap-3">
-              <span className="truncate text-sm font-medium text-[#405047]">{row.name}</span>
-              <span className="shrink-0 text-sm font-semibold tabular-nums text-[#1c2420]">
-                {row.count} <span className="font-normal text-[#8a9890]">{row.count === 1 ? "trabalho" : "trabalhos"}</span>
+              <span className="truncate text-sm font-medium text-body">{row.name}</span>
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-fg">
+                {row.count} <span className="font-normal text-soft">{row.count === 1 ? "trabalho" : "trabalhos"}</span>
               </span>
             </div>
-            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eef2ef]">
-              <div className="h-full rounded-full bg-[#087f7d]" style={{ width: `${Math.round((row.count / max) * 100)}%` }} />
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-divider">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((row.count / max) * 100)}%` }} />
             </div>
           </li>
         ))}
@@ -104,7 +104,7 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/bancada"
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#d9e1dd] bg-white px-3 text-sm font-semibold text-[#405047] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-body shadow-sm transition hover:border-line-strong hover:bg-canvas"
         >
           <ArrowLeft size={15} aria-hidden="true" />
           Voltar para a bancada
@@ -119,8 +119,8 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
                 aria-current={active ? "true" : undefined}
                 className={`inline-flex h-10 items-center rounded-lg border px-3 text-sm font-semibold transition ${
                   active
-                    ? "border-[#087f7d] bg-[#087f7d] text-white"
-                    : "border-[#d9e1dd] bg-white text-[#405047] hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+                    ? "border-primary bg-primary text-white"
+                    : "border-line bg-surface text-body hover:border-line-strong hover:bg-canvas"
                 }`}
               >
                 {option.label}
@@ -147,14 +147,14 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
         <SectionCard
           eyebrow="Equipe"
           title="Produção por funcionário"
-          action={topPerson ? <span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">Topo: {topPerson.name}</span> : null}
+          action={topPerson ? <span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">Topo: {topPerson.name}</span> : null}
         >
           {ranking(people, "Ninguém concluiu trabalho neste período.")}
         </SectionCard>
 
         <SectionCard eyebrow="Estações" title="Produção por mesa">
           {mesaRows.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
+            <p className="rounded-lg border border-dashed border-line-strong bg-canvas p-6 text-center text-sm text-muted">
               Nenhuma mesa com trabalho concluído neste período.
             </p>
           ) : (
@@ -166,17 +166,17 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
                   <li key={row.name}>
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-[#405047]">{row.name}</span>
-                        <span className="block truncate text-xs text-[#8a9890]">
+                        <span className="block truncate text-sm font-medium text-body">{row.name}</span>
+                        <span className="block truncate text-xs text-soft">
                           {responsible ? `Responsável: ${responsible}` : "Sem responsável definido"}
                         </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums text-[#1c2420]">
-                        {row.count} <span className="font-normal text-[#8a9890]">{row.count === 1 ? "trabalho" : "trabalhos"}</span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-fg">
+                        {row.count} <span className="font-normal text-soft">{row.count === 1 ? "trabalho" : "trabalhos"}</span>
                       </span>
                     </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#eef2ef]">
-                      <div className="h-full rounded-full bg-[#087f7d]" style={{ width: `${Math.round((row.count / max) * 100)}%` }} />
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-divider">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${Math.round((row.count / max) * 100)}%` }} />
                     </div>
                   </li>
                 );
@@ -189,10 +189,10 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
       <SectionCard
         eyebrow="Detalhe"
         title="Histórico de trabalhos"
-        action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{recent.length} registro(s)</span>}
+        action={<span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{recent.length} registro(s)</span>}
       >
         {recent.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
+          <p className="rounded-lg border border-dashed border-line-strong bg-canvas p-6 text-center text-sm text-muted">
             Nenhum trabalho concluído neste período.
           </p>
         ) : (
@@ -200,7 +200,7 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-[#e4eae6] text-left text-xs uppercase tracking-[0.08em] text-[#63736b]">
+                  <tr className="border-b border-line text-left text-xs uppercase tracking-[0.08em] text-muted">
                     <th className="py-2 pr-3 font-semibold">Concluído em</th>
                     <th className="py-2 pr-3 font-semibold">Pedido</th>
                     <th className="py-2 pr-3 font-semibold">Cliente</th>
@@ -212,17 +212,17 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
                 </thead>
                 <tbody>
                   {recent.map((task) => (
-                    <tr key={task.id} className="border-b border-[#eef2ef] last:border-0">
-                      <td className="py-2.5 pr-3 whitespace-nowrap text-[#66756d] tabular-nums">
+                    <tr key={task.id} className="border-b border-divider last:border-0">
+                      <td className="py-2.5 pr-3 whitespace-nowrap text-muted tabular-nums">
                         {task.doneAt ? formatDateTime(task.doneAt) : "-"}
                       </td>
-                      <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-[#405047]">#{task.order.number}</td>
+                      <td className="py-2.5 pr-3 font-mono text-xs font-semibold text-body">#{task.order.number}</td>
                       <td className="py-2.5 pr-3">
                         <span className="font-medium">{task.order.client.name}</span>
-                        <span className="block text-xs text-[#8a9890]">{task.order.items[0]?.description ?? "Pedido"}</span>
+                        <span className="block text-xs text-soft">{task.order.items[0]?.description ?? "Pedido"}</span>
                       </td>
-                      <td className="py-2.5 pr-3 text-[#66756d]">{task.stageName ?? "-"}</td>
-                      <td className="py-2.5 pr-3 text-[#66756d]">{task.mesa?.name ?? "Sem mesa"}</td>
+                      <td className="py-2.5 pr-3 text-muted">{task.stageName ?? "-"}</td>
+                      <td className="py-2.5 pr-3 text-muted">{task.mesa?.name ?? "Sem mesa"}</td>
                       <td className="py-2.5 pr-3 font-medium">{task.pickedByName}</td>
                       <td className="py-2.5">
                         {bancadaNoteBadge[task.noteKind] ? (
@@ -230,9 +230,9 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
                             {bancadaNoteLabels[task.noteKind]}
                           </span>
                         ) : (
-                          <span className="text-xs text-[#9aa8a0]">-</span>
+                          <span className="text-xs text-faint">-</span>
                         )}
-                        {task.note ? <span className="mt-0.5 block text-xs text-[#66756d]">{task.note}</span> : null}
+                        {task.note ? <span className="mt-0.5 block text-xs text-muted">{task.note}</span> : null}
                       </td>
                     </tr>
                   ))}
@@ -240,7 +240,7 @@ export default async function BancadaHistoricoPage({ searchParams }: { searchPar
               </table>
             </div>
             {total > recent.length ? (
-              <p className="mt-3 text-xs text-[#8a9890]">
+              <p className="mt-3 text-xs text-soft">
                 Mostrando os {recent.length} mais recentes de {total} no período.
               </p>
             ) : null}

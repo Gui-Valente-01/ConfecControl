@@ -35,8 +35,8 @@ export function FeaturePicker({ defaultSelected, variant = "card" }: FeaturePick
               aria-pressed={active}
               className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
                 active
-                  ? "border-[#087f7d] bg-[#087f7d] text-white"
-                  : "border-[#d9e1dd] bg-white text-[#405047] hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+                  ? "border-primary bg-primary text-white"
+                  : "border-line bg-surface text-body hover:border-line-strong hover:bg-canvas"
               }`}
             >
               {preset.label}
@@ -46,7 +46,7 @@ export function FeaturePicker({ defaultSelected, variant = "card" }: FeaturePick
         <button
           type="button"
           onClick={() => setSelected([])}
-          className="rounded-lg border border-[#d9e1dd] bg-white px-2.5 py-1.5 text-xs font-semibold text-[#8a9890] transition hover:border-[#c7d3ce] hover:text-[#405047]"
+          className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs font-semibold text-soft transition hover:border-line-strong hover:text-body"
         >
           Limpar
         </button>
@@ -60,7 +60,7 @@ export function FeaturePicker({ defaultSelected, variant = "card" }: FeaturePick
               key={feature.key}
               className={`flex cursor-pointer gap-2 rounded-lg border px-3 py-2 transition ${
                 variant === "compact" ? "items-center text-sm" : "items-start"
-              } ${checked ? "border-[#087f7d] bg-[#f4fbfa]" : "border-[#d9e1dd] bg-white hover:border-[#c7d3ce]"}`}
+              } ${checked ? "border-primary bg-primary-soft" : "border-line bg-surface hover:border-line-strong"}`}
             >
               <input
                 type="checkbox"
@@ -68,14 +68,14 @@ export function FeaturePicker({ defaultSelected, variant = "card" }: FeaturePick
                 value={feature.key}
                 checked={checked}
                 onChange={() => toggle(feature.key)}
-                className={`size-4 accent-[#087f7d] ${variant === "card" ? "mt-0.5" : ""}`}
+                className={`size-4 accent-primary ${variant === "card" ? "mt-0.5" : ""}`}
               />
               {variant === "compact" ? (
                 feature.label
               ) : (
                 <span>
-                  <span className="block text-sm font-medium text-[#1c2420]">{feature.label}</span>
-                  <span className="block text-xs text-[#63736b]">{feature.description}</span>
+                  <span className="block text-sm font-medium text-fg">{feature.label}</span>
+                  <span className="block text-xs text-muted">{feature.description}</span>
                 </span>
               )}
             </label>
@@ -83,7 +83,7 @@ export function FeaturePicker({ defaultSelected, variant = "card" }: FeaturePick
         })}
       </div>
 
-      <p className="text-xs text-[#8a9890]">
+      <p className="text-xs text-soft">
         {selected.length === 0
           ? "Nenhum módulo pago: o cliente fica só com o núcleo (pedidos, clientes, produtos, configurações)."
           : `${selected.length} de ${sellableFeatures.length} módulos pagos.`}

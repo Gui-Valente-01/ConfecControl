@@ -98,19 +98,19 @@ export type Tarefa = {
 
 const TONS = {
   urgente: {
-    cartao: "border-[#f1c0c9] bg-[#fff5f7] hover:border-[#e79aa8] hover:bg-[#ffeef1]",
-    icone: "bg-[#fde8ec] text-[#9f2f42]",
-    numero: "text-[#9f2f42]",
+    cartao: "border-danger-line bg-danger-soft hover:border-danger-line hover:bg-danger-soft",
+    icone: "bg-danger-soft text-danger-dark",
+    numero: "text-danger-dark",
   },
   atencao: {
-    cartao: "border-[#ead49c] bg-[#fffcf3] hover:border-[#dcbf76] hover:bg-[#fff8e6]",
-    icone: "bg-[#fdf3da] text-[#7b5a0b]",
-    numero: "text-[#7b5a0b]",
+    cartao: "border-warning-line bg-warning-soft hover:border-warning-line hover:bg-warning-soft",
+    icone: "bg-warning-soft text-warning-ink",
+    numero: "text-warning-ink",
   },
   normal: {
-    cartao: "border-[#d9e1dd] bg-white hover:border-[#bfe0d9] hover:bg-[#f6fbfa]",
-    icone: "bg-[#e8f6f3] text-[#05605e]",
-    numero: "text-[#05605e]",
+    cartao: "border-line bg-surface hover:border-primary/30 hover:bg-primary-soft",
+    icone: "bg-primary-soft text-primary-dark",
+    numero: "text-primary-dark",
   },
 } as const;
 
@@ -253,7 +253,7 @@ export function TarefasDoDia({
   return (
     <section aria-labelledby="tarefas-titulo" className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="tarefas-titulo" className="text-lg font-semibold text-[#1c2420]">
+        <h2 id="tarefas-titulo" className="text-lg font-semibold text-fg">
           O que precisa da sua atenção
         </h2>
 
@@ -264,7 +264,7 @@ export function TarefasDoDia({
               onClick={() => gravarPreferencia(!detalhado)}
               aria-expanded={detalhado}
               aria-controls="tarefas-lista"
-              className="inline-flex h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-[#405047] transition hover:bg-[#eef4f1]"
+              className="inline-flex h-11 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-body transition hover:bg-tint"
             >
               {detalhado ? "Ocultar detalhes" : "O que fazer"}
               <ChevronDown
@@ -279,7 +279,7 @@ export function TarefasDoDia({
           {podeCriarPedido ? (
             <Link
               href="/pedidos"
-              className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]"
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark"
             >
               <Plus size={17} aria-hidden="true" />
               Novo pedido
@@ -289,7 +289,7 @@ export function TarefasDoDia({
       </div>
 
       {tarefas.length === 0 ? (
-        <p className="flex items-center gap-2 rounded-lg border border-[#bfe0d9] bg-[#e8f6f3] px-3 py-2.5 text-sm text-[#05605e]">
+        <p className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary-soft px-3 py-2.5 text-sm text-primary-dark">
           <CheckCircle2 size={17} className="shrink-0" aria-hidden="true" />
           <span>
             <strong className="font-semibold">Tudo em dia.</strong> Nenhum pedido atrasado, nada parado
@@ -317,11 +317,11 @@ export function TarefasDoDia({
                       <span className={`text-xl font-bold tabular-nums ${tom.numero}`}>
                         {tarefa.quantidade}
                       </span>
-                      <span className="font-semibold text-[#1c2420]">{tarefa.titulo}</span>
+                      <span className="font-semibold text-fg">{tarefa.titulo}</span>
                     </span>
-                    <span className="mt-1 block text-sm leading-5 text-[#66756d]">{tarefa.acao}</span>
+                    <span className="mt-1 block text-sm leading-5 text-muted">{tarefa.acao}</span>
                   </span>
-                  <ArrowRight size={16} className="mt-1 shrink-0 text-[#8a9890]" aria-hidden="true" />
+                  <ArrowRight size={16} className="mt-1 shrink-0 text-soft" aria-hidden="true" />
                 </Link>
               </li>
             );
@@ -344,7 +344,7 @@ export function TarefasDoDia({
                   >
                     <Icone size={16} className={`shrink-0 ${tom.numero}`} aria-hidden="true" />
                     <span className={`font-bold tabular-nums ${tom.numero}`}>{tarefa.quantidade}</span>
-                    <span className="text-[#405047]">{tarefa.curto}</span>
+                    <span className="text-body">{tarefa.curto}</span>
                   </Link>
                 </li>
               );
@@ -353,8 +353,8 @@ export function TarefasDoDia({
 
           {/* Uma linha só, sempre da pendência mais grave. Sem isto a faixa
               vira um monte de número sem dizer o que fazer com ele. */}
-          <p className="text-sm leading-5 text-[#66756d]">
-            <span className="font-semibold text-[#405047]">Comece por aqui:</span> {tarefas[0].acao}
+          <p className="text-sm leading-5 text-muted">
+            <span className="font-semibold text-body">Comece por aqui:</span> {tarefas[0].acao}
           </p>
         </>
       )}

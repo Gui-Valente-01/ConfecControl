@@ -23,7 +23,7 @@ export function PrioritySelect({ orderId, value }: { orderId: string; value: Ord
         defaultValue={value}
         onChange={() => formRef.current?.requestSubmit()}
         aria-label="Prioridade do pedido"
-        className={`h-8 rounded-md border px-2 text-xs font-semibold outline-none ring-[#087f7d]/20 transition focus:ring-4 ${orderPriorityBadge[value]}`}
+        className={`h-8 rounded-md border px-2 text-xs font-semibold outline-none ring-primary/20 transition focus:ring-4 ${orderPriorityBadge[value]}`}
       >
         {options.map((priority) => (
           <option key={priority} value={priority}>

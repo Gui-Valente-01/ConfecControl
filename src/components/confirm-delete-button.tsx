@@ -38,8 +38,8 @@ export function ConfirmDeleteButton({
   if (blockedReason) {
     const base =
       variant === "icon"
-        ? "inline-flex size-9 items-center justify-center rounded-lg border border-[#e6ebe8] bg-[#f4f7f5] text-[#a9b5ae]"
-        : "inline-flex h-10 items-center gap-2 rounded-lg border border-[#e6ebe8] bg-[#f4f7f5] px-4 text-sm font-semibold text-[#a9b5ae]";
+        ? "inline-flex size-9 items-center justify-center rounded-lg border border-line bg-canvas text-faint"
+        : "inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-canvas px-4 text-sm font-semibold text-faint";
     return (
       <button type="button" disabled className={`${base} cursor-not-allowed`} title={blockedReason} aria-label={blockedReason}>
         <Trash2 size={variant === "icon" ? 16 : 16} aria-hidden="true" />
@@ -61,7 +61,7 @@ export function ConfirmDeleteButton({
           <button
             type="button"
             onClick={() => setPerguntando(true)}
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]"
+            className="inline-flex size-9 items-center justify-center rounded-lg border border-line bg-surface text-danger-dark transition hover:border-danger-line hover:bg-danger-soft"
             title={title}
             aria-label={title}
           >
@@ -71,7 +71,7 @@ export function ConfirmDeleteButton({
           <button
             type="button"
             onClick={() => setPerguntando(true)}
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d9e1dd] bg-white px-4 text-sm font-semibold text-[#9f2f42] transition hover:border-[#f1c0c9] hover:bg-[#fff0f2]"
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-line bg-surface px-4 text-sm font-semibold text-danger-dark transition hover:border-danger-line hover:bg-danger-soft"
           >
             <Trash2 size={16} aria-hidden="true" />
             {label}

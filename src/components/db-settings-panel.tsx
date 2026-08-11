@@ -27,7 +27,7 @@ export function DbSettingsPanel({ company }: DbSettingsPanelProps) {
           action={
             <Link
               href="/usuarios"
-              className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]"
+              className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark"
             >
               <UsersRound size={16} aria-hidden="true" />
               Gerenciar usuários
@@ -40,12 +40,12 @@ export function DbSettingsPanel({ company }: DbSettingsPanelProps) {
               ["Gerente", "Vê tudo, exceto a gestão de funcionários", UserCog],
               ["Produção / Financeiro", "Acesso só às áreas do cargo", Workflow],
             ].map(([role, text, Icon]) => (
-              <article key={role as string} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
+              <article key={role as string} className="rounded-lg border border-line bg-surface p-4 shadow-sm">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-primary-soft text-primary-dark">
                   <Icon size={20} aria-hidden="true" />
                 </div>
                 <h3 className="mt-3 font-semibold">{role as string}</h3>
-                <p className="mt-2 text-sm text-[#66756d]">{text as string}</p>
+                <p className="mt-2 text-sm text-muted">{text as string}</p>
               </article>
             ))}
           </div>

@@ -53,7 +53,7 @@ function priorityColor(priority: OrderPriority) {
 }
 
 const selectClass =
-  "mt-1 h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-sm outline-none ring-[#087f7d]/20 shadow-sm transition focus:border-[#087f7d] focus:ring-4";
+  "mt-1 h-9 w-full rounded-lg border border-line-strong bg-surface px-2 text-sm outline-none ring-primary/20 shadow-sm transition focus:border-primary focus:ring-4";
 
 export function DbProductionBoard({ stages, stageOptions, partners, employees, filters, canManage }: DbProductionBoardProps) {
   const lastStageId = stageOptions[stageOptions.length - 1]?.id;
@@ -64,7 +64,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
       <SectionCard eyebrow="Filtros" title="Refinar produção">
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label className="min-w-40 flex-1">
-            <span className="text-xs text-[#63736b]">Etapa</span>
+            <span className="text-xs text-muted">Etapa</span>
             <select name="stage" defaultValue={filters.stage} className={selectClass}>
               <option value="">Todas</option>
               {stageOptions.map((stage) => (
@@ -73,7 +73,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
             </select>
           </label>
           <label className="min-w-40 flex-1">
-            <span className="text-xs text-[#63736b]">Status</span>
+            <span className="text-xs text-muted">Status</span>
             <select name="status" defaultValue={filters.status} className={selectClass}>
               <option value="">Todos</option>
               {(Object.keys(orderStatusLabels) as OrderStatus[]).map((status) => (
@@ -82,7 +82,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
             </select>
           </label>
           <label className="min-w-40 flex-1">
-            <span className="text-xs text-[#63736b]">Prioridade</span>
+            <span className="text-xs text-muted">Prioridade</span>
             <select name="priority" defaultValue={filters.priority} className={selectClass}>
               <option value="">Todas</option>
               {(Object.keys(orderPriorityLabels) as OrderPriority[]).map((priority) => (
@@ -90,12 +90,12 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
               ))}
             </select>
           </label>
-          <button className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#05605e]">
+          <button className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark">
             <Filter size={15} aria-hidden="true" />
             Aplicar
           </button>
           {hasFilters ? (
-            <a href="/producao" className="inline-flex h-9 items-center rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+            <a href="/producao" className="inline-flex h-9 items-center rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-canvas">
               Limpar
             </a>
           ) : null}
@@ -107,7 +107,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
           {stages.map((stage) => (
             <section
               key={stage.id}
-              className="min-h-96 rounded-lg border border-[#d9e1dd] border-t-4 bg-[#f8faf9] p-3"
+              className="min-h-96 rounded-lg border border-line border-t-4 bg-canvas p-3"
               style={{ borderTopColor: stage.color || "#087f7d" }}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -119,7 +119,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
               </div>
               <div className="space-y-3">
                 {stage.currentOrders.length === 0 ? (
-                  <p className="rounded-md border border-dashed border-[#d9e1dd] px-2 py-4 text-center text-xs text-[#8a9890]">
+                  <p className="rounded-md border border-dashed border-line px-2 py-4 text-center text-xs text-soft">
                     Sem pedidos
                   </p>
                 ) : null}
@@ -127,7 +127,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                   const firstItem = order.items[0];
                   const late = isOrderLate(order.deliveryDate, order.status);
                   return (
-                    <article key={order.id} className="relative rounded-lg border border-[#d9e1dd] bg-white shadow-sm transition hover:border-[#c7d3ce]">
+                    <article key={order.id} className="relative rounded-lg border border-line bg-surface shadow-sm transition hover:border-line-strong">
                       {canManage ? (
                         <ToastForm action={moveOrderStageAction} className="absolute right-2 top-2 z-10">
                           <input type="hidden" name="orderId" value={order.id} />
@@ -137,45 +137,45 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                             title="Avançar etapa"
                             aria-label="Avançar etapa"
                             disabled={stage.id === lastStageId}
-                            className="flex size-8 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white text-[#087f7d] transition hover:bg-[#e8f6f3] disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex size-8 items-center justify-center rounded-lg border border-line-strong bg-surface text-primary transition hover:bg-primary-soft disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <ArrowRight size={15} aria-hidden="true" />
                           </button>
                         </ToastForm>
                       ) : null}
                       <details className="group">
-                        <summary className={`flex cursor-pointer list-none items-center gap-2 p-3 transition hover:bg-[#f8faf9] ${canManage ? "pr-12" : "pr-3"}`}>
+                        <summary className={`flex cursor-pointer list-none items-center gap-2 p-3 transition hover:bg-canvas ${canManage ? "pr-12" : "pr-3"}`}>
                           <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: priorityColor(order.priority) }} aria-hidden="true" />
-                          <span className="shrink-0 font-mono text-xs font-semibold text-[#63736b]">#{order.number}</span>
+                          <span className="shrink-0 font-mono text-xs font-semibold text-muted">#{order.number}</span>
                           <span className="truncate text-sm font-semibold">{order.client.name}</span>
-                          {late ? <AlertTriangle size={14} className="ml-auto shrink-0 text-[#9f2f42]" aria-hidden="true" /> : null}
-                          <ChevronDown size={15} className="shrink-0 text-[#8a9890] transition group-open:rotate-180" aria-hidden="true" />
+                          {late ? <AlertTriangle size={14} className="ml-auto shrink-0 text-danger-dark" aria-hidden="true" /> : null}
+                          <ChevronDown size={15} className="shrink-0 text-soft transition group-open:rotate-180" aria-hidden="true" />
                         </summary>
 
-                        <div className="space-y-3 border-t border-[#edf2ef] p-3">
+                        <div className="space-y-3 border-t border-divider p-3">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <StatusBadge tone={priorityTone(order.priority)}>{orderPriorityLabels[order.priority]}</StatusBadge>
                             <StatusBadge tone={late ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge>
                             {late ? (
-                              <span className="inline-flex items-center gap-1 rounded-md bg-[#fff0f2] px-2 py-1 text-xs font-semibold text-[#9f2f42]">
+                              <span className="inline-flex items-center gap-1 rounded-md bg-danger-soft px-2 py-1 text-xs font-semibold text-danger-dark">
                                 <AlertTriangle size={12} aria-hidden="true" />
                                 Atrasado
                               </span>
                             ) : null}
                           </div>
 
-                          <p className="text-sm text-[#66756d]">{firstItem?.description || "Pedido sem item"}</p>
-                          <div className="flex items-center gap-1.5 text-xs text-[#63736b]">
+                          <p className="text-sm text-muted">{firstItem?.description || "Pedido sem item"}</p>
+                          <div className="flex items-center gap-1.5 text-xs text-muted">
                             <UserRound size={13} aria-hidden="true" />
                             {order.assignee || "Sem responsável"}
                           </div>
                           {order.partner ? (
-                            <div className="flex items-center gap-1.5 text-xs text-[#05605e]">
+                            <div className="flex items-center gap-1.5 text-xs text-primary-dark">
                               <Handshake size={13} aria-hidden="true" />
                               {order.partner.name}
                             </div>
                           ) : null}
-                          <div className="rounded-md bg-[#eef4f1] px-2 py-2 text-xs font-semibold text-[#405047]">
+                          <div className="rounded-md bg-tint px-2 py-2 text-xs font-semibold text-body">
                             {firstItem?.quantity ?? 0} unidades
                           </div>
 
@@ -204,7 +204,7 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                                   <option key={partner.id} value={partner.id}>{partner.name}</option>
                                 ))}
                               </select>
-                              <button className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white text-xs font-semibold text-[#405047] transition hover:bg-[#f8faf9]">Salvar</button>
+                              <button className="h-9 w-full rounded-lg border border-line-strong bg-surface text-xs font-semibold text-body transition hover:bg-canvas">Salvar</button>
                             </ToastForm>
                           ) : null}
 
@@ -215,10 +215,10 @@ export function DbProductionBoard({ stages, stageOptions, partners, employees, f
                               <input
                                 name="note"
                                 placeholder="Observação da etapa (opcional)"
-                                className="h-9 w-full rounded-lg border border-[#c7d3ce] px-2 text-xs outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+                                className="h-9 w-full rounded-lg border border-line-strong px-2 text-xs outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
                               />
                               <button
-                                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#087f7d] text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:cursor-not-allowed disabled:opacity-50"
+                                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
                                 disabled={stage.id === lastStageId}
                               >
                                 Avançar

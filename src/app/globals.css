@@ -1,25 +1,185 @@
 @import "tailwindcss";
 
+/* Paleta do sistema.
+   ---------------------------------------------------------------------------
+   Estas variaveis viram classes do Tailwind automaticamente: --color-primary
+   gera bg-primary, text-primary, border-primary, ring-primary/20 e assim por
+   diante. Escrever a cor pelo nome, e nao pelo codigo, e o que permite trocar
+   o verde da marca (ou montar um tema escuro) mexendo so neste bloco, em vez
+   de procurar o mesmo #087f7d espalhado por dezenas de telas. */
+@theme {
+  /* Marca */
+  --color-primary: #087f7d;
+  --color-primary-dark: #05605e;
+  --color-primary-soft: #e8f6f3;
+
+  /* Escala de texto, do mais forte ao mais apagado */
+  --color-ink: #111a16;
+  --color-fg: #1c2420;
+  --color-body: #405047;
+  --color-muted: #63736b;
+  --color-soft: #8a9890;
+  --color-faint: #9aa8a0;
+
+  /* Linhas e superficies */
+  --color-line: #d9e1dd;
+  --color-line-strong: #c7d3ce;
+  --color-divider: #edf2ef;
+  --color-shell: #f4f6f5;
+  --color-surface: #ffffff;
+  --color-canvas: #f8faf9;
+  --color-tint: #eef4f1;
+
+  /* Estados */
+  --color-danger: #c43f54;
+  --color-danger-dark: #9f2f42;
+  --color-danger-soft: #fff0f2;
+  --color-danger-line: #f1c0c9;
+  --color-warning: #c88a2b;
+  --color-warning-ink: #7b5a0b;
+  --color-warning-soft: #fff7dd;
+  --color-warning-line: #ead49c;
+  --color-info: #5b68d8;
+
+  /* Duas familias que so aparecem nas etiquetas de cargo (gerente e vendas).
+     Viraram token pelo mesmo motivo das outras: sem isso ficariam duas
+     manchas claras acesas no tema escuro. */
+  --color-info-soft: #eef5fb;
+  --color-info-line: #bfcedf;
+  --color-info-ink: #2a5a89;
+  --color-accent-soft: #fbf0f7;
+  --color-accent-line: #e4c4d8;
+  --color-accent-ink: #7c3d68;
+}
+
 :root {
-  --background: #f4f6f5;
-  --foreground: #1c2420;
-  --cc-surface: #ffffff;
-  --cc-surface-muted: #f8faf9;
-  --cc-surface-soft: #eef4f1;
-  --cc-border: #d9e1dd;
-  --cc-border-strong: #c7d3ce;
-  --cc-muted: #63736b;
-  --cc-muted-strong: #405047;
-  --cc-primary: #087f7d;
-  --cc-primary-dark: #05605e;
-  --cc-danger: #c43f54;
-  --cc-danger-dark: #9f2f42;
-  --cc-warning: #c88a2b;
-  --cc-info: #5b68d8;
-  --cc-ink: #111a16;
+  --background: var(--color-shell);
+  --foreground: var(--color-fg);
+  /* Apelidos --cc-*: mantidos porque as regras deste arquivo e alguns
+     shadow-[var(--cc-shadow)] apontam para eles. A cor em si mora no @theme. */
+  --cc-surface: var(--color-surface);
+  --cc-surface-muted: var(--color-canvas);
+  --cc-surface-soft: var(--color-tint);
+  --cc-border: var(--color-line);
+  --cc-border-strong: var(--color-line-strong);
+  --cc-muted: var(--color-muted);
+  --cc-muted-strong: var(--color-body);
+  --cc-primary: var(--color-primary);
+  --cc-primary-dark: var(--color-primary-dark);
+  --cc-danger: var(--color-danger);
+  --cc-danger-dark: var(--color-danger-dark);
+  --cc-warning: var(--color-warning);
+  --cc-info: var(--color-info);
+  --cc-ink: var(--color-ink);
   --cc-ring: rgba(8, 127, 125, 0.18);
   --cc-shadow: 0 16px 40px rgba(17, 26, 22, 0.08);
   --cc-shadow-soft: 0 8px 24px rgba(17, 26, 22, 0.06);
+}
+
+/* Tema escuro.
+   ---------------------------------------------------------------------------
+   Quem manda e o atributo data-theme no <html>. Ele e escrito por um script
+   que roda antes da primeira pintura (ver layout.tsx): se a pessoa escolheu
+   "Automatico", ele copia o tema do aparelho; se escolheu claro ou escuro,
+   vale a escolha dela. Assim a mesma regra serve para os dois casos e a
+   paleta escura existe uma vez so no arquivo.
+
+   Como a interface inteira usa os nomes do bloco @theme (bg-surface,
+   text-muted, border-line...), trocar os valores aqui vira o sistema todo.
+   Nao ha nenhuma classe dark: espalhada pelas telas.
+
+   Duas coisas NAO se invertem, de proposito:
+   - ink continua escuro. Ele e o fundo do menu lateral e dos botoes pretos, e
+     tambem o texto da pilula clara que marca a pagina atual: nos dois casos o
+     par certo continua sendo escuro com claro por cima.
+   - o branco literal (bg-white/10, a pilula do menu) segue branco, porque ali
+     ele e sobreposicao sobre fundo escuro, e nao a cor de uma folha. */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  /* Diz ao navegador que a pagina e escura: barra de rolagem, campo de data e
+     os outros controles nativos vem escuros junto, sem precisar estilizar. */
+  color-scheme: dark;
+
+  /* Superficies, do fundo da pagina ate o cartao levantado */
+  --color-shell: #0e1311;
+  --color-canvas: #151b18;
+  --color-surface: #1a221e;
+  --color-tint: #1f2b26;
+
+  /* Linhas: separam sem virar risco branco na tela */
+  --color-divider: #262f2a;
+  --color-line: #2d3833;
+  --color-line-strong: #3b4741;
+
+  /* Texto, do titulo ao mais apagado */
+  --color-fg: #eef2ef;
+  --color-body: #ccd6d0;
+  --color-muted: #a1aea7;
+  --color-soft: #8b978f;
+  --color-faint: #7f8c84;
+
+  /* Marca: um verde bem mais aberto, que o fundo escuro nao engole */
+  --color-primary: #23b3af;
+  --color-primary-dark: #35c9c4;
+  --color-primary-soft: #12332f;
+
+  /* Estados: o tom "dark" vira o mais claro, porque no escuro ele e texto */
+  --color-danger: #e8677d;
+  --color-danger-dark: #f0899d;
+  --color-danger-soft: #3a2027;
+  --color-danger-line: #5c2f39;
+  --color-warning: #d9a03a;
+  --color-warning-ink: #e8c26a;
+  --color-warning-soft: #33280f;
+  --color-warning-line: #55471f;
+  --color-info: #8f9aed;
+  --color-info-soft: #16222e;
+  --color-info-line: #2c4056;
+  --color-info-ink: #93c2ee;
+  --color-accent-soft: #2a1b26;
+  --color-accent-line: #4b3141;
+  --color-accent-ink: #e3a9cf;
+
+  /* Sombra clara nao aparece no escuro: o que levanta o cartao e o preto. */
+  --cc-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --cc-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* No escuro o preenchimento da marca e o do perigo ficam CLAROS. Texto branco
+   por cima deles nao alcanca o contraste minimo de leitura (fica em 3,4 quando
+   o exigido e 4,5), entao quem esta por cima passa a ser escuro. E o mesmo par
+   que a pilula clara do menu ja usa: fundo claro, letra escura.
+
+   Duas classes no seletor para vencer o text-white que vem da tela, sem
+   precisar mexer nos 92 lugares que escrevem "text-white" na mao. */
+:root[data-theme="dark"] .bg-primary.text-white,
+:root[data-theme="dark"] .bg-danger.text-white {
+  color: #06211f;
+}
+
+/* A folha impressa e sempre clara, mesmo com o sistema no escuro: senao o
+   recibo do cliente sairia com fundo preto (ou branco, gastando toner).
+   O seletor repete [data-theme="dark"] de proposito: sem isso ele perderia
+   em especificidade justamente para o bloco escuro que precisa anular. */
+@media print {
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: light;
+    --color-shell: #ffffff;
+    --color-surface: #ffffff;
+    --color-canvas: #ffffff;
+    --color-tint: #eef4f1;
+    --color-fg: #1c2420;
+    --color-body: #405047;
+    --color-muted: #63736b;
+    --color-soft: #8a9890;
+    --color-line: #d9e1dd;
+    --color-line-strong: #c7d3ce;
+    --color-divider: #edf2ef;
+  }
 }
 
 @theme inline {
@@ -75,7 +235,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #63736b;
+  color: var(--color-muted);
 }
 
 :focus-visible {
@@ -87,7 +247,7 @@ textarea::placeholder {
    rolagem até ele: o toast diz o que houve, e a borda diz onde. */
 [aria-invalid="true"] {
   border-color: var(--cc-danger) !important;
-  background-color: #fff8f9;
+  background-color: var(--color-danger-soft);
 }
 
 [aria-invalid="true"]:focus {

@@ -60,26 +60,26 @@ const roleOrder: UserRole[] = ["ADMIN", "MANAGER", "PRODUCTION", "FINANCE", "SAL
 const initialState: UserFormState = {};
 
 const fieldClass =
-  "mt-1.5 h-11 w-full rounded-xl border border-[#c7d3ce] bg-white px-3.5 text-[15px] text-[#1c2420] outline-none ring-[#087f7d]/20 transition placeholder:text-[#63736b] hover:border-[#aebdb6] focus:border-[#087f7d] focus:ring-4";
+  "mt-1.5 h-11 w-full rounded-xl border border-line-strong bg-surface px-3.5 text-[15px] text-fg outline-none ring-primary/20 transition placeholder:text-muted hover:border-line-strong focus:border-primary focus:ring-4";
 const compactFieldClass =
-  "mt-1.5 h-11 w-full rounded-xl border border-[#c7d3ce] bg-white px-3 text-sm text-[#1c2420] outline-none ring-[#087f7d]/20 transition placeholder:text-[#63736b] hover:border-[#aebdb6] focus:border-[#087f7d] focus:ring-4";
-const labelClass = "text-sm font-medium text-[#405047]";
-const compactLabelClass = "text-xs font-semibold text-[#52635a]";
+  "mt-1.5 h-11 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm text-fg outline-none ring-primary/20 transition placeholder:text-muted hover:border-line-strong focus:border-primary focus:ring-4";
+const labelClass = "text-sm font-medium text-body";
+const compactLabelClass = "text-xs font-semibold text-body";
 
 const roleBadgeClass: Record<UserRole, string> = {
-  ADMIN: "border-[#111a16] bg-[#111a16] text-white",
-  MANAGER: "border-[#bfcedf] bg-[#eef5fb] text-[#2a5a89]",
-  PRODUCTION: "border-[#bfe4dc] bg-[#e8f6f3] text-[#05605e]",
-  FINANCE: "border-[#ead49c] bg-[#fff7dd] text-[#7b5a0b]",
-  SALES: "border-[#e4c4d8] bg-[#fbf0f7] text-[#7c3d68]",
+  ADMIN: "border-ink bg-ink text-white",
+  MANAGER: "border-info-line bg-info-soft text-info-ink",
+  PRODUCTION: "border-primary/30 bg-primary-soft text-primary-dark",
+  FINANCE: "border-warning-line bg-warning-soft text-warning-ink",
+  SALES: "border-accent-line bg-accent-soft text-accent-ink",
 };
 
 const roleAvatarClass: Record<UserRole, string> = {
-  ADMIN: "bg-[#111a16] text-white",
-  MANAGER: "bg-[#e7f0f8] text-[#2a5a89]",
-  PRODUCTION: "bg-[#dff3ef] text-[#05605e]",
-  FINANCE: "bg-[#fff1c4] text-[#7b5a0b]",
-  SALES: "bg-[#f7e6f1] text-[#7c3d68]",
+  ADMIN: "bg-ink text-white",
+  MANAGER: "bg-info-soft text-info-ink",
+  PRODUCTION: "bg-primary-soft text-primary-dark",
+  FINANCE: "bg-warning-soft text-warning-ink",
+  SALES: "bg-accent-soft text-accent-ink",
 };
 
 const roleDescriptions: Record<UserRole, string> = {
@@ -161,7 +161,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
         ))}
       </datalist>
 
-      <section className="overflow-hidden rounded-2xl border border-[#24342c] bg-[#111a16] text-white shadow-[var(--cc-shadow)]">
+      <section className="overflow-hidden rounded-2xl border border-[#24342c] bg-ink text-white shadow-[var(--cc-shadow)]">
         <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-5 md:px-6">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#8ec9c1]">Visão geral da equipe</p>
@@ -198,23 +198,23 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
       </section>
 
       <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_370px]">
-        <section className="min-w-0 overflow-hidden rounded-2xl border border-[#d9e1dd] bg-white shadow-[var(--cc-shadow-soft)]">
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e7eeea] bg-[#fbfcfb] px-4 py-4 md:px-5">
+        <section className="min-w-0 overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--cc-shadow-soft)]">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line bg-canvas px-4 py-4 md:px-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#63736b]">Funcionários</p>
-              <h2 className="mt-0.5 text-lg font-semibold text-[#1c2420]">Sua equipe</h2>
-              <p className="mt-1 text-sm text-[#52635a]">Consulte, edite e proteja os acessos da empresa.</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Funcionários</p>
+              <h2 className="mt-0.5 text-lg font-semibold text-fg">Sua equipe</h2>
+              <p className="mt-1 text-sm text-body">Consulte, edite e proteja os acessos da empresa.</p>
             </div>
-            <span className="rounded-full border border-[#d9e1dd] bg-white px-3 py-1.5 text-xs font-semibold text-[#405047]">
+            <span className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-body">
               {peopleLabel(users.length)}
             </span>
           </div>
 
-          <div className="grid gap-2.5 border-b border-[#e7eeea] p-4 md:grid-cols-[minmax(0,1fr)_150px_170px] md:p-5">
+          <div className="grid gap-2.5 border-b border-line p-4 md:grid-cols-[minmax(0,1fr)_150px_170px] md:p-5">
             <label className="relative block">
               <span className="sr-only">Buscar funcionário</span>
               <Search
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
                 size={17}
                 aria-hidden="true"
               />
@@ -222,7 +222,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                className="h-11 w-full rounded-xl border border-[#c7d3ce] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#63736b] transition hover:border-[#aebdb6] focus:border-[#087f7d] focus:ring-4"
+                className="h-11 w-full rounded-xl border border-line-strong bg-surface pl-10 pr-3 text-sm outline-none ring-primary/20 placeholder:text-muted transition hover:border-line-strong focus:border-primary focus:ring-4"
                 placeholder="Nome, e-mail, setor ou cargo"
               />
             </label>
@@ -231,7 +231,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-                className="h-11 w-full rounded-xl border border-[#c7d3ce] bg-white px-3 text-sm text-[#405047] outline-none ring-[#087f7d]/20 transition hover:border-[#aebdb6] focus:border-[#087f7d] focus:ring-4"
+                className="h-11 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm text-body outline-none ring-primary/20 transition hover:border-line-strong focus:border-primary focus:ring-4"
               >
                 <option value="ALL">Todos os status</option>
                 <option value="ACTIVE">Ativos</option>
@@ -243,7 +243,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
               <select
                 value={roleFilter}
                 onChange={(event) => setRoleFilter(event.target.value as UserRole | "ALL")}
-                className="h-11 w-full rounded-xl border border-[#c7d3ce] bg-white px-3 text-sm text-[#405047] outline-none ring-[#087f7d]/20 transition hover:border-[#aebdb6] focus:border-[#087f7d] focus:ring-4"
+                className="h-11 w-full rounded-xl border border-line-strong bg-surface px-3 text-sm text-body outline-none ring-primary/20 transition hover:border-line-strong focus:border-primary focus:ring-4"
               >
                 <option value="ALL">Todos os cargos</option>
                 {roleOrder.map((role) => (
@@ -255,12 +255,12 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
             </label>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#edf2ef] px-4 py-2.5 text-xs text-[#63736b] md:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-divider px-4 py-2.5 text-xs text-muted md:px-5">
             <p aria-live="polite">
-              Exibindo <strong className="font-semibold text-[#405047]">{filteredUsers.length}</strong> de {users.length}
+              Exibindo <strong className="font-semibold text-body">{filteredUsers.length}</strong> de {users.length}
             </p>
             {hasActiveFilters ? (
-              <button type="button" onClick={clearFilters} className="font-semibold text-[#05605e] hover:underline">
+              <button type="button" onClick={clearFilters} className="font-semibold text-primary-dark hover:underline">
                 Limpar filtros
               </button>
             ) : null}
@@ -268,24 +268,24 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
 
           <div className="p-4 md:p-5">
             {users.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#b8c7c0] bg-[#f8faf9] px-5 py-10 text-center">
-                <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-[#e8f6f3] text-[#05605e]">
+              <div className="rounded-2xl border border-dashed border-line-strong bg-canvas px-5 py-10 text-center">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-soft text-primary-dark">
                   <UserPlus size={22} aria-hidden="true" />
                 </div>
-                <h3 className="mt-4 font-semibold text-[#1c2420]">Monte sua equipe</h3>
-                <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-[#52635a]">
+                <h3 className="mt-4 font-semibold text-fg">Monte sua equipe</h3>
+                <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-body">
                   Adicione o primeiro funcionário e escolha exatamente quais áreas ele poderá acessar.
                 </p>
-                <a href="#novo-acesso" className="mt-4 inline-flex h-11 items-center rounded-xl bg-[#05605e] px-4 text-sm font-semibold text-white hover:bg-[#044d4c]">
+                <a href="#novo-acesso" className="mt-4 inline-flex h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-dark">
                   Adicionar funcionário
                 </a>
               </div>
             ) : filteredUsers.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#b8c7c0] bg-[#f8faf9] px-5 py-10 text-center">
-                <Search className="mx-auto text-[#63736b]" size={24} aria-hidden="true" />
-                <h3 className="mt-3 font-semibold text-[#1c2420]">Nenhum resultado encontrado</h3>
-                <p className="mt-1 text-sm text-[#52635a]">Tente outro nome ou remova um dos filtros.</p>
-                <button type="button" onClick={clearFilters} className="mt-4 h-10 rounded-xl border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] hover:bg-[#f1f6f3]">
+              <div className="rounded-2xl border border-dashed border-line-strong bg-canvas px-5 py-10 text-center">
+                <Search className="mx-auto text-muted" size={24} aria-hidden="true" />
+                <h3 className="mt-3 font-semibold text-fg">Nenhum resultado encontrado</h3>
+                <p className="mt-1 text-sm text-body">Tente outro nome ou remova um dos filtros.</p>
+                <button type="button" onClick={clearFilters} className="mt-4 h-10 rounded-xl border border-line-strong bg-surface px-4 text-sm font-semibold text-body hover:bg-tint">
                   Limpar filtros
                 </button>
               </div>
@@ -296,7 +296,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                   return (
                     <article
                       key={user.id}
-                      className="overflow-hidden rounded-2xl border border-[#d9e1dd] bg-white transition hover:border-[#b8c7c0] hover:shadow-[0_10px_28px_rgba(17,26,22,0.07)]"
+                      className="overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-line-strong hover:shadow-[0_10px_28px_rgba(17,26,22,0.07)]"
                     >
                       <div className="p-4 md:p-5">
                         <div className="flex min-w-0 items-start gap-3.5">
@@ -305,9 +305,9 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="break-words text-base font-semibold text-[#1c2420]">{user.name}</h3>
+                              <h3 className="break-words text-base font-semibold text-fg">{user.name}</h3>
                               {isSelf ? (
-                                <span className="rounded-full border border-[#d9e1dd] bg-[#eef4f1] px-2.5 py-1 text-xs font-semibold text-[#405047]">
+                                <span className="rounded-full border border-line bg-tint px-2.5 py-1 text-xs font-semibold text-body">
                                   Seu acesso
                                 </span>
                               ) : null}
@@ -317,42 +317,42 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                               <span
                                 className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold leading-none ${
                                   user.active
-                                    ? "border-[#bfe4dc] bg-[#e8f6f3] text-[#05605e]"
-                                    : "border-[#f1c0c9] bg-[#fff0f2] text-[#9f2f42]"
+                                    ? "border-primary/30 bg-primary-soft text-primary-dark"
+                                    : "border-danger-line bg-danger-soft text-danger-dark"
                                 }`}
                               >
-                                <span className={`size-1.5 rounded-full ${user.active ? "bg-[#087f7d]" : "bg-[#c43f54]"}`} aria-hidden="true" />
+                                <span className={`size-1.5 rounded-full ${user.active ? "bg-primary" : "bg-danger"}`} aria-hidden="true" />
                                 {user.active ? "Ativo" : "Inativo"}
                               </span>
                             </div>
-                            <p className="mt-1 break-all text-sm text-[#52635a]">{user.email}</p>
+                            <p className="mt-1 break-all text-sm text-body">{user.email}</p>
                           </div>
                         </div>
 
-                        <div className="mt-4 grid gap-3 rounded-xl border border-[#edf2ef] bg-[#f8faf9] p-3 sm:grid-cols-2 2xl:grid-cols-3">
+                        <div className="mt-4 grid gap-3 rounded-xl border border-divider bg-canvas p-3 sm:grid-cols-2 2xl:grid-cols-3">
                           <div>
-                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#63736b]">
+                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                               <Briefcase size={12} aria-hidden="true" /> Setor
                             </p>
-                            <p className="mt-1 text-sm font-medium text-[#405047]">{user.sector || "Não informado"}</p>
+                            <p className="mt-1 text-sm font-medium text-body">{user.sector || "Não informado"}</p>
                           </div>
                           <div>
-                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#63736b]">
+                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                               <Phone size={12} aria-hidden="true" /> Telefone
                             </p>
-                            <p className="mt-1 text-sm font-medium text-[#405047]">{user.phone || "Não informado"}</p>
+                            <p className="mt-1 text-sm font-medium text-body">{user.phone || "Não informado"}</p>
                           </div>
                           <div className="sm:col-span-2 2xl:col-span-1">
-                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#63736b]">
+                            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                               <CalendarDays size={12} aria-hidden="true" /> Criado em
                             </p>
-                            <p className="mt-1 text-sm font-medium text-[#405047]">{formatLongDate(user.createdAt)}</p>
+                            <p className="mt-1 text-sm font-medium text-body">{formatLongDate(user.createdAt)}</p>
                           </div>
                         </div>
                       </div>
 
-                      <details className="group/details border-t border-[#e7eeea] bg-[#fbfcfb]">
-                        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f1f6f3] hover:text-[#05605e] md:px-5 [&::-webkit-details-marker]:hidden">
+                      <details className="group/details border-t border-line bg-canvas">
+                        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-body transition hover:bg-tint hover:text-primary-dark md:px-5 [&::-webkit-details-marker]:hidden">
                           <span className="inline-flex items-center gap-2">
                             <Pencil size={15} aria-hidden="true" />
                             {isSelf ? "Editar meus dados" : "Gerenciar acesso"}
@@ -360,13 +360,13 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                           <ChevronDown className="transition-transform group-open/details:rotate-180" size={17} aria-hidden="true" />
                         </summary>
 
-                        <div className="border-t border-[#e7eeea] bg-white p-4 md:p-5">
+                        <div className="border-t border-line bg-surface p-4 md:p-5">
                           <div className="mb-4">
-                            <p className="flex items-center gap-2 text-sm font-semibold text-[#1c2420]">
-                              <UserCog size={16} className="text-[#05605e]" aria-hidden="true" />
+                            <p className="flex items-center gap-2 text-sm font-semibold text-fg">
+                              <UserCog size={16} className="text-primary-dark" aria-hidden="true" />
                               Dados e permissões
                             </p>
-                            <p className="mt-1 text-xs leading-5 text-[#63736b]">
+                            <p className="mt-1 text-xs leading-5 text-muted">
                               Atualize as informações usadas no acesso e na identificação da equipe.
                             </p>
                           </div>
@@ -386,7 +386,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                               {isSelf ? (
                                 <>
                                   <input type="hidden" name="role" value={user.role} />
-                                  <div className="mt-1.5 flex h-11 items-center rounded-xl border border-[#d9e1dd] bg-[#eef4f1] px-3 text-sm font-semibold text-[#405047]">
+                                  <div className="mt-1.5 flex h-11 items-center rounded-xl border border-line bg-tint px-3 text-sm font-semibold text-body">
                                     {roleLabels[user.role]}
                                   </div>
                                 </>
@@ -411,7 +411,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                             <div className="flex items-end">
                               <SubmitButton
                                 pendingText="Salvando dados..."
-                                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#05605e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#044d4c] disabled:cursor-not-allowed disabled:opacity-60"
+                                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 <UserCog size={16} aria-hidden="true" />
                                 Salvar alterações
@@ -420,25 +420,25 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                           </ToastForm>
 
                           {isSelf ? (
-                            <div className="mt-4 flex items-start gap-3 rounded-xl border border-[#d9e1dd] bg-[#f8faf9] p-3.5">
-                              <LockKeyhole className="mt-0.5 shrink-0 text-[#05605e]" size={17} aria-hidden="true" />
-                              <p className="text-xs leading-5 text-[#52635a]">
+                            <div className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-canvas p-3.5">
+                              <LockKeyhole className="mt-0.5 shrink-0 text-primary-dark" size={17} aria-hidden="true" />
+                              <p className="text-xs leading-5 text-body">
                                 Seu cargo é protegido. Para trocar sua própria senha, acesse{" "}
-                                <Link href="/conta" className="font-semibold text-[#05605e] hover:underline">
+                                <Link href="/conta" className="font-semibold text-primary-dark hover:underline">
                                   Minha conta
                                 </Link>
                                 .
                               </p>
                             </div>
                           ) : (
-                            <div className="mt-5 rounded-xl border border-[#d9e1dd] bg-[#f8faf9] p-4">
+                            <div className="mt-5 rounded-xl border border-line bg-canvas p-4">
                               <div className="flex items-start gap-3">
-                                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary-dark">
                                   <KeyRound size={17} aria-hidden="true" />
                                 </div>
                                 <div>
-                                  <p className="text-sm font-semibold text-[#1c2420]">Segurança do acesso</p>
-                                  <p className="mt-0.5 text-xs leading-5 text-[#63736b]">
+                                  <p className="text-sm font-semibold text-fg">Segurança do acesso</p>
+                                  <p className="mt-0.5 text-xs leading-5 text-muted">
                                     Redefina a senha ou suspenda o acesso quando necessário.
                                   </p>
                                 </div>
@@ -460,20 +460,20 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                                 </label>
                                 <SubmitButton
                                   pendingText="Redefinindo..."
-                                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#b8c7c0] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#eef4f1] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-tint disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                 >
                                   <KeyRound size={15} aria-hidden="true" />
                                   Redefinir senha
                                 </SubmitButton>
                               </ToastForm>
 
-                              <div className="mt-4 flex flex-col gap-2 border-t border-[#d9e1dd] pt-4 sm:flex-row sm:items-center">
+                              <div className="mt-4 flex flex-col gap-2 border-t border-line pt-4 sm:flex-row sm:items-center">
                                 <ToastForm action={toggleUserActiveAction}>
                                   <input type="hidden" name="id" value={user.id} />
                                   <input type="hidden" name="active" value={(!user.active).toString()} />
                                   <button
                                     type="submit"
-                                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#eef4f1] sm:w-auto"
+                                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-tint sm:w-auto"
                                   >
                                     <Power size={15} aria-hidden="true" />
                                     {user.active ? "Desativar acesso" : "Reativar acesso"}
@@ -503,34 +503,34 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
         </section>
 
         <aside id="novo-acesso" className="scroll-mt-28 xl:sticky xl:top-28">
-          <section className="overflow-hidden rounded-2xl border border-[#d9e1dd] bg-white shadow-[var(--cc-shadow-soft)]">
-            <div className="border-b border-[#e7eeea] bg-[#fbfcfb] px-5 py-4">
+          <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-[var(--cc-shadow-soft)]">
+            <div className="border-b border-line bg-canvas px-5 py-4">
               <div className="flex items-start gap-3">
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e8f6f3] text-[#05605e]">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary-dark">
                   <UserPlus size={19} aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#63736b]">Novo acesso</p>
-                  <h2 className="mt-0.5 text-lg font-semibold text-[#1c2420]">Adicionar funcionário</h2>
-                  <p className="mt-1 text-sm leading-5 text-[#52635a]">Crie um login e defina o nível de acesso.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">Novo acesso</p>
+                  <h2 className="mt-0.5 text-lg font-semibold text-fg">Adicionar funcionário</h2>
+                  <p className="mt-1 text-sm leading-5 text-body">Crie um login e defina o nível de acesso.</p>
                 </div>
               </div>
             </div>
 
             <form ref={formRef} className="space-y-4 p-5" action={formAction} autoComplete="off">
-              <p className="text-xs text-[#63736b]">
-                Campos marcados com <span className="font-bold text-[#9f2f42]">*</span> são obrigatórios.
+              <p className="text-xs text-muted">
+                Campos marcados com <span className="font-bold text-danger-dark">*</span> são obrigatórios.
               </p>
               <label className="block">
-                <span className={labelClass}>Nome completo <span className="text-[#9f2f42]">*</span></span>
+                <span className={labelClass}>Nome completo <span className="text-danger-dark">*</span></span>
                 <input name="name" autoComplete="name" required className={fieldClass} placeholder="Ex.: Maria Souza" />
               </label>
               <label className="block">
-                <span className={labelClass}>E-mail de login <span className="text-[#9f2f42]">*</span></span>
+                <span className={labelClass}>E-mail de login <span className="text-danger-dark">*</span></span>
                 <input name="email" type="email" autoComplete="email" required className={fieldClass} placeholder="maria@empresa.com" />
               </label>
               <label className="block">
-                <span className={labelClass}>Senha inicial <span className="text-[#9f2f42]">*</span></span>
+                <span className={labelClass}>Senha inicial <span className="text-danger-dark">*</span></span>
                 <div className="relative">
                   <input
                     name="password"
@@ -545,19 +545,19 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
-                    className="absolute bottom-0 right-0 flex size-11 items-center justify-center rounded-r-xl text-[#52635a] transition hover:bg-[#eef4f1] hover:text-[#05605e]"
+                    className="absolute bottom-0 right-0 flex size-11 items-center justify-center rounded-r-xl text-body transition hover:bg-tint hover:text-primary-dark"
                     aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                     title={showPassword ? "Ocultar senha" : "Mostrar senha"}
                   >
                     {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
                   </button>
                 </div>
-                <span id="new-password-help" className="mt-1.5 block text-xs leading-5 text-[#63736b]">
+                <span id="new-password-help" className="mt-1.5 block text-xs leading-5 text-muted">
                   Compartilhe por um canal seguro e peça a troca no primeiro acesso.
                 </span>
               </label>
               <label className="block">
-                <span className={labelClass}>Cargo de acesso <span className="text-[#9f2f42]">*</span></span>
+                <span className={labelClass}>Cargo de acesso <span className="text-danger-dark">*</span></span>
                 <select
                   name="role"
                   value={newRole}
@@ -572,41 +572,41 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                 </select>
               </label>
 
-              <div className="flex items-start gap-3 rounded-xl border border-[#bfe4dc] bg-[#eef8f5] p-3.5">
-                <ShieldCheck className="mt-0.5 shrink-0 text-[#05605e]" size={17} aria-hidden="true" />
+              <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary-soft p-3.5">
+                <ShieldCheck className="mt-0.5 shrink-0 text-primary-dark" size={17} aria-hidden="true" />
                 <div>
-                  <p className="text-xs font-semibold text-[#05605e]">Permissões de {roleLabels[newRole]}</p>
-                  <p className="mt-1 text-xs leading-5 text-[#405047]">{roleDescriptions[newRole]}</p>
+                  <p className="text-xs font-semibold text-primary-dark">Permissões de {roleLabels[newRole]}</p>
+                  <p className="mt-1 text-xs leading-5 text-body">{roleDescriptions[newRole]}</p>
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
                 <label className="block">
-                  <span className={labelClass}>Setor <span className="font-normal text-[#63736b]">(opcional)</span></span>
+                  <span className={labelClass}>Setor <span className="font-normal text-muted">(opcional)</span></span>
                   <input name="sector" list="sectors-list" className={fieldClass} placeholder="Corte, Costura..." />
                 </label>
                 <label className="block">
-                  <span className={labelClass}>Telefone <span className="font-normal text-[#63736b]">(opcional)</span></span>
+                  <span className={labelClass}>Telefone <span className="font-normal text-muted">(opcional)</span></span>
                   <input name="phone" type="tel" autoComplete="tel" className={fieldClass} placeholder="(11) 99999-9999" />
                 </label>
               </div>
 
               {state.error ? (
-                <p role="alert" className="rounded-xl border border-[#f1c0c9] bg-[#fff0f2] px-3.5 py-3 text-sm font-medium text-[#9f2f42]">
+                <p role="alert" className="rounded-xl border border-danger-line bg-danger-soft px-3.5 py-3 text-sm font-medium text-danger-dark">
                   {state.error}
                 </p>
               ) : null}
 
               <SubmitButton
                 pendingText="Criando acesso..."
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#05605e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#044d4c] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <UserPlus size={17} aria-hidden="true" />
                 Criar acesso seguro
               </SubmitButton>
 
-              <div className="flex items-start gap-2 rounded-xl bg-[#f8faf9] px-3.5 py-3 text-xs leading-5 text-[#52635a]">
-                <LockKeyhole className="mt-0.5 shrink-0 text-[#05605e]" size={15} aria-hidden="true" />
+              <div className="flex items-start gap-2 rounded-xl bg-canvas px-3.5 py-3 text-xs leading-5 text-body">
+                <LockKeyhole className="mt-0.5 shrink-0 text-primary-dark" size={15} aria-hidden="true" />
                 O novo funcionário verá apenas as áreas permitidas para o cargo escolhido.
               </div>
             </form>

@@ -31,6 +31,7 @@ import {
 import { useState } from "react";
 import type { UserRole } from "@prisma/client";
 import { logoutAction } from "@/app/login/actions";
+import { SeletorDeTema } from "@/components/seletor-de-tema";
 import { SinoAvisos } from "@/components/sino-avisos";
 import { planAllowsRoute } from "@/lib/features";
 import { canAccessRoute, canManageOrders, roleLabels } from "@/lib/roles";
@@ -136,7 +137,7 @@ export function AppShell({
               aria-current={ativo ? "page" : undefined}
               className={`flex ${alturaItem} items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
                 ativo || algumaSubAtiva
-                  ? "bg-white text-[#111a16] shadow-sm"
+                  ? "bg-white text-ink shadow-sm"
                   : "text-[#c8d6cf] hover:bg-white/10 hover:text-white"
               }`}
             >
@@ -153,7 +154,7 @@ export function AppShell({
                   onClick={aoNavegar}
                   aria-current={subAtiva ? "page" : undefined}
                   className={`ml-5 flex ${alturaItem} items-center gap-2.5 rounded-lg border-l border-white/15 pl-4 pr-3 text-sm transition ${
-                    subAtiva ? "bg-white/90 font-semibold text-[#111a16]" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
+                    subAtiva ? "bg-white/90 font-semibold text-ink" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <SubIcon size={16} aria-hidden="true" />
@@ -194,7 +195,7 @@ export function AppShell({
                     onClick={aoNavegar}
                     aria-current={ativo ? "page" : undefined}
                     className={`ml-5 flex ${alturaItem} items-center gap-2.5 rounded-lg border-l border-white/15 pl-4 pr-3 text-sm transition ${
-                      ativo ? "bg-white font-semibold text-[#111a16]" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
+                      ativo ? "bg-white font-semibold text-ink" : "text-[#9eb1a8] hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <Icon size={16} aria-hidden="true" />
@@ -236,11 +237,11 @@ export function AppShell({
         : null;
 
   return (
-    <main className="min-h-screen bg-[#f4f6f5] text-[#1c2420]">
+    <main className="min-h-screen bg-shell text-fg">
       <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-[#24342c] bg-[#111a16] px-5 py-5 text-white lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 flex-col overflow-hidden border-r border-[#24342c] bg-ink px-5 py-5 text-white lg:flex">
           <Link href="/" className="flex shrink-0 items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-lg bg-[#087f7d] text-white shadow-sm">
+            <div className="flex size-11 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
               <Factory size={22} aria-hidden="true" />
             </div>
             <div>
@@ -265,9 +266,10 @@ export function AppShell({
               <UserRound size={16} aria-hidden="true" />
               Minha conta
             </Link>
+            <SeletorDeTema />
             {/* O manual fica só no menu "Mais". Ter o mesmo link em dois
                 lugares fazia parecer que eram dois manuais diferentes. */}
-            <form action={logoutAction} className="mt-2">
+            <form action={logoutAction} className="mt-3">
               <button className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf] transition hover:bg-white/10 hover:text-white">
                 <LogOut size={16} aria-hidden="true" />
                 Sair
@@ -277,11 +279,11 @@ export function AppShell({
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-[#d9e1dd] bg-[#f4f6f5]/90 px-4 py-3.5 backdrop-blur md:px-8">
+          <header className="sticky top-0 z-10 border-b border-line bg-shell/90 px-4 py-3.5 backdrop-blur md:px-8">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <button
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#d9e1dd] bg-white text-[#1c2420] shadow-sm lg:hidden"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-line bg-surface text-fg shadow-sm lg:hidden"
                   aria-label="Abrir menu"
                   title="Abrir menu"
                   onClick={() => setMobileOpen(true)}
@@ -289,10 +291,10 @@ export function AppShell({
                   <Menu size={20} aria-hidden="true" />
                 </button>
                 <div className="min-w-0">
-                  <p className="hidden text-xs font-semibold uppercase tracking-[0.14em] text-[#63736b] md:block">
+                  <p className="hidden text-xs font-semibold uppercase tracking-[0.14em] text-muted md:block">
                     {eyebrow}
                   </p>
-                  <h1 className="truncate text-base font-semibold text-[#1c2420] md:mt-0.5 md:text-2xl">
+                  <h1 className="truncate text-base font-semibold text-fg md:mt-0.5 md:text-2xl">
                     {title}
                   </h1>
                 </div>
@@ -306,7 +308,7 @@ export function AppShell({
                     className="relative hidden w-48 shrink-0 md:block lg:w-56 xl:w-72"
                   >
                     <Search
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
                       size={18}
                       aria-hidden="true"
                     />
@@ -314,7 +316,7 @@ export function AppShell({
                       name="q"
                       aria-label={resolvedSearch.ariaLabel}
                       defaultValue={resolvedSearch.defaultValue}
-                      className="h-10 w-full rounded-lg border border-[#d9e1dd] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#63736b] shadow-sm transition focus:border-[#087f7d] focus:ring-4"
+                      className="h-10 w-full rounded-lg border border-line bg-surface pl-10 pr-3 text-sm outline-none ring-primary/20 placeholder:text-muted shadow-sm transition focus:border-primary focus:ring-4"
                       placeholder={resolvedSearch.placeholder}
                     />
                   </form>
@@ -325,7 +327,7 @@ export function AppShell({
                     href={headerAction.href}
                     aria-label={headerAction.label}
                     title={headerAction.label}
-                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#05605e] text-sm font-semibold text-white shadow-sm transition hover:bg-[#044d4c] sm:h-10 sm:w-auto sm:gap-2 sm:px-4"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark sm:h-10 sm:w-auto sm:gap-2 sm:px-4"
                   >
                     <Plus size={17} aria-hidden="true" />
                     <span className="hidden whitespace-nowrap sm:inline">{headerAction.label}</span>
@@ -337,7 +339,7 @@ export function AppShell({
             {resolvedSearch?.showOnMobile ? (
               <form method="get" action={resolvedSearch.action} className="relative mt-3 md:hidden">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
                   size={18}
                   aria-hidden="true"
                 />
@@ -345,7 +347,7 @@ export function AppShell({
                   name="q"
                   aria-label={resolvedSearch.ariaLabel}
                   defaultValue={resolvedSearch.defaultValue}
-                  className="h-10 w-full rounded-lg border border-[#d9e1dd] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 placeholder:text-[#63736b] shadow-sm transition focus:border-[#087f7d] focus:ring-4"
+                  className="h-10 w-full rounded-lg border border-line bg-surface pl-10 pr-3 text-sm outline-none ring-primary/20 placeholder:text-muted shadow-sm transition focus:border-primary focus:ring-4"
                   placeholder={resolvedSearch.placeholder}
                 />
               </form>
@@ -357,11 +359,11 @@ export function AppShell({
       </div>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-50 bg-[#111a16]/45 lg:hidden" role="presentation">
-          <aside className="flex h-full w-80 max-w-[88vw] flex-col overflow-hidden border-r border-[#24342c] bg-[#111a16] px-5 py-6 text-white shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-ink/45 lg:hidden" role="presentation">
+          <aside className="flex h-full w-80 max-w-[88vw] flex-col overflow-hidden border-r border-[#24342c] bg-ink px-5 py-6 text-white shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <Link href="/" className="flex items-center gap-3" onClick={() => setMobileOpen(false)}>
-                <div className="flex size-10 items-center justify-center rounded-lg bg-[#087f7d] text-white">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-white">
                   <Factory size={20} aria-hidden="true" />
                 </div>
                 <div>
@@ -396,7 +398,8 @@ export function AppShell({
                 <UserRound size={16} aria-hidden="true" />
                 Minha conta
               </Link>
-              <form action={logoutAction} className="mt-2">
+              <SeletorDeTema />
+              <form action={logoutAction} className="mt-3">
                 <button className="flex h-10 w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-transparent text-sm font-semibold text-[#c8d6cf]">
                   <LogOut size={16} aria-hidden="true" />
                   Sair

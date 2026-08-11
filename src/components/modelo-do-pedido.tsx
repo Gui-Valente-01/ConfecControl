@@ -52,7 +52,7 @@ export function ModeloDoPedido({
 
   if (anexos.length === 0) {
     return (
-      <p className="flex items-center gap-2 rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] px-3 py-2.5 text-xs text-[#8a9890]">
+      <p className="flex items-center gap-2 rounded-lg border border-dashed border-line-strong bg-canvas px-3 py-2.5 text-xs text-soft">
         <ImageOff size={14} aria-hidden="true" />
         Sem foto do modelo. Peça a arte a quem fez o pedido antes de começar.
       </p>
@@ -78,7 +78,7 @@ export function ModeloDoPedido({
                 onClick={() => setVendo(posicaoNaLista(anexo))}
                 title={`Ver ${anexo.name} maior`}
                 aria-label={`Ver a arte ${anexo.name} do pedido ${numeroPedido} em tamanho maior`}
-                className="block overflow-hidden rounded-lg border border-[#d9e1dd] transition hover:border-[#087f7d]"
+                className="block overflow-hidden rounded-lg border border-line transition hover:border-primary"
               >
                 <Image
                   src={anexo.url}
@@ -98,7 +98,7 @@ export function ModeloDoPedido({
               <button
                 type="button"
                 onClick={() => setVendo(posicaoNaLista(imagens[imagensVisiveis.length]))}
-                className="flex size-20 items-center justify-center rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] text-xs font-semibold text-[#66756d] transition hover:border-[#087f7d]"
+                className="flex size-20 items-center justify-center rounded-lg border border-dashed border-line-strong bg-canvas text-xs font-semibold text-muted transition hover:border-primary"
                 aria-label={`Ver as outras ${sobrando} artes do pedido ${numeroPedido}`}
               >
                 +{sobrando}
@@ -117,14 +117,14 @@ export function ModeloDoPedido({
                 <button
                   type="button"
                   onClick={() => setVendo(posicaoNaLista(anexo))}
-                  className="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-[#d9e1dd] bg-white px-2.5 py-2 text-left transition hover:border-[#087f7d] hover:bg-[#f8faf9]"
+                  className="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-line bg-surface px-2.5 py-2 text-left transition hover:border-primary hover:bg-canvas"
                 >
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-[#eef4f1] text-[#405047]">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-tint text-body">
                     <Icone size={16} aria-hidden="true" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-[#405047]">{anexo.name}</span>
-                    <span className="block text-xs text-[#8a9890]">
+                    <span className="block truncate text-sm font-medium text-body">{anexo.name}</span>
+                    <span className="block text-xs text-soft">
                       {rotuloAnexo(anexo)} · {comoAbrir(anexo)}
                     </span>
                   </span>
@@ -136,14 +136,14 @@ export function ModeloDoPedido({
       ) : null}
 
       {imagens.length === 0 && arte.length > 0 ? (
-        <p className="text-xs text-[#8a9890]">
+        <p className="text-xs text-soft">
           Nenhum arquivo dá para ver aqui na tela. Toque acima para abrir ou baixar.
         </p>
       ) : null}
 
       {producao.length > 0 ? (
-        <div className="border-t border-[#eef2ef] pt-2">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-[#8a9890]">
+        <div className="border-t border-divider pt-2">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-soft">
             Fotos da produção
           </p>
           <ul className="flex flex-wrap gap-2">
@@ -158,7 +158,7 @@ export function ModeloDoPedido({
                       ? `Ver a foto ${anexo.name}, enviada por ${anexo.sentBy}`
                       : `Ver a foto ${anexo.name}`
                   }
-                  className="block overflow-hidden rounded-lg border border-[#ead49c] transition hover:border-[#b9821f]"
+                  className="block overflow-hidden rounded-lg border border-warning-line transition hover:border-warning"
                 >
                   {ehVisualizavel(anexo) ? (
                     <Image
@@ -170,7 +170,7 @@ export function ModeloDoPedido({
                       style={{ width: 64, height: 64 }}
                     />
                   ) : (
-                    <span className="flex size-16 items-center justify-center bg-[#fffcf3] text-[#7b5a0b]">
+                    <span className="flex size-16 items-center justify-center bg-warning-soft text-warning-ink">
                       <Paperclip size={16} aria-hidden="true" />
                     </span>
                   )}
@@ -180,7 +180,7 @@ export function ModeloDoPedido({
           </ul>
           {/* Quem tirou fica visível: é o que permite voltar e perguntar. */}
           {producao[0]?.sentBy ? (
-            <p className="mt-1 text-xs text-[#8a9890]">
+            <p className="mt-1 text-xs text-soft">
               {producao.length === 1
                 ? `Enviada por ${producao[0].sentBy}`
                 : `Enviadas pela equipe, a última por ${producao[producao.length - 1].sentBy}`}

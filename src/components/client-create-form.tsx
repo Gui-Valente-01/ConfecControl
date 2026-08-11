@@ -9,7 +9,7 @@ import { useFieldError } from "@/components/use-field-error";
 import { emptyFormState } from "@/lib/form-state";
 
 const fieldClass =
-  "mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4";
+  "mt-1 h-10 w-full rounded-lg border border-line-strong px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4";
 
 export function ClientCreateForm() {
   const [state, formAction] = useActionState(createClientAction, emptyFormState);
@@ -19,34 +19,34 @@ export function ClientCreateForm() {
   return (
     <form ref={formRef} className="space-y-3" action={formAction}>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Empresa</span>
+        <span className="text-sm font-medium text-body">Empresa</span>
         <input className={fieldClass} name="name" placeholder="Ex.: Moda Sul" required />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Contato</span>
+        <span className="text-sm font-medium text-body">Contato</span>
         <input className={fieldClass} name="contact" placeholder="Nome da pessoa" />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">WhatsApp</span>
+        <span className="text-sm font-medium text-body">WhatsApp</span>
         <input className={fieldClass} name="phone" type="tel" autoComplete="tel" placeholder="(11) 99999-9999" />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">E-mail</span>
+        <span className="text-sm font-medium text-body">E-mail</span>
         <input className={fieldClass} name="email" type="email" placeholder="cliente@empresa.com" />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">CPF/CNPJ</span>
+        <span className="text-sm font-medium text-body">CPF/CNPJ</span>
         <input className={fieldClass} name="document" inputMode="numeric" placeholder="00.000.000/0001-00" />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Endereço</span>
+        <span className="text-sm font-medium text-body">Endereço</span>
         <input className={fieldClass} name="address" placeholder="Rua, número, cidade" />
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-[#405047]">Observações</span>
-        <textarea className="mt-1 min-h-20 w-full rounded-lg border border-[#c7d3ce] px-3 py-2 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4" name="notes" placeholder="Preferencias, histórico, etc." />
+        <span className="text-sm font-medium text-body">Observações</span>
+        <textarea className="mt-1 min-h-20 w-full rounded-lg border border-line-strong px-3 py-2 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4" name="notes" placeholder="Preferencias, histórico, etc." />
       </label>
-      {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
+      {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
       <SubmitButton>
         <Plus size={17} aria-hidden="true" />
         Salvar cliente

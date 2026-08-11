@@ -19,7 +19,7 @@ import { emptyFormState } from "@/lib/form-state";
 function BotaoEnviar() {
   const { pending } = useFormStatus();
   return (
-    <span className="text-xs font-medium text-[#66756d]">
+    <span className="text-xs font-medium text-muted">
       {pending ? "Enviando foto..." : null}
     </span>
   );
@@ -36,7 +36,7 @@ export function FotoDaBancada({ taskId, numeroPedido }: { taskId: string; numero
       {/* O <label> É o botão: o input de arquivo fica escondido porque o
           estilo nativo dele não dá para acertar, e no celular ele aparece
           minúsculo. */}
-      <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]">
+      <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-body transition hover:bg-canvas">
         <Camera size={16} aria-hidden="true" />
         Tirar foto
         <input

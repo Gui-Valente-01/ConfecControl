@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/toast";
 import { PwaRegister } from "@/components/pwa-register";
+import { scriptDoTema } from "@/lib/tema";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,7 +35,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f4f6f5",
+  // A barra do navegador acompanha o tema do aparelho. Sem o par escuro, o
+  // topo do celular ficaria uma faixa clara acesa em cima da tela escura.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f6f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1311" },
+  ],
   viewportFit: "cover",
 };
 
@@ -47,8 +53,16 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#f4f6f5]">
+      <head>
+        {/* Decide o tema antes de a tela ser pintada. Se ficasse no React, a
+            pagina apareceria clara e piscaria para escura no carregamento.
+            O suppressHydrationWarning acima e por causa disto: o atributo
+            existe no navegador e nao no HTML que veio do servidor. */}
+        <script dangerouslySetInnerHTML={{ __html: scriptDoTema }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-shell">
         <ToastProvider>{children}</ToastProvider>
         <PwaRegister />
       </body>

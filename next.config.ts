@@ -30,9 +30,18 @@ const nextConfig: NextConfig = {
     //
     // Só o host do Storage é liberado. Deixar aberto permitiria transformar
     // imagem de qualquer endereço da internet às nossas custas.
-    remotePatterns: host
-      ? [{ protocol: "https" as const, hostname: host, pathname: "/storage/v1/object/public/**" }]
-      : [],
+    remotePatterns: [
+      ...(host
+        ? [{ protocol: "https" as const, hostname: host, pathname: "/storage/v1/object/public/**" }]
+        : []),
+      // O seed de demonstração usa fotos do picsum.photos. Liberado APENAS fora
+      // de produção, para o cenário de demo renderizar no dev local; em produção
+      // nada além do Storage é permitido (transformar imagem de qualquer host às
+      // nossas custas continua bloqueado).
+      ...(process.env.NODE_ENV !== "production"
+        ? [{ protocol: "https" as const, hostname: "picsum.photos", pathname: "/**" }]
+        : []),
+    ],
     // Tamanhos que a tela realmente pede: miniatura da bancada e a maior do
     // pedido. Lista curta significa menos versões geradas e mais cache.
     imageSizes: [64, 96, 160, 256],

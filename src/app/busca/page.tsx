@@ -71,23 +71,23 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
       <SectionCard eyebrow="Pesquisa" title="Buscar no sistema">
         <form method="get" className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-48 flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#63736b]" size={18} aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} aria-hidden="true" />
             <input
               name="q"
               defaultValue={q}
               autoFocus
-              className="h-11 w-full rounded-lg border border-[#c7d3ce] bg-white pl-10 pr-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+              className="h-11 w-full rounded-lg border border-line-strong bg-surface pl-10 pr-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
               placeholder="Pedido (número), cliente ou produto"
             />
           </div>
-          <select name="type" defaultValue={type} className="h-11 rounded-lg border border-[#c7d3ce] bg-white px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4">
+          <select name="type" defaultValue={type} className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4">
             {typeOptions.map((option) => (
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
-          <button className="h-11 rounded-lg bg-[#087f7d] px-5 text-sm font-semibold text-white transition hover:bg-[#05605e]">Buscar</button>
+          <button className="h-11 rounded-lg bg-primary px-5 text-sm font-semibold text-white transition hover:bg-primary-dark">Buscar</button>
         </form>
-        {q ? <p className="mt-3 text-sm text-[#66756d]">{total} resultado(s) para &quot;{q}&quot;.</p> : <p className="mt-3 text-sm text-[#66756d]">Digite algo para pesquisar.</p>}
+        {q ? <p className="mt-3 text-sm text-muted">{total} resultado(s) para &quot;{q}&quot;.</p> : <p className="mt-3 text-sm text-muted">Digite algo para pesquisar.</p>}
       </SectionCard>
 
       {q ? (
@@ -100,10 +100,10 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
               <ul className="space-y-2">
                 {orders.map((order) => (
                   <li key={order.id}>
-                    <Link href={`/pedidos/${order.id}`} className="flex items-center justify-between gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm hover:bg-[#eef4f1]">
+                    <Link href={`/pedidos/${order.id}`} className="flex items-center justify-between gap-2 rounded-lg border border-line bg-canvas px-3 py-2 text-sm hover:bg-tint">
                       <span className="flex items-center gap-2">
-                        <ClipboardList size={15} className="text-[#63736b]" aria-hidden="true" />
-                        <span className="font-mono font-semibold text-[#405047]">#{order.number}</span>
+                        <ClipboardList size={15} className="text-muted" aria-hidden="true" />
+                        <span className="font-mono font-semibold text-body">#{order.number}</span>
                         <span>{order.client.name}</span>
                       </span>
                       <StatusBadge>{orderStatusLabels[order.status]}</StatusBadge>
@@ -123,12 +123,12 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
               <ul className="space-y-2">
                 {clients.map((client) => (
                   <li key={client.id}>
-                    <Link href={`/clientes/${client.id}`} className="flex items-center justify-between gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm hover:bg-[#eef4f1]">
+                    <Link href={`/clientes/${client.id}`} className="flex items-center justify-between gap-2 rounded-lg border border-line bg-canvas px-3 py-2 text-sm hover:bg-tint">
                       <span className="flex items-center gap-2">
-                        <Users size={15} className="text-[#63736b]" aria-hidden="true" />
+                        <Users size={15} className="text-muted" aria-hidden="true" />
                         {client.name}
                       </span>
-                      <span className="text-[#63736b]">{client.phone || ""}</span>
+                      <span className="text-muted">{client.phone || ""}</span>
                     </Link>
                   </li>
                 ))}
@@ -145,12 +145,12 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
               <ul className="space-y-2">
                 {products.map((product) => (
                   <li key={product.id}>
-                    <Link href="/produtos" className="flex items-center justify-between gap-2 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] px-3 py-2 text-sm hover:bg-[#eef4f1]">
+                    <Link href="/produtos" className="flex items-center justify-between gap-2 rounded-lg border border-line bg-canvas px-3 py-2 text-sm hover:bg-tint">
                       <span className="flex items-center gap-2">
-                        <Shirt size={15} className="text-[#63736b]" aria-hidden="true" />
+                        <Shirt size={15} className="text-muted" aria-hidden="true" />
                         {product.name}
                       </span>
-                      <span className="text-[#63736b]">{centsToCurrency(product.standardPriceInCents)}</span>
+                      <span className="text-muted">{centsToCurrency(product.standardPriceInCents)}</span>
                     </Link>
                   </li>
                 ))}
@@ -165,5 +165,5 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="text-sm text-[#8a9890]">{text}</p>;
+  return <p className="text-sm text-soft">{text}</p>;
 }

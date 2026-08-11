@@ -33,22 +33,22 @@ const boardColumns: MiniColumn[] = [
 
 function OrderCard({ order }: { order: MiniOrder }) {
   return (
-    <div className="rounded-lg border border-[#d9e1dd] bg-white p-2.5 shadow-sm">
+    <div className="rounded-lg border border-line bg-surface p-2.5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[11px] font-semibold text-[#63736b]">{order.number}</span>
+        <span className="font-mono text-[11px] font-semibold text-muted">{order.number}</span>
         {order.tone === "late" ? (
-          <span className="rounded-md bg-[#fff0f2] px-1.5 py-0.5 text-[10px] font-semibold text-[#9f2f42]">
+          <span className="rounded-md bg-danger-soft px-1.5 py-0.5 text-[10px] font-semibold text-danger-dark">
             Atrasado
           </span>
         ) : null}
         {order.tone === "ok" ? (
-          <span className="rounded-md bg-[#e8f6f3] px-1.5 py-0.5 text-[10px] font-semibold text-[#0f696b]">
+          <span className="rounded-md bg-primary-soft px-1.5 py-0.5 text-[10px] font-semibold text-primary-dark">
             No prazo
           </span>
         ) : null}
       </div>
-      <p className="mt-1 truncate text-xs font-semibold text-[#1c2420]">{order.client}</p>
-      <p className="mt-0.5 text-[11px] text-[#63736b]">{order.meta}</p>
+      <p className="mt-1 truncate text-xs font-semibold text-fg">{order.client}</p>
+      <p className="mt-0.5 text-[11px] text-muted">{order.meta}</p>
     </div>
   );
 }
@@ -56,17 +56,17 @@ function OrderCard({ order }: { order: MiniOrder }) {
 // Quadro de produção em miniatura (o mesmo kanban da tela /producao).
 export function MiniBoard() {
   return (
-    <div className="rounded-2xl border border-[#d9e1dd] bg-[#f8faf9] p-3 shadow-[0_16px_40px_rgba(17,26,22,0.10)]">
+    <div className="rounded-2xl border border-line bg-canvas p-3 shadow-[0_16px_40px_rgba(17,26,22,0.10)]">
       <div className="flex items-center justify-between px-1 pb-2">
-        <p className="text-xs font-semibold text-[#405047]">Quadro de produção</p>
-        <p className="text-[11px] text-[#8a9890]">hoje</p>
+        <p className="text-xs font-semibold text-body">Quadro de produção</p>
+        <p className="text-[11px] text-soft">hoje</p>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {boardColumns.map((column) => (
-          <div key={column.stage} className="rounded-xl bg-[#eef4f1] p-2">
+          <div key={column.stage} className="rounded-xl bg-tint p-2">
             <div className="flex items-center justify-between px-0.5 pb-1.5">
-              <span className="text-[11px] font-semibold text-[#405047]">{column.stage}</span>
-              <span className="rounded bg-white px-1 text-[10px] font-semibold text-[#63736b]">
+              <span className="text-[11px] font-semibold text-body">{column.stage}</span>
+              <span className="rounded bg-surface px-1 text-[10px] font-semibold text-muted">
                 {column.orders.length}
               </span>
             </div>
@@ -90,22 +90,22 @@ export function MiniStock() {
     { name: "Boné trucker", qty: "340 un.", low: false },
   ];
   return (
-    <div className="overflow-hidden rounded-xl border border-[#d9e1dd] bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
       {rows.map((row, i) => (
         <div
           key={row.name}
-          className={`flex items-center justify-between gap-3 px-3 py-2.5 ${i > 0 ? "border-t border-[#edf2ef]" : ""}`}
+          className={`flex items-center justify-between gap-3 px-3 py-2.5 ${i > 0 ? "border-t border-divider" : ""}`}
         >
           <div className="min-w-0">
-            <p className="truncate text-xs font-semibold text-[#1c2420]">{row.name}</p>
-            <p className="text-[11px] text-[#63736b]">{row.qty} em estoque</p>
+            <p className="truncate text-xs font-semibold text-fg">{row.name}</p>
+            <p className="text-[11px] text-muted">{row.qty} em estoque</p>
           </div>
           {row.low ? (
-            <span className="shrink-0 rounded-md bg-[#fff0f2] px-2 py-0.5 text-[10px] font-semibold text-[#9f2f42]">
+            <span className="shrink-0 rounded-md bg-danger-soft px-2 py-0.5 text-[10px] font-semibold text-danger-dark">
               Repor
             </span>
           ) : (
-            <span className="shrink-0 rounded-md bg-[#e8f6f3] px-2 py-0.5 text-[10px] font-semibold text-[#0f696b]">
+            <span className="shrink-0 rounded-md bg-primary-soft px-2 py-0.5 text-[10px] font-semibold text-primary-dark">
               Ok
             </span>
           )}
@@ -123,19 +123,19 @@ export function MiniFinance() {
     { order: "#1036 Cecília Ateliê", value: "Pago", tone: "paid" as const },
   ];
   return (
-    <div className="overflow-hidden rounded-xl border border-[#d9e1dd] bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
       {rows.map((row, i) => (
         <div
           key={row.order}
-          className={`flex items-center justify-between gap-3 px-3 py-2.5 ${i > 0 ? "border-t border-[#edf2ef]" : ""}`}
+          className={`flex items-center justify-between gap-3 px-3 py-2.5 ${i > 0 ? "border-t border-divider" : ""}`}
         >
-          <p className="truncate text-xs font-semibold text-[#1c2420]">{row.order}</p>
+          <p className="truncate text-xs font-semibold text-fg">{row.order}</p>
           {row.tone === "due" ? (
-            <span className="shrink-0 text-[11px] font-semibold text-[#9f2f42]">{row.value}</span>
+            <span className="shrink-0 text-[11px] font-semibold text-danger-dark">{row.value}</span>
           ) : row.tone === "partial" ? (
-            <span className="shrink-0 text-[11px] font-medium text-[#63736b]">{row.value}</span>
+            <span className="shrink-0 text-[11px] font-medium text-muted">{row.value}</span>
           ) : (
-            <span className="shrink-0 rounded-md bg-[#e8f6f3] px-2 py-0.5 text-[10px] font-semibold text-[#0f696b]">
+            <span className="shrink-0 rounded-md bg-primary-soft px-2 py-0.5 text-[10px] font-semibold text-primary-dark">
               {row.value}
             </span>
           )}
@@ -161,8 +161,8 @@ export function MiniChat() {
 // Tela compacta no formato celular (a mesma produção, na mão do encarregado).
 export function MiniPhone() {
   return (
-    <div className="mx-auto w-[260px] rounded-[2rem] border-[6px] border-[#111a16] bg-[#f4f6f5] p-3 shadow-[0_24px_60px_rgba(17,26,22,0.18)]">
-      <p className="px-1 text-[11px] font-semibold text-[#405047]">Produção</p>
+    <div className="mx-auto w-[260px] rounded-[2rem] border-[6px] border-ink bg-shell p-3 shadow-[0_24px_60px_rgba(17,26,22,0.18)]">
+      <p className="px-1 text-[11px] font-semibold text-body">Produção</p>
       <div className="mt-2 space-y-2">
         <OrderCard order={{ number: "#1039", client: "Vale Sul Uniformes", meta: "200 un. para 30 jun", tone: "late" }} />
         <OrderCard order={{ number: "#1042", client: "Malharia Duas Irmãs", meta: "120 un. para 14 jul" }} />
@@ -172,7 +172,7 @@ export function MiniPhone() {
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className="pointer-events-none mt-3 flex h-9 w-full items-center justify-center rounded-lg bg-[#087f7d] text-xs font-semibold text-white"
+        className="pointer-events-none mt-3 flex h-9 w-full items-center justify-center rounded-lg bg-primary text-xs font-semibold text-white"
       >
         Avançar etapa
       </button>

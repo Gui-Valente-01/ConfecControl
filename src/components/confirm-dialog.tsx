@@ -65,11 +65,13 @@ export function ConfirmDialog({
   const itens = linhas.filter((l) => l.startsWith("•")).map((l) => l.slice(1).trim());
   const paragrafos = linhas.filter((l) => !l.startsWith("•"));
 
+  // O bg-surface do <dialog> e explicito de proposito: sem ele o navegador
+  // aplica o proprio branco, e no tema escuro o texto claro sumiria dentro.
   return (
     <dialog
       ref={ref}
       aria-labelledby="confirmar-titulo"
-      className="m-auto w-[min(92vw,30rem)] rounded-xl border border-[#d9e1dd] p-0 text-[#1c2420] shadow-[0_24px_60px_rgba(17,26,22,0.22)] backdrop:bg-[#111a16]/45"
+      className="m-auto w-[min(92vw,30rem)] rounded-xl border border-line bg-surface p-0 text-fg shadow-[0_24px_60px_rgba(17,26,22,0.22)] backdrop:bg-ink/45"
       onClick={(event) => {
         // Clique fora da caixa fecha, como a pessoa espera de uma janela.
         if (event.target === ref.current) onCancelar();
@@ -77,7 +79,7 @@ export function ConfirmDialog({
     >
       <div className="p-5">
         <div className="flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#fff0f2] text-[#9f2f42]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-danger-soft text-danger-dark">
             <AlertTriangle size={20} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1">
@@ -85,7 +87,7 @@ export function ConfirmDialog({
               {titulo}
             </h2>
             {paragrafos.map((p) => (
-              <p key={p} className="mt-1.5 text-sm leading-6 text-[#66756d]">
+              <p key={p} className="mt-1.5 text-sm leading-6 text-muted">
                 {p}
               </p>
             ))}
@@ -93,7 +95,7 @@ export function ConfirmDialog({
         </div>
 
         {itens.length > 0 ? (
-          <ul className="mt-3 space-y-1.5 rounded-lg bg-[#fff8f9] p-3 text-sm text-[#7d2434]">
+          <ul className="mt-3 space-y-1.5 rounded-lg bg-danger-soft p-3 text-sm text-danger-dark">
             {itens.map((item) => (
               <li key={item} className="flex gap-2">
                 <span aria-hidden="true">•</span>
@@ -110,14 +112,14 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onCancelar}
-            className="inline-flex h-11 items-center justify-center rounded-lg border border-[#c7d3ce] bg-white px-4 text-sm font-semibold text-[#405047] transition hover:bg-[#f8faf9]"
+            className="inline-flex h-11 items-center justify-center rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-canvas"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={onConfirmar}
-            className="inline-flex h-11 items-center justify-center rounded-lg bg-[#9f2f42] px-4 text-sm font-semibold text-white transition hover:bg-[#7d2434]"
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-danger px-4 text-sm font-semibold text-white transition hover:bg-danger-dark"
           >
             {confirmarLabel}
           </button>

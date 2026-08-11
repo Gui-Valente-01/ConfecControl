@@ -146,7 +146,7 @@ export function VisualizadorAnexo({ anexos, aberto, onFechar, numeroPedido }: Pr
     <dialog
       ref={ref}
       aria-label={`Arte do pedido ${numeroPedido}`}
-      className="m-0 h-dvh max-h-none w-screen max-w-none bg-[#111a16] p-0 text-white backdrop:bg-black/70"
+      className="m-0 h-dvh max-h-none w-screen max-w-none bg-ink p-0 text-white backdrop:bg-black/70"
     >
       <div className="flex h-full flex-col">
         {/* Cabeçalho: o que é, e como sair. */}
@@ -220,7 +220,7 @@ export function VisualizadorAnexo({ anexos, aberto, onFechar, numeroPedido }: Pr
             <iframe
               src={anexo.url}
               title={`PDF do pedido ${numeroPedido}: ${anexo.name}`}
-              className="h-full w-full bg-white"
+              className="h-full w-full bg-surface"
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
@@ -232,7 +232,7 @@ export function VisualizadorAnexo({ anexos, aberto, onFechar, numeroPedido }: Pr
                 target="_blank"
                 rel="noopener"
                 download
-                className="inline-flex h-11 items-center gap-2 rounded-lg bg-white px-4 text-sm font-semibold text-[#111a16]"
+                className="inline-flex h-11 items-center gap-2 rounded-lg bg-surface px-4 text-sm font-semibold text-ink"
               >
                 <Download size={16} aria-hidden="true" />
                 Baixar para abrir no programa de arte

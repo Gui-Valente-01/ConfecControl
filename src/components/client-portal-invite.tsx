@@ -40,18 +40,18 @@ export function ClientPortalInvite({ clientId, hasEmail, portalEnabled, inviteTo
   }
 
   return (
-    <details className="mt-3 rounded-lg border border-[#d9e1dd] bg-[#f8faf9] p-3">
-      <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[#087f7d]">
+    <details className="mt-3 rounded-lg border border-line bg-canvas p-3">
+      <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-primary">
         <LinkIcon size={13} aria-hidden="true" />
         Portal do cliente
       </summary>
 
       <div className="mt-3 space-y-2">
         {!hasEmail ? (
-          <p className="text-xs text-[#9f2f42]">Adicione um e-mail a este cliente (em Editar) para liberar o acesso ao portal.</p>
+          <p className="text-xs text-danger-dark">Adicione um e-mail a este cliente (em Editar) para liberar o acesso ao portal.</p>
         ) : (
           <>
-            <p className="text-xs text-[#63736b]">
+            <p className="text-xs text-muted">
               {portalEnabled && !inviteToken
                 ? "Este cliente já ativou o portal. Gere um novo link só se ele precisar redefinir a senha."
                 : "Gere um link e envie ao cliente (WhatsApp, e-mail). No 1º acesso ele cria a senha."}
@@ -63,12 +63,12 @@ export function ClientPortalInvite({ clientId, hasEmail, portalEnabled, inviteTo
                   readOnly
                   value={link}
                   onFocus={(event) => event.currentTarget.select()}
-                  className="h-9 w-full rounded-lg border border-[#c7d3ce] bg-white px-2 text-xs text-[#405047] outline-none"
+                  className="h-9 w-full rounded-lg border border-line-strong bg-surface px-2 text-xs text-body outline-none"
                 />
                 <button
                   type="button"
                   onClick={copy}
-                  className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-[#c7d3ce] bg-white px-2.5 text-xs font-semibold text-[#405047] transition hover:bg-[#eef4f1]"
+                  className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border border-line-strong bg-surface px-2.5 text-xs font-semibold text-body transition hover:bg-tint"
                 >
                   {copied ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}
                   {copied ? "Copiado" : "Copiar"}
@@ -81,7 +81,7 @@ export function ClientPortalInvite({ clientId, hasEmail, portalEnabled, inviteTo
               <button
                 type="submit"
                 disabled={pending}
-                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#087f7d] px-3 text-xs font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60"
               >
                 <Send size={13} aria-hidden="true" />
                 {pending ? "Gerando..." : inviteToken ? "Gerar novo link" : "Gerar link de acesso"}

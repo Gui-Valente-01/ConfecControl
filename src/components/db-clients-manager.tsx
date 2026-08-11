@@ -62,29 +62,29 @@ export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManag
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <SectionCard eyebrow="Base comercial" title="Cadastro de clientes">
           {clients.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-8 text-center">
-              <Users className="mx-auto text-[#087f7d]" size={28} aria-hidden="true" />
+            <div className="rounded-lg border border-dashed border-line-strong bg-canvas p-8 text-center">
+              <Users className="mx-auto text-primary" size={28} aria-hidden="true" />
               <h3 className="mt-3 font-semibold">Nenhum cliente cadastrado</h3>
-              <p className="mt-2 text-sm text-[#66756d]">Cadastre o primeiro cliente para iniciar os pedidos reais.</p>
+              <p className="mt-2 text-sm text-muted">Cadastre o primeiro cliente para iniciar os pedidos reais.</p>
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {clients.map((client) => {
                 const total = client.orders.reduce((sum, order) => sum + order.totalAmountInCents, 0);
                 return (
-                  <article key={client.id} className="rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm transition hover:border-[#c7d3ce]">
+                  <article key={client.id} className="rounded-lg border border-line bg-surface p-4 shadow-sm transition hover:border-line-strong">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex gap-3">
-                        <div className="flex size-11 items-center justify-center rounded-lg bg-[#e8f6f3] text-[#05605e]">
+                        <div className="flex size-11 items-center justify-center rounded-lg bg-primary-soft text-primary-dark">
                           <Users size={20} aria-hidden="true" />
                         </div>
                         <div>
                           <h3 className="font-semibold">
-                            <Link href={`/clientes/${client.id}`} className="hover:text-[#05605e] hover:underline">
+                            <Link href={`/clientes/${client.id}`} className="hover:text-primary-dark hover:underline">
                               {client.name}
                             </Link>
                           </h3>
-                          <p className="mt-1 text-sm text-[#66756d]">{client.contact || "Contato não informado"}</p>
+                          <p className="mt-1 text-sm text-muted">{client.contact || "Contato não informado"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -107,14 +107,14 @@ export function DbClientsManager({ clients, canEdit, hasPortal }: DbClientsManag
                     </div>
                     <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
                       <p>
-                        <span className="block text-[#63736b]">Pedidos</span>
+                        <span className="block text-muted">Pedidos</span>
                         <strong>{client._count.orders}</strong>
                       </p>
                       <p>
-                        <span className="block text-[#63736b]">Total vendido</span>
+                        <span className="block text-muted">Total vendido</span>
                         <strong>{centsToCurrency(total)}</strong>
                       </p>
-                      <p className="flex items-end gap-2 text-[#405047]">
+                      <p className="flex items-end gap-2 text-body">
                         <Phone size={15} aria-hidden="true" />
                         {client.phone || "(00) 00000-0000"}
                       </p>

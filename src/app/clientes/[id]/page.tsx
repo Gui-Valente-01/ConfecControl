@@ -79,33 +79,33 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
     <SectionCard
       eyebrow={tone === "late" ? "Precisa de atenção" : tone === "open" ? "Em produção" : "Encerrados"}
       title={title}
-      action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{rows.length}</span>}
+      action={<span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{rows.length}</span>}
     >
       {rows.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-5 text-center text-sm text-[#66756d]">{empty}</p>
+        <p className="rounded-lg border border-dashed border-line-strong bg-canvas p-5 text-center text-sm text-muted">{empty}</p>
       ) : (
-        <ul className="divide-y divide-[#eef2ef]">
+        <ul className="divide-y divide-divider">
           {rows.map((order) => {
             const saldo = order.totalAmountInCents - order.paidAmountInCents;
             return (
               <li key={order.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 first:pt-0 last:pb-0">
-                <Link href={`/pedidos/${order.id}`} className="font-mono text-xs font-semibold text-[#05605e] hover:underline">
+                <Link href={`/pedidos/${order.id}`} className="font-mono text-xs font-semibold text-primary-dark hover:underline">
                   #{order.number}
                 </Link>
                 <span className="min-w-0 flex-1 truncate text-sm">
                   {order.items[0]?.description ?? "Pedido"}
-                  {order.items[0] ? <span className="text-[#8a9890]"> · {order.items[0].quantity} un.</span> : null}
+                  {order.items[0] ? <span className="text-soft"> · {order.items[0].quantity} un.</span> : null}
                 </span>
                 <StatusBadge tone={tone === "late" ? "warn" : tone === "done" ? "dark" : "good"}>
                   {orderStatusLabels[order.status]}
                 </StatusBadge>
-                <span className={`text-xs tabular-nums ${tone === "late" ? "font-semibold text-[#9f2f42]" : "text-[#8a9890]"}`}>
+                <span className={`text-xs tabular-nums ${tone === "late" ? "font-semibold text-danger-dark" : "text-soft"}`}>
                   {order.deliveryDate ? formatShortDate(order.deliveryDate) : "sem prazo"}
                 </span>
                 {showMoney ? (
                   <span className="text-sm font-semibold tabular-nums">
                     {centsToCurrency(order.totalAmountInCents)}
-                    {saldo > 0 ? <span className="ml-1 text-xs font-medium text-[#9f2f42]">deve {centsToCurrency(saldo)}</span> : null}
+                    {saldo > 0 ? <span className="ml-1 text-xs font-medium text-danger-dark">deve {centsToCurrency(saldo)}</span> : null}
                   </span>
                 ) : null}
               </li>
@@ -121,7 +121,7 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/clientes"
-          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#d9e1dd] bg-white px-3 text-sm font-semibold text-[#405047] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
+          className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-body shadow-sm transition hover:border-line-strong hover:bg-canvas"
         >
           <ArrowLeft size={15} aria-hidden="true" />
           Voltar para clientes
@@ -131,7 +131,7 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
             href={`https://wa.me/55${client.phone.replace(/\D/g, "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-[#05605e] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#044d4c]"
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark"
           >
             <Phone size={15} aria-hidden="true" />
             Falar no WhatsApp
@@ -142,25 +142,25 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
       <SectionCard eyebrow="Ficha" title="Dados do cliente">
         <div className="grid gap-3 sm:grid-cols-2">
           {contactLines.length === 0 ? (
-            <p className="text-sm text-[#66756d]">Nenhum contato cadastrado.</p>
+            <p className="text-sm text-muted">Nenhum contato cadastrado.</p>
           ) : (
             contactLines.map((line) => {
               const Icon = line.icon;
               return (
-                <p key={line.text} className="flex items-center gap-2 text-sm text-[#405047]">
-                  <Icon size={15} className="shrink-0 text-[#8a9890]" aria-hidden="true" />
+                <p key={line.text} className="flex items-center gap-2 text-sm text-body">
+                  <Icon size={15} className="shrink-0 text-soft" aria-hidden="true" />
                   {line.text}
                 </p>
               );
             })
           )}
           {client.document ? (
-            <p className="text-sm text-[#405047]">
-              <span className="text-[#8a9890]">CPF/CNPJ:</span> {client.document}
+            <p className="text-sm text-body">
+              <span className="text-soft">CPF/CNPJ:</span> {client.document}
             </p>
           ) : null}
         </div>
-        {client.notes ? <p className="mt-3 border-t border-[#eef2ef] pt-3 text-sm text-[#66756d]">{client.notes}</p> : null}
+        {client.notes ? <p className="mt-3 border-t border-divider pt-3 text-sm text-muted">{client.notes}</p> : null}
       </SectionCard>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -194,17 +194,17 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
         <SectionCard
           eyebrow="Financeiro"
           title="Histórico de pagamentos"
-          action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{centsToCurrency(totalPaid)} recebido</span>}
+          action={<span className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{centsToCurrency(totalPaid)} recebido</span>}
         >
           {received.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-5 text-center text-sm text-[#66756d]">
+            <p className="rounded-lg border border-dashed border-line-strong bg-canvas p-5 text-center text-sm text-muted">
               Nenhum pagamento registrado com data ainda.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] border-collapse text-sm">
                 <thead>
-                  <tr className="border-b border-[#e4eae6] text-left text-xs uppercase tracking-[0.08em] text-[#63736b]">
+                  <tr className="border-b border-line text-left text-xs uppercase tracking-[0.08em] text-muted">
                     <th className="py-2 pr-3 font-semibold">Data</th>
                     <th className="py-2 pr-3 font-semibold">Pedido</th>
                     <th className="py-2 pr-3 font-semibold">Forma</th>
@@ -214,16 +214,16 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
                 </thead>
                 <tbody>
                   {received.map((payment) => (
-                    <tr key={payment.id} className="border-b border-[#eef2ef] last:border-0">
-                      <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums text-[#66756d]">
+                    <tr key={payment.id} className="border-b border-divider last:border-0">
+                      <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums text-muted">
                         {payment.paidAt ? formatShortDate(payment.paidAt) : "-"}
                       </td>
                       <td className="py-2.5 pr-3">
-                        <Link href={`/pedidos/${payment.orderId}`} className="font-mono text-xs font-semibold text-[#05605e] hover:underline">
+                        <Link href={`/pedidos/${payment.orderId}`} className="font-mono text-xs font-semibold text-primary-dark hover:underline">
                           #{payment.orderNumber}
                         </Link>
                       </td>
-                      <td className="py-2.5 pr-3 text-[#66756d]">{payment.method ?? "-"}</td>
+                      <td className="py-2.5 pr-3 text-muted">{payment.method ?? "-"}</td>
                       <td className="py-2.5 pr-3">
                         <StatusBadge tone={payment.status === "PAID" ? "good" : "warn"}>
                           {paymentStatusLabels[payment.status]}

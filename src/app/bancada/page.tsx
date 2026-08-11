@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CheckCircle2, Hand, History, LayoutGrid, PackageCheck, Shirt, UserRound } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronDown, Hand, History, LayoutGrid, Shirt } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
@@ -17,7 +17,6 @@ import {
   bancadaNoteLabels,
   orderPriorityBadge,
   orderPriorityLabels,
-  orderStatusLabels,
 } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
@@ -29,7 +28,7 @@ export default async function BancadaPage() {
   const user = await requireRouteUser("/bancada");
   const companyId = user.companyId;
 
-  const [mesas, activeTasks, doneByMesa, recentDone, doneStages, openOrders] = await Promise.all([
+  const [mesas, activeTasks, totalDone, recentDone, doneStages, openOrders] = await Promise.all([
     prisma.mesa.findMany({
       where: { companyId, active: true },
       orderBy: { position: "asc" },
@@ -50,7 +49,7 @@ export default async function BancadaPage() {
         },
       },
     }),
-    prisma.bancadaTask.groupBy({ by: ["mesaId"], where: { companyId, status: "DONE" }, _count: { _all: true } }),
+    prisma.bancadaTask.count({ where: { companyId, status: "DONE" } }),
     prisma.bancadaTask.findMany({
       where: { companyId, status: "DONE" },
       orderBy: { doneAt: "desc" },
@@ -84,12 +83,6 @@ export default async function BancadaPage() {
     (order) => !activeOrderIds.has(order.id) && !doneKeys.has(`${order.id}::${order.currentStage?.name ?? ""}`),
   );
 
-  const mesaNameById = new Map(mesas.map((mesa) => [mesa.id, mesa.name]));
-  const doneCounts = doneByMesa
-    .map((row) => ({ name: row.mesaId ? mesaNameById.get(row.mesaId) ?? "Mesa removida" : "Sem mesa", count: row._count._all }))
-    .sort((a, b) => b.count - a.count);
-  const totalDone = doneCounts.reduce((sum, row) => sum + row.count, 0);
-
   // Forma que a regra de compatibilidade espera, montada uma vez só.
   const mesasComEtapa = mesas.map((mesa) => ({
     id: mesa.id,
@@ -101,166 +94,132 @@ export default async function BancadaPage() {
   const noteOptions = Object.entries(bancadaNoteLabels);
   const canSeeHistory = canSeeBancadaHistory(user.role);
 
+  // "Um por vez": a tela mostra só o que a pessoa está fazendo. A fila de
+  // pedidos e os concluídos ficam recolhidos, para não competir com o trabalho
+  // atual. Se não há nada em andamento, a fila já abre para a pessoa começar.
+  const filaAberta = activeTasks.length === 0 && available.length > 0;
+
   return (
     <AppShell eyebrow="Chão de fábrica" title="Bancada" user={user} search={false}>
       {mesas.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#c7d3ce] bg-[#fff8ec] p-6 text-center">
-          <p className="text-sm font-medium text-[#7b5a0b]">Cadastre suas mesas em Configurações para começar a usar a bancada.</p>
+        <div className="rounded-2xl border border-dashed border-line-strong bg-warning-soft p-6 text-center">
+          <p className="text-sm font-medium text-warning-ink">Cadastre suas mesas em Configurações para começar a usar a bancada.</p>
         </div>
       ) : null}
 
-      {/* Na bancada agora */}
-      <SectionCard
-        eyebrow="Em andamento"
-        title="Na bancada agora"
-        action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{activeTasks.length} em andamento</span>}
-      >
-        {activeTasks.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
-            Nenhum pedido sendo trabalhado. Pegue um pedido na lista abaixo.
+      {/* ===================================================================
+          1) O QUE ESTOU FAZENDO — o herói da tela. Cada pedido em andamento é
+          um card grande, largura cheia no celular: nome grande, o modelo à
+          mão, e um único botão grande "Terminei".
+      =================================================================== */}
+      {activeTasks.length === 0 ? (
+        <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-sm">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-tint text-primary">
+            <Hand size={26} aria-hidden="true" />
           </div>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {activeTasks.map((task) => (
-              <article key={task.id} className="rounded-xl border border-[#d9e1dd] bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-[#e8f6f3] px-2 py-1 text-xs font-semibold text-[#05605e]">
-                    <LayoutGrid size={12} aria-hidden="true" />
-                    {task.mesa?.name ?? "Sem mesa"}
-                  </span>
-                  <span className="font-mono text-xs font-semibold text-[#63736b]">#{task.order.number}</span>
+          <p className="mt-3 text-base font-semibold text-fg">Você não está com nenhum pedido</p>
+          <p className="mt-1 text-sm text-muted">Toque em “Pegar pedido” abaixo para começar a trabalhar.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {activeTasks.map((task) => (
+            <article key={task.id} className="flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-sm">
+              {/* Cliente grande; a mesa fica como etiqueta calma à direita. */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xl font-semibold leading-tight text-fg">{task.order.client.name}</p>
+                  <p className="mt-0.5 text-[15px] text-muted">{task.order.items[0]?.description ?? "Pedido"}</p>
                 </div>
-                <p className="mt-2 text-sm font-semibold">{task.order.client.name}</p>
-                <p className="text-sm text-[#66756d]">{task.order.items[0]?.description ?? "Pedido"}</p>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-[#8a9890]">
-                  <UserRound size={12} aria-hidden="true" />
-                  {task.pickedByName} · pegou {formatDateTime(task.pickedAt)}
-                </p>
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary-soft px-2.5 py-1.5 text-xs font-semibold text-primary-dark">
+                  <LayoutGrid size={13} aria-hidden="true" />
+                  {task.mesa?.name ?? "Sem mesa"}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-faint">
+                #{task.order.number} · {task.pickedByName}, {formatDateTime(task.pickedAt)}
+              </p>
 
-                {/* O modelo fica à mão de quem está produzindo: é o que evita
-                    fazer a peça errada e descobrir só na conferência. */}
-                <div className="mt-3">
-                  <ModeloDoPedido anexos={task.order.attachments} numeroPedido={task.order.number} compacto />
-                  {/* Só em quem está com a mão no trabalho: é o escopo que a
-                      ação do servidor também exige. */}
-                  <FotoDaBancada taskId={task.id} numeroPedido={task.order.number} />
-                  <ChamadoBancada orderId={task.orderId} numeroPedido={task.order.number} />
-                </div>
+              {/* O modelo à mão evita fazer a peça errada; foto e chamado logo abaixo. */}
+              <div className="mt-4">
+                <ModeloDoPedido anexos={task.order.attachments} numeroPedido={task.order.number} compacto />
+                <FotoDaBancada taskId={task.id} numeroPedido={task.order.number} />
+                <ChamadoBancada orderId={task.orderId} numeroPedido={task.order.number} />
+              </div>
 
-                {/* Esta tela é usada em pé, no celular, com a mão ocupada. Os
-                    controles têm 44px de altura (mínimo confortável para o
-                    dedo) e texto de 16px no celular, que é o tamanho abaixo do
-                    qual o iPhone dá zoom sozinho ao tocar no campo. */}
-                <ToastForm action={completeTaskAction} className="mt-3 space-y-2 border-t border-[#eef2ef] pt-3">
+              {/* Ação principal no fim do card, sempre no mesmo lugar. O aviso de
+                  faltou/sobrou fica recolhido: quem só quer terminar vê apenas o
+                  botão grande. Alvos altos e texto 16px (o iPhone não dá zoom). */}
+              <div className="mt-5 border-t border-divider pt-4">
+                <ToastForm action={completeTaskAction} className="space-y-3">
                   <input type="hidden" name="id" value={task.id} />
-                  <div className="flex flex-wrap gap-2">
-                    <select name="noteKind" defaultValue="NONE" className="h-11 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm">
-                      {noteOptions.map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <input
-                      name="note"
-                      placeholder="O que faltou ou sobrou"
-                      className="h-11 min-w-40 flex-1 rounded-lg border border-[#c7d3ce] px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="flex h-12 flex-1 items-center justify-center gap-2 rounded-lg bg-[#087f7d] text-base font-semibold text-white transition hover:bg-[#05605e] sm:h-10 sm:text-sm">
-                      <CheckCircle2 size={18} aria-hidden="true" />
-                      Concluído
-                    </button>
-                  </div>
-                </ToastForm>
-                <ToastForm action={releaseTaskAction} className="mt-1" confirm="Liberar este pedido (desfaz o 'peguei')?">
-                  <input type="hidden" name="id" value={task.id} />
-                  <button className="inline-flex h-11 items-center px-1 text-sm font-semibold text-[#9f2f42] hover:underline sm:h-9">
-                    Liberar pedido
+
+                  <details className="group">
+                    <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-medium text-muted [&::-webkit-details-marker]:hidden">
+                      <ChevronDown size={15} className="transition group-open:rotate-180" aria-hidden="true" />
+                      Faltou ou sobrou peça? (opcional)
+                    </summary>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <select name="noteKind" defaultValue="NONE" className="h-12 rounded-xl border border-line-strong bg-surface px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-11 sm:text-sm">
+                        {noteOptions.map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      <input
+                        name="note"
+                        placeholder="O que faltou ou sobrou"
+                        className="h-12 min-w-40 flex-1 rounded-xl border border-line-strong px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-11 sm:text-sm"
+                      />
+                    </div>
+                  </details>
+
+                  <button className="flex h-20 w-full items-center justify-center gap-3 rounded-2xl bg-primary text-2xl font-bold text-white shadow-sm transition hover:bg-primary-dark">
+                    <CheckCircle2 size={30} aria-hidden="true" />
+                    Terminei
                   </button>
                 </ToastForm>
-              </article>
-            ))}
-          </div>
-        )}
-      </SectionCard>
 
-      {/* Concluídos recentes: o trabalho feito fica visível, não some da tela */}
-      {recentDone.length > 0 ? (
-        <SectionCard
-          eyebrow="Finalizados"
-          title="Concluídos recentemente"
-          action={
-            canSeeHistory ? (
-              <Link
-                href="/bancada/historico"
-                className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-[#d9e1dd] bg-white px-3 text-sm font-semibold text-[#405047] shadow-sm transition hover:border-[#c7d3ce] hover:bg-[#f8faf9]"
-              >
-                <History size={15} aria-hidden="true" />
-                Ver histórico
-              </Link>
-            ) : null
-          }
-        >
-          <ul className="divide-y divide-[#eef2ef]">
-            {recentDone.map((task) => (
-              <li key={task.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 first:pt-0 last:pb-0">
-                <CheckCircle2 size={16} className="shrink-0 text-[#05605e]" aria-hidden="true" />
-                <span className="font-mono text-xs font-semibold text-[#63736b]">#{task.order.number}</span>
-                <span className="text-sm font-semibold">{task.order.client.name}</span>
-                <span className="min-w-0 flex-1 truncate text-sm text-[#66756d]">
-                  {task.order.items[0]?.description ?? "Pedido"}
-                </span>
-                {task.stageName ? (
-                  <span className="rounded-md bg-[#eef4f1] px-2 py-0.5 text-xs font-semibold text-[#405047]">{task.stageName}</span>
-                ) : null}
-                {bancadaNoteBadge[task.noteKind] ? (
-                  <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${bancadaNoteBadge[task.noteKind]}`}>
-                    {bancadaNoteLabels[task.noteKind]}
-                  </span>
-                ) : null}
-                <span className="text-xs text-[#8a9890]">
-                  {task.mesa?.name ?? "Sem mesa"} · {task.pickedByName}
-                  {task.doneAt ? ` · ${formatDateTime(task.doneAt)}` : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </SectionCard>
-      ) : null}
-
-      {/* Contagem por mesa */}
-      {totalDone > 0 ? (
-        <SectionCard eyebrow="Controle" title="Concluídos por mesa" action={<span className="rounded-lg bg-[#eef4f1] px-3 py-2 text-sm font-semibold text-[#405047]">{totalDone} no total</span>}>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {doneCounts.map((row) => (
-              <div key={row.name} className="flex items-center justify-between gap-3 rounded-lg border border-[#d9e1dd] bg-white p-4 shadow-sm">
-                <span className="flex items-center gap-2 text-sm font-medium text-[#405047]">
-                  <PackageCheck size={16} className="text-[#05605e]" aria-hidden="true" />
-                  {row.name}
-                </span>
-                <span className="text-2xl font-semibold">{row.count}</span>
+                <ToastForm action={releaseTaskAction} className="mt-2 text-center" confirm="Liberar este pedido (desfaz o 'peguei')?">
+                  <input type="hidden" name="id" value={task.id} />
+                  <button className="inline-flex h-10 items-center px-3 text-sm font-medium text-danger-dark hover:underline">
+                    Não é comigo — liberar
+                  </button>
+                </ToastForm>
               </div>
-            ))}
-          </div>
-        </SectionCard>
-      ) : null}
+            </article>
+          ))}
+        </div>
+      )}
 
-      {/* Escolher pedido (bem separado, com foto) */}
-      <SectionCard eyebrow="Pegar trabalho" title="Escolher pedido">
-        {available.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[#c7d3ce] bg-[#f8faf9] p-6 text-center text-sm text-[#66756d]">
-            Nenhum pedido disponível para pegar agora.
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {/* ===================================================================
+          2) PEGAR PEDIDO — a fila fica atrás de um botão. Quem está trabalhando
+          não precisa vê-la; quem terminou (ou está sem pedido) abre e escolhe.
+      =================================================================== */}
+      {available.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line-strong bg-canvas px-4 py-5 text-center text-sm text-muted">
+          Nenhum pedido na fila para pegar agora.
+        </p>
+      ) : (
+        <details className="group" open={filaAberta}>
+          <summary className="flex h-14 cursor-pointer list-none items-center justify-between rounded-2xl bg-ink px-5 text-white transition hover:bg-[#05100b] [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2.5 text-lg font-semibold">
+              <Hand size={20} aria-hidden="true" />
+              Pegar pedido
+            </span>
+            <span className="flex items-center gap-2.5">
+              <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-sm font-semibold">{available.length} na fila</span>
+              <ChevronDown size={20} className="transition group-open:rotate-180" aria-hidden="true" />
+            </span>
+          </summary>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {available.map((order) => {
               const foto = primeiraImagem(order.attachments);
               const firstItem = order.items[0];
               const extra = order.items.length - 1;
               const mesasParaOPedido = mesasCompativeis(mesasComEtapa, order.currentStageId);
               return (
-                <article key={order.id} className="overflow-hidden rounded-xl border border-[#d9e1dd] bg-white shadow-sm">
-                  <div className="flex h-44 items-center justify-center bg-[#f0f3f1]">
+                <article key={order.id} className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+                  <div className="relative flex h-40 items-center justify-center bg-tint">
                     {foto ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -269,39 +228,34 @@ export default async function BancadaPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <Shirt size={40} className="text-[#b6c2bb]" aria-hidden="true" />
+                      <Shirt size={40} className="text-faint" aria-hidden="true" />
                     )}
+                    {order.priority === "URGENT" || order.priority === "HIGH" ? (
+                      <span className={`absolute left-2 top-2 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${orderPriorityBadge[order.priority]}`}>
+                        {orderPriorityLabels[order.priority]}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="p-4">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-sm font-semibold text-[#405047]">#{order.number}</span>
-                      <div className="flex items-center gap-1.5">
-                        {order.priority === "URGENT" || order.priority === "HIGH" ? (
-                          <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${orderPriorityBadge[order.priority]}`}>
-                            {orderPriorityLabels[order.priority]}
-                          </span>
-                        ) : null}
-                        <span className="rounded-md bg-[#eef4f1] px-2 py-0.5 text-xs font-semibold text-[#405047]">{orderStatusLabels[order.status]}</span>
-                      </div>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="min-w-0 truncate font-semibold text-fg">{order.client.name}</p>
+                      <span className="shrink-0 font-mono text-xs font-semibold text-soft">#{order.number}</span>
                     </div>
-                    <p className="mt-1.5 font-semibold">{order.client.name}</p>
-                    <p className="text-sm text-[#66756d]">
+                    <p className="mt-0.5 text-sm text-muted">
                       {firstItem ? `${firstItem.description} (${firstItem.quantity} un.)` : "Sem item"}
-                      {extra > 0 ? <span className="text-[#9aa8a0]"> +{extra}</span> : null}
+                      {extra > 0 ? <span className="text-faint"> +{extra}</span> : null}
                     </p>
-                    <p className="mt-1 text-xs text-[#8a9890]">Entrega: {formatShortDate(order.deliveryDate)}</p>
+                    <p className="mt-1 text-xs text-soft">Entrega: {formatShortDate(order.deliveryDate)}</p>
 
-                    {/* Arte em PDF ou .cdr não aparece na foto acima: aqui ela
-                        vira um item que dá para abrir ou baixar. */}
+                    {/* Arte em PDF/.cdr não vira miniatura acima: aqui abre ou baixa. */}
                     <div className="mt-2">
                       <ModeloDoPedido anexos={order.attachments} numeroPedido={order.number} compacto />
                     </div>
 
-                    {/* Só as mesas que atendem a etapa deste pedido. Mostrar
-                        as outras e recusar depois seria fazer a pessoa errar
-                        primeiro para só então explicar. */}
+                    {/* Só as mesas que atendem a etapa deste pedido: mostrar as
+                        outras e recusar depois seria fazer a pessoa errar antes. */}
                     {mesasParaOPedido.length === 0 ? (
-                      <p className="mt-3 flex items-start gap-2 rounded-lg border border-[#ead49c] bg-[#fffcf3] px-2.5 py-2 text-xs leading-5 text-[#7b5a0b]">
+                      <p className="mt-3 flex items-start gap-2 rounded-xl border border-warning-line bg-warning-soft px-2.5 py-2 text-xs leading-5 text-warning-ink">
                         <AlertTriangle size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
                         <span>
                           Nenhuma mesa atende a etapa <strong>{order.currentStage?.name ?? "atual"}</strong> deste
@@ -309,14 +263,14 @@ export default async function BancadaPage() {
                         </span>
                       </p>
                     ) : (
-                      <ToastForm action={pickOrderAction} className="mt-3 flex flex-wrap gap-2 border-t border-[#eef2ef] pt-3">
+                      <ToastForm action={pickOrderAction} className="mt-3 flex flex-wrap gap-2 border-t border-divider pt-3">
                         <input type="hidden" name="orderId" value={order.id} />
                         <select
                           name="mesaId"
                           required
                           defaultValue=""
                           aria-label={`Mesa para o pedido ${order.number}`}
-                          className="h-12 min-w-28 flex-1 rounded-lg border border-[#c7d3ce] bg-white px-2 text-base outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4 sm:h-10 sm:text-sm"
+                          className="h-12 min-w-28 flex-1 rounded-xl border border-line-strong bg-surface px-3 text-base outline-none ring-primary/20 transition focus:border-primary focus:ring-4 sm:h-11 sm:text-sm"
                         >
                           <option value="" disabled>Mesa...</option>
                           {mesasParaOPedido.map((mesa) => (
@@ -325,7 +279,7 @@ export default async function BancadaPage() {
                         </select>
                         <button
                           aria-label={`Pegar o pedido ${order.number}`}
-                          className="inline-flex h-12 items-center gap-2 rounded-lg bg-[#111a16] px-5 text-base font-semibold text-white transition hover:bg-[#05100b] sm:h-10 sm:px-4 sm:text-sm"
+                          className="inline-flex h-12 items-center gap-2 rounded-xl bg-primary px-5 text-base font-semibold text-white transition hover:bg-primary-dark sm:h-11 sm:px-4"
                         >
                           <Hand size={18} aria-hidden="true" />
                           Pegar
@@ -337,8 +291,60 @@ export default async function BancadaPage() {
               );
             })}
           </div>
-        )}
-      </SectionCard>
+        </details>
+      )}
+
+      {/* ===================================================================
+          3) CONCLUÍDOS — recolhido no rodapé. O detalhamento por mesa e por
+          pessoa vive no Histórico (só gestão); aqui basta os últimos + o total.
+      =================================================================== */}
+      {recentDone.length > 0 ? (
+        <details className="group rounded-2xl border border-line bg-surface shadow-sm">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-sm font-semibold text-body">
+              <CheckCircle2 size={16} className="text-primary-dark" aria-hidden="true" />
+              Concluídos recentemente
+            </span>
+            <span className="flex items-center gap-2">
+              <span className="rounded-lg bg-tint px-2.5 py-1 text-xs font-semibold text-body">{totalDone} no total</span>
+              <ChevronDown size={16} className="text-soft transition group-open:rotate-180" aria-hidden="true" />
+            </span>
+          </summary>
+
+          <div className="border-t border-divider px-5 py-3">
+            <ul className="divide-y divide-divider">
+              {recentDone.map((task) => (
+                <li key={task.id} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-3 first:pt-0 last:pb-0">
+                  <span className="font-mono text-xs font-semibold text-muted">#{task.order.number}</span>
+                  <span className="text-sm font-semibold">{task.order.client.name}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted">
+                    {task.order.items[0]?.description ?? "Pedido"}
+                  </span>
+                  {bancadaNoteBadge[task.noteKind] ? (
+                    <span className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${bancadaNoteBadge[task.noteKind]}`}>
+                      {bancadaNoteLabels[task.noteKind]}
+                    </span>
+                  ) : null}
+                  <span className="text-xs text-soft">
+                    {task.mesa?.name ?? "Sem mesa"} · {task.pickedByName}
+                    {task.doneAt ? ` · ${formatDateTime(task.doneAt)}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {canSeeHistory ? (
+              <Link
+                href="/bancada/historico"
+                className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-body shadow-sm transition hover:border-line-strong hover:bg-canvas"
+              >
+                <History size={15} aria-hidden="true" />
+                Ver histórico completo
+              </Link>
+            ) : null}
+          </div>
+        </details>
+      ) : null}
     </AppShell>
   );
 }

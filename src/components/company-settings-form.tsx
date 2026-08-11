@@ -32,17 +32,17 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
     <form className="space-y-3" action={formAction}>
       {fields.map(([name, label, defaultValue]) => (
         <label key={name} className="block">
-          <span className="text-sm font-medium text-[#405047]">{label}</span>
+          <span className="text-sm font-medium text-body">{label}</span>
           <input
-            className="mt-1 h-10 w-full rounded-lg border border-[#c7d3ce] px-3 text-sm outline-none ring-[#087f7d]/20 transition focus:border-[#087f7d] focus:ring-4"
+            className="mt-1 h-10 w-full rounded-lg border border-line-strong px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
             name={name}
             defaultValue={defaultValue}
             required={name === "name"}
           />
         </label>
       ))}
-      {state.error ? <p className="rounded-lg bg-[#fff0f2] px-3 py-2 text-sm font-medium text-[#9f2f42]">{state.error}</p> : null}
-      <SubmitButton className="flex h-10 w-full items-center justify-center rounded-lg bg-[#087f7d] px-4 text-sm font-semibold text-white transition hover:bg-[#05605e] disabled:opacity-60">
+      {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
+      <SubmitButton className="flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-dark disabled:opacity-60">
         Salvar dados
       </SubmitButton>
     </form>
