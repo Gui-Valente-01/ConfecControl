@@ -121,17 +121,21 @@
   --color-soft: #8b978f;
   --color-faint: #7f8c84;
 
-  /* Marca: um verde bem mais aberto, que o fundo escuro nao engole */
-  --color-primary: #23b3af;
-  --color-primary-dark: #35c9c4;
+  /* A marca continua a marca: o verde do preenchimento e o mesmo do tema
+     claro, com texto branco por cima (contraste 4,8). Clarear o verde aqui
+     mudava a cara do sistema, e ainda obrigava a inverter o texto do botao
+     para escuro -- dois preços altos para resolver um problema que so existe
+     quando o verde e TEXTO, e nao fundo. Isso e tratado logo abaixo. */
+  --color-primary: #087f7d;
+  --color-primary-dark: #066b69;
   --color-primary-soft: #12332f;
 
-  /* Estados: o tom "dark" vira o mais claro, porque no escuro ele e texto */
-  --color-danger: #e8677d;
-  --color-danger-dark: #f0899d;
+  /* Mesma ideia no vermelho: preenchimento na cor da marca, texto branco. */
+  --color-danger: #c43f54;
+  --color-danger-dark: #9f2f42;
   --color-danger-soft: #3a2027;
   --color-danger-line: #5c2f39;
-  --color-warning: #d9a03a;
+  --color-warning: #c88a2b;
   --color-warning-ink: #e8c26a;
   --color-warning-soft: #33280f;
   --color-warning-line: #55471f;
@@ -148,16 +152,21 @@
   --cc-shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* No escuro o preenchimento da marca e o do perigo ficam CLAROS. Texto branco
-   por cima deles nao alcanca o contraste minimo de leitura (fica em 3,4 quando
-   o exigido e 4,5), entao quem esta por cima passa a ser escuro. E o mesmo par
-   que a pilula clara do menu ja usa: fundo claro, letra escura.
+/* A mesma cor tem dois trabalhos, e no escuro eles pedem tons diferentes.
+   Como FUNDO, o verde da marca funciona igual ao tema claro. Como TEXTO sobre
+   fundo escuro, ele afunda: #087f7d num cartao escuro da 3,4 de contraste,
+   abaixo do minimo de leitura.
 
-   Duas classes no seletor para vencer o text-white que vem da tela, sem
-   precisar mexer nos 92 lugares que escrevem "text-white" na mao. */
-:root[data-theme="dark"] .bg-primary.text-white,
-:root[data-theme="dark"] .bg-danger.text-white {
-  color: #06211f;
+   Entao so o uso como texto e clareado. O preenchimento fica intacto, e o
+   botao continua verde da marca com letra branca, como no tema claro. */
+:root[data-theme="dark"] .text-primary,
+:root[data-theme="dark"] .text-primary-dark {
+  color: #4fd0cb;
+}
+
+:root[data-theme="dark"] .text-danger,
+:root[data-theme="dark"] .text-danger-dark {
+  color: #f0899d;
 }
 
 /* A folha impressa e sempre clara, mesmo com o sistema no escuro: senao o
