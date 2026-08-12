@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // O host do Storage vem da própria variável de ambiente, e não escrito à mão:
 // cada instalação aponta para o seu projeto no Supabase, e um host fixo aqui
@@ -49,4 +50,30 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// O empacotamento do monitoramento só entra quando as credenciais existem.
+//
+// Sem esta condição, o build passaria a exigir a conta do Sentry para
+// funcionar: quem clonar o projeto, e o próprio deploy antes de a conta
+// existir, quebrariam por falta de uma variável. Com ela, o sistema roda igual
+// sem monitoramento e ganha o envio dos mapas de código assim que as chaves
+// forem cadastradas no painel do Vercel.
+const credenciaisDoMonitoramento =
+  process.env.SENTRY_ORG && process.env.SENTRY_PROJECT && process.env.SENTRY_AUTH_TOKEN;
+
+export default credenciaisDoMonitoramento
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      silent: true,
+      // Sem os mapas, o erro chega como uma linha de código embaralhado. Eles
+      // são enviados e apagados do pacote público: quem abrir o site não
+      // consegue ler o código-fonte do sistema.
+      widenClientFileUpload: true,
+      sourcemaps: { deleteSourcemapsAfterUpload: true },
+      // O bloqueador de anúncio do navegador derruba chamada para domínio de
+      // monitoramento. Passando pelo próprio site, o aviso chega mesmo assim.
+      tunnelRoute: "/monitoring",
+      disableLogger: true,
+    })
+  : nextConfig;

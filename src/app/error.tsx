@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { Home, RotateCcw, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
+    // Esta é a tela que a pessoa vê quando algo quebra. Sem o aviso daqui, o
+    // erro morre no aparelho dela e a única pista que sobra é o telefonema.
+    Sentry.captureException(error);
     console.error(error);
   }, [error]);
 

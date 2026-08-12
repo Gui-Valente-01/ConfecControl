@@ -55,3 +55,7 @@ backup-pagamentos-producao.json
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# O arquivo de exemplo e a documentacao das variaveis: ele PRECISA ir para
+# o Git. So tem nome de variavel e valor de mentira -- nenhum segredo.
+!.env.example
