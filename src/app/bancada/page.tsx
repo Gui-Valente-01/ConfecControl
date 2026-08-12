@@ -11,7 +11,7 @@ import { FotoDaBancada } from "@/components/foto-da-bancada";
 import { ModeloDoPedido } from "@/components/modelo-do-pedido";
 import { primeiraImagem } from "@/lib/anexos";
 import { mesasCompativeis } from "@/lib/mesa-rules";
-import { canSeeBancadaHistory } from "@/lib/roles";
+import { canSeeBancadaHistory, seesAllBancadaWork } from "@/lib/roles";
 import {
   bancadaNoteBadge,
   bancadaNoteLabels,
@@ -94,10 +94,20 @@ export default async function BancadaPage() {
   const noteOptions = Object.entries(bancadaNoteLabels);
   const canSeeHistory = canSeeBancadaHistory(user.role);
 
+  // Quem produz vê em destaque só a própria peça: com a mão ocupada, o card do
+  // colega no meio do caminho é o que faz concluir o pedido errado. O trabalho
+  // dos outros continua na tela, mas como lista curta de acompanhamento.
+  //
+  // Quem coordena continua vendo tudo em destaque: para ele a pergunta é
+  // justamente o que está em cada mesa agora.
+  const veTudo = seesAllBancadaWork(user.role);
+  const minhasTarefas = veTudo ? activeTasks : activeTasks.filter((task) => task.pickedById === user.id);
+  const tarefasDosColegas = veTudo ? [] : activeTasks.filter((task) => task.pickedById !== user.id);
+
   // "Um por vez": a tela mostra só o que a pessoa está fazendo. A fila de
   // pedidos e os concluídos ficam recolhidos, para não competir com o trabalho
   // atual. Se não há nada em andamento, a fila já abre para a pessoa começar.
-  const filaAberta = activeTasks.length === 0 && available.length > 0;
+  const filaAberta = minhasTarefas.length === 0 && available.length > 0;
 
   return (
     <AppShell eyebrow="Chão de fábrica" title="Bancada" user={user} search={false}>
@@ -112,7 +122,7 @@ export default async function BancadaPage() {
           um card grande, largura cheia no celular: nome grande, o modelo à
           mão, e um único botão grande "Terminei".
       =================================================================== */}
-      {activeTasks.length === 0 ? (
+      {minhasTarefas.length === 0 ? (
         <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-sm">
           <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-tint text-primary">
             <Hand size={26} aria-hidden="true" />
@@ -122,7 +132,7 @@ export default async function BancadaPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {activeTasks.map((task) => (
+          {minhasTarefas.map((task) => (
             <article key={task.id} className="flex flex-col rounded-2xl border border-line bg-surface p-5 shadow-sm">
               {/* Cliente grande; a mesa fica como etiqueta calma à direita. */}
               <div className="flex items-start justify-between gap-3">
@@ -189,6 +199,29 @@ export default async function BancadaPage() {
           ))}
         </div>
       )}
+
+      {/* Só para quem produz: o que os colegas estão fazendo, como lista curta.
+          Serve para saber que a peça já tem dono — não tem botão, porque o
+          trabalho é de outra pessoa. */}
+      {tarefasDosColegas.length > 0 ? (
+        <div className="rounded-2xl border border-line bg-canvas px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">Nas outras mesas</p>
+          <ul className="mt-2 divide-y divide-divider">
+            {tarefasDosColegas.map((task) => (
+              <li key={task.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 py-2 text-sm first:pt-0 last:pb-0">
+                <span className="inline-flex items-center gap-1.5 rounded-md bg-tint px-2 py-0.5 text-xs font-semibold text-body">
+                  <LayoutGrid size={11} aria-hidden="true" />
+                  {task.mesa?.name ?? "Sem mesa"}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-muted">
+                  #{task.order.number} · {task.order.client.name}
+                </span>
+                <span className="text-xs text-soft">{task.pickedByName}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {/* ===================================================================
           2) PEGAR PEDIDO — a fila fica atrás de um botão. Quem está trabalhando

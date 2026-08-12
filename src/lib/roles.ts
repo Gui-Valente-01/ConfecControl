@@ -69,3 +69,10 @@ export function canManageProduction(role: UserRole) {
 export function canSeeBancadaHistory(role: UserRole) {
   return role === "ADMIN" || role === "MANAGER";
 }
+
+// Na bancada, quem coordena precisa ver o que está em cada mesa. Quem está
+// produzindo precisa é da própria peça: para ele o trabalho dos colegas vira
+// uma lista curta de acompanhamento, e o destaque fica no que é dele.
+export function seesAllBancadaWork(role: UserRole) {
+  return role !== "PRODUCTION";
+}
