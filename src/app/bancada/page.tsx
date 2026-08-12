@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronDown, Hand, History, LayoutGrid, Shirt } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
-import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
 import { completeTaskAction, pickOrderAction, releaseTaskAction } from "@/app/bancada/actions";
 import { requireRouteUser } from "@/lib/auth";

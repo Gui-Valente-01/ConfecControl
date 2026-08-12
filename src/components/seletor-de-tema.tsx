@@ -1,7 +1,7 @@
 "use client";
 
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { TEMA_CHAVE, TEMA_EVENTO, temaBarra, temaOpcoes, type Tema } from "@/lib/tema";
 
 const ICONE: Record<Tema, typeof Sun> = {
@@ -9,6 +9,37 @@ const ICONE: Record<Tema, typeof Sun> = {
   light: Sun,
   dark: Moon,
 };
+
+// ---- A escolha de tema como fonte externa ao React --------------------------
+// Fora do componente de propósito: as três funções não dependem de nada dele, e
+// declará-las aqui garante a mesma referência a cada desenho -- o que o
+// useSyncExternalStore exige para não reassinar o evento sem parar.
+
+function assinarTema(aoMudar: () => void) {
+  // O evento próprio cobre a troca nesta aba (há mais de um seletor na tela);
+  // o "storage" cobre a troca feita em outra aba do sistema.
+  window.addEventListener(TEMA_EVENTO, aoMudar);
+  window.addEventListener("storage", aoMudar);
+  return () => {
+    window.removeEventListener(TEMA_EVENTO, aoMudar);
+    window.removeEventListener("storage", aoMudar);
+  };
+}
+
+function lerTema(): Tema {
+  try {
+    return (localStorage.getItem(TEMA_CHAVE) as Tema | null) ?? "auto";
+  } catch {
+    return "auto";
+  }
+}
+
+// O servidor não tem como saber a escolha de quem vai abrir a página. Devolve o
+// padrão; se a pessoa tiver escolhido outra coisa, o React corrige sozinho ao
+// hidratar. O tema em si não pisca: quem já resolveu isso é o script do layout.
+function lerTemaNoServidor(): Tema {
+  return "auto";
+}
 
 // Escreve o tema já resolvido no <html>. É o mesmo que o script do layout faz
 // no carregamento; aqui vale para quando a pessoa troca com a tela aberta.
@@ -46,14 +77,16 @@ const ESTILO: Record<Tom, { rotulo: string; caixa: string; inativo: string }> = 
 
 export function SeletorDeTema({ tom = "escuro" }: { tom?: Tom } = {}) {
   const estilo = ESTILO[tom];
-  // Começa em null para não desenhar a opção errada: o valor real está no
-  // navegador, e o servidor não tem como saber qual é.
-  const [tema, setTema] = useState<Tema | null>(null);
+  // A escolha mora no navegador, não no React: é o localStorage quem sabe.
+  // useSyncExternalStore é a forma de ler isso sem copiar o valor para dentro
+  // de um useState -- cópia que sai de sincronia quando o seletor aparece em
+  // dois lugares da tela, ou quando a pessoa troca o tema em outra aba.
+  const tema = useSyncExternalStore(assinarTema, lerTema, lerTemaNoServidor);
 
+  // Escreve a escolha no <html>. Roda também quando ela vem de outra aba.
   useEffect(() => {
-    const salvo = localStorage.getItem(TEMA_CHAVE) as Tema | null;
-    setTema(salvo ?? "auto");
-  }, []);
+    aplicar(tema);
+  }, [tema]);
 
   // No automático, seguir o aparelho em tempo real: quem usa o modo noturno
   // por horário veria a tela trocar sozinha ao anoitecer, sem recarregar.
@@ -65,32 +98,16 @@ export function SeletorDeTema({ tom = "escuro" }: { tom?: Tom } = {}) {
     return () => consulta.removeEventListener("change", aoMudar);
   }, [tema]);
 
-  // Mantem os seletores da tela mostrando a mesma opcao, e acompanha a troca
-  // feita em outra aba do sistema.
-  useEffect(() => {
-    const aoTrocar = (evento: Event) => {
-      const novo = (evento as CustomEvent<Tema>).detail;
-      if (novo) setTema(novo);
-    };
-    const aoTrocarEmOutraAba = (evento: StorageEvent) => {
-      if (evento.key !== TEMA_CHAVE) return;
-      const novo = (evento.newValue as Tema | null) ?? "auto";
-      setTema(novo);
-      aplicar(novo);
-    };
-    window.addEventListener(TEMA_EVENTO, aoTrocar);
-    window.addEventListener("storage", aoTrocarEmOutraAba);
-    return () => {
-      window.removeEventListener(TEMA_EVENTO, aoTrocar);
-      window.removeEventListener("storage", aoTrocarEmOutraAba);
-    };
-  }, []);
-
+  // Só grava e avisa: quem redesenha a tela é o useSyncExternalStore acima,
+  // em todos os seletores de uma vez.
   const escolher = (novo: Tema) => {
-    setTema(novo);
-    localStorage.setItem(TEMA_CHAVE, novo);
-    aplicar(novo);
-    window.dispatchEvent(new CustomEvent<Tema>(TEMA_EVENTO, { detail: novo }));
+    try {
+      localStorage.setItem(TEMA_CHAVE, novo);
+    } catch {
+      // Navegador sem armazenamento (aba anônima com restrição): o tema ainda
+      // vale para esta sessão, só não sobrevive ao recarregar.
+    }
+    window.dispatchEvent(new Event(TEMA_EVENTO));
   };
 
   // No menu o seletor e so tres icones lado a lado: ali o espaco e do nome da
