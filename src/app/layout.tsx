@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/toast";
 import { PwaRegister } from "@/components/pwa-register";
+import { siteUrl } from "@/lib/site";
 import { scriptDoTema } from "@/lib/tema";
 import "./globals.css";
 
@@ -15,15 +16,50 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const descricao =
+  "Sistema de gestão para confecção: pedidos, produção por etapa, estoque de peças e cobrança em um lugar só, do corte à entrega.";
+
 export const metadata: Metadata = {
-  title: "ConfecControl",
-  description:
-    "Pedidos, produção, estoque de peças e cobranças da sua confecção em um lugar só, do corte à entrega.",
+  // Endereço absoluto de todo link gerado nesta página. Sem ele o Next monta as
+  // tags de compartilhamento com "localhost", e o link colado no WhatsApp
+  // aparece sem título e sem imagem.
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "ConfecControl — Sistema de gestão para confecção",
+    // As telas de dentro passam só o próprio nome e o Next completa o resto.
+    template: "%s · ConfecControl",
+  },
+  description: descricao,
   applicationName: "ConfecControl",
+  // Como o dono da confecção procura no Google. São os termos que os
+  // concorrentes disputam; sem eles a página não concorre por nenhum.
+  keywords: [
+    "sistema para confecção",
+    "controle de produção confecção",
+    "sistema para facção",
+    "software para estamparia",
+    "gestão de pedidos confecção",
+    "controle de pedidos costura",
+  ],
   appleWebApp: {
     capable: true,
     title: "ConfecControl",
     statusBarStyle: "default",
+  },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "ConfecControl",
+    title: "ConfecControl — Sistema de gestão para confecção",
+    description: descricao,
+    url: siteUrl,
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "ConfecControl" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ConfecControl — Sistema de gestão para confecção",
+    description: descricao,
+    images: ["/og.png"],
   },
   icons: {
     icon: [

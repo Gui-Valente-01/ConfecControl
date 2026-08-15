@@ -7,8 +7,10 @@ import {
   gargalo,
   lerDias,
   lerPontualidade,
+  pedidosParados,
   resumirProblemas,
   type MovimentoEtapa,
+  type PedidoEmAndamento,
 } from "@/lib/producao-analytics";
 
 const dia = (d: number, h = 8) => new Date(2026, 7, d, h, 0, 0);
@@ -225,5 +227,66 @@ describe("lerPontualidade", () => {
 
   it("sem entrega nao julga nada", () => {
     expect(lerPontualidade(null)).toContain("nenhuma entrega");
+  });
+});
+
+describe("pedidosParados", () => {
+  const agora = dia(20);
+  const pedido = (over: Partial<PedidoEmAndamento> = {}): PedidoEmAndamento => ({
+    numero: 1,
+    cliente: "Malharia Duas Irmãs",
+    etapa: "Costura",
+    ultimaMudanca: dia(19),
+    entrouEm: dia(1),
+    ...over,
+  });
+
+  it("pega o pedido parado alem do limite e ignora o que andou ontem", () => {
+    const r = pedidosParados(
+      [
+        pedido({ numero: 1, ultimaMudanca: dia(19) }),
+        pedido({ numero: 2, ultimaMudanca: dia(5) }),
+      ],
+      7,
+      agora,
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0].numero).toBe(2);
+    expect(r[0].diasParado).toBe(15);
+  });
+
+  it("conta da entrada quando o pedido nunca mudou de etapa", () => {
+    const r = pedidosParados([pedido({ ultimaMudanca: null, entrouEm: dia(2) })], 7, agora);
+    expect(r[0].nuncaMoveu).toBe(true);
+    expect(r[0].diasParado).toBe(18);
+  });
+
+  it("ordena do mais esquecido para o menos", () => {
+    const r = pedidosParados(
+      [
+        pedido({ numero: 1, ultimaMudanca: dia(10) }),
+        pedido({ numero: 2, ultimaMudanca: dia(2) }),
+        pedido({ numero: 3, ultimaMudanca: dia(6) }),
+      ],
+      7,
+      agora,
+    );
+    expect(r.map((p) => p.numero)).toEqual([2, 3, 1]);
+  });
+
+  it("pedido sem etapa aparece nomeado, e nao em branco", () => {
+    const r = pedidosParados([pedido({ etapa: null, ultimaMudanca: dia(1) })], 7, agora);
+    expect(r[0].etapa).toBe("Sem etapa");
+  });
+
+  it("data no futuro nao vira pedido parado ha dias negativos", () => {
+    const r = pedidosParados([pedido({ ultimaMudanca: dia(25) })], 7, agora);
+    expect(r).toHaveLength(0);
+  });
+
+  it("exatamente no limite ja conta: quem espera mais um dia perde o pedido", () => {
+    const r = pedidosParados([pedido({ ultimaMudanca: dia(13) })], 7, agora);
+    expect(r).toHaveLength(1);
+    expect(r[0].diasParado).toBe(7);
   });
 });

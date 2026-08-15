@@ -181,6 +181,69 @@ export function calcularTempoTotal(
 }
 
 // ---------------------------------------------------------------------------
+// Pedido parado: o que ninguém tocou
+// ---------------------------------------------------------------------------
+
+export type PedidoEmAndamento = {
+  numero: number;
+  cliente: string;
+  /** Etapa em que o pedido está agora. */
+  etapa: string | null;
+  /** Última vez que mudou de etapa. Null quando nunca saiu de onde entrou. */
+  ultimaMudanca: Date | null;
+  /** Data de entrada no sistema, usada quando o pedido nunca mudou de etapa. */
+  entrouEm: Date;
+};
+
+export type PedidoParado = {
+  numero: number;
+  cliente: string;
+  etapa: string;
+  diasParado: number;
+  /** Nunca saiu da etapa inicial: costuma ser pedido esquecido na entrada. */
+  nuncaMoveu: boolean;
+};
+
+/** Dias sem tocar num pedido antes de ele virar aviso. */
+export const DIAS_PARA_PEDIDO_PARADO = 7;
+
+/**
+ * Pedidos que estão há dias na mesma etapa.
+ *
+ * Diferente de "atrasado": o atraso só aparece quando o prazo já passou, e
+ * quem descobre nessa hora descobre tarde. Este aqui pega o pedido que parou
+ * ANTES de o prazo estourar — e pega também o que nem prazo tem, que hoje
+ * simplesmente some da vista de todo mundo.
+ *
+ * A referência é a última mudança de etapa; quem nunca mudou conta a partir da
+ * entrada, senão o pedido esquecido no dia em que foi lançado nunca apareceria.
+ */
+export function pedidosParados(
+  pedidos: PedidoEmAndamento[],
+  limiteDias: number = DIAS_PARA_PEDIDO_PARADO,
+  agora: Date = new Date(),
+): PedidoParado[] {
+  const parados: PedidoParado[] = [];
+
+  for (const pedido of pedidos) {
+    const referencia = pedido.ultimaMudanca ?? pedido.entrouEm;
+    const dias = emDias(referencia, agora);
+    // Data no futuro (relógio da máquina errado) sairia como parado há -3 dias.
+    if (dias < limiteDias) continue;
+
+    parados.push({
+      numero: pedido.numero,
+      cliente: pedido.cliente,
+      etapa: pedido.etapa ?? "Sem etapa",
+      diasParado: Math.floor(dias),
+      nuncaMoveu: pedido.ultimaMudanca === null,
+    });
+  }
+
+  return parados.sort((a, b) => b.diasParado - a.diasParado);
+}
+
+// ---------------------------------------------------------------------------
 // Produtividade da bancada
 // ---------------------------------------------------------------------------
 

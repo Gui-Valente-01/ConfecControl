@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookOpen, Factory, Mail, MessageCircle } from "lucide-react";
@@ -6,6 +7,11 @@ import { getSessionUser } from "@/lib/auth";
 import { formatPhone, resolveSupportContact } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Entrar",
+  description: "Acesse a conta da sua confecção no ConfecControl.",
+};
 
 export default async function LoginPage() {
   const user = await getSessionUser();

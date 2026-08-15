@@ -2,11 +2,12 @@ import Link from "next/link";
 import {
   Check,
   CreditCard,
-  Factory,
   MessageCircle,
   Printer,
   Ruler,
 } from "lucide-react";
+import { BotaoDemo } from "./botao-demo";
+import { LandingFooter, LandingHeader, PrimaryCta } from "./landing-chrome";
 import { MiniBoard, MiniChat, MiniFinance, MiniPhone, MiniStock } from "./landing-previews";
 import { Reveal } from "./reveal";
 
@@ -63,57 +64,10 @@ const faqs = [
   },
 ];
 
-function Logo() {
-  return (
-    <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-white">
-        <Factory size={18} aria-hidden="true" />
-      </span>
-      <span className="text-lg font-semibold tracking-tight text-fg">ConfecControl</span>
-    </Link>
-  );
-}
-
-function PrimaryCta({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/cadastro"
-      className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark active:scale-[0.98] ${className ?? ""}`}
-    >
-      Criar minha conta
-    </Link>
-  );
-}
-
 export function LandingPage() {
   return (
     <div className="bg-shell text-fg">
-      {/* Navegação */}
-      <header className="sticky top-0 z-40 border-b border-line bg-shell/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:px-8">
-          <Logo />
-          <nav className="hidden items-center gap-7 text-sm font-medium text-body md:flex" aria-label="Seções da página">
-            <a href="#funcionalidades" className="transition hover:text-primary">Funcionalidades</a>
-            <a href="#como-funciona" className="transition hover:text-primary">Como funciona</a>
-            <a href="#perguntas" className="transition hover:text-primary">Perguntas</a>
-          </nav>
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/login"
-              className="inline-flex h-10 items-center rounded-lg border border-line-strong bg-surface px-4 text-sm font-semibold text-body transition hover:bg-canvas"
-            >
-              Entrar
-            </Link>
-            {/* Quem esconde é o container, e não uma classe passada ao botão:
-                o PrimaryCta já traz "inline-flex" embutido, e as duas regras de
-                display brigavam — o botão continuava aparecendo em tela estreita
-                e empurrava o cabeçalho para fora. */}
-            <span className="hidden sm:inline-flex">
-              <PrimaryCta className="h-10" />
-            </span>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main>
         {/* Hero */}
@@ -127,6 +81,7 @@ export function LandingPage() {
             </p>
             <div className="lp-hero-item mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "220ms" }}>
               <PrimaryCta />
+              <BotaoDemo />
               <Link
                 href="/login"
                 className="inline-flex h-11 items-center rounded-lg border border-line-strong bg-surface px-5 text-sm font-semibold text-body transition hover:bg-canvas"
@@ -312,27 +267,16 @@ export function LandingPage() {
               <p className="mt-4 max-w-md text-base leading-relaxed text-[#9eb1a8]">
                 Criar a conta da sua confecção leva menos de dois minutos.
               </p>
-              <div className="mt-8">
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <PrimaryCta className="h-12 px-7 text-base" />
+                <BotaoDemo tom="escuro" className="h-12 px-6 text-base" />
               </div>
             </Reveal>
           </div>
         </section>
       </main>
 
-      {/* Rodapé */}
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 md:px-8">
-          <div className="flex items-center gap-3">
-            <Logo />
-            <span className="hidden text-sm text-soft sm:inline">Gestão de produção para confecções.</span>
-          </div>
-          <div className="flex items-center gap-5 text-sm font-medium text-body">
-            <Link href="/login" className="transition hover:text-primary">Entrar</Link>
-            <Link href="/cadastro" className="transition hover:text-primary">Criar minha conta</Link>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

@@ -12,7 +12,9 @@ import {
   gargalo,
   lerDias,
   lerPontualidade,
+  pedidosParados,
   resumirProblemas,
+  DIAS_PARA_PEDIDO_PARADO,
 } from "@/lib/producao-analytics";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -69,7 +71,16 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     }),
     prisma.order.findMany({
       where: { companyId },
-      select: { number: true, deliveryDate: true, status: true, assignee: true, client: { select: { name: true } } },
+      select: {
+        id: true,
+        number: true,
+        orderDate: true,
+        deliveryDate: true,
+        status: true,
+        assignee: true,
+        client: { select: { name: true } },
+        currentStage: { select: { name: true } },
+      },
     }),
     prisma.product.findMany({
       where: { companyId },
@@ -310,6 +321,27 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     .sort((a, b) => b.quantidade - a.quantidade);
 
   const tarefasConcluidas = produtividade.reduce((s, p) => s + p.concluidas, 0);
+
+  // Pedido que ninguém tocou há dias. Sai do histórico que já foi carregado
+  // acima: a última movimentação de cada pedido é a última linha dele na lista,
+  // que vem ordenada por data.
+  const ultimaMudancaPorPedido = new Map<string, Date>();
+  for (const h of historico) {
+    ultimaMudancaPorPedido.set(h.orderId, h.changedAt);
+  }
+
+  const parados = pedidosParados(
+    allOrders
+      // Entregue e cancelado não param: saíram do fluxo.
+      .filter((o) => o.status !== "DELIVERED" && o.status !== "CANCELED")
+      .map((o) => ({
+        numero: o.number,
+        cliente: o.client.name,
+        etapa: o.currentStage?.name ?? null,
+        ultimaMudanca: ultimaMudancaPorPedido.get(o.id) ?? null,
+        entrouEm: o.orderDate,
+      })),
+  );
 
   // Estado atual (independe do período)
   const lateOrders = allOrders
@@ -750,6 +782,52 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
                 </li>
               ))}
             </ul>
+          )}
+        </SectionCard>
+
+        {/* Vem antes de "atrasados" de propósito: o atraso já aconteceu e não
+            dá para desfazer; o pedido parado ainda dá tempo de salvar. */}
+        <SectionCard
+          eyebrow="Esquecidos"
+          title={`Parados há ${DIAS_PARA_PEDIDO_PARADO} dias ou mais`}
+          action={
+            parados.length > 0 ? (
+              <div className="rounded-lg bg-warning-soft px-3 py-2 text-sm font-semibold text-warning-ink">
+                {parados.length}
+              </div>
+            ) : undefined
+          }
+        >
+          {parados.length === 0 ? (
+            <EmptyHint icon={Clock} text={`Nenhum pedido parado há mais de ${DIAS_PARA_PEDIDO_PARADO} dias.`} />
+          ) : (
+            <>
+              <p className="mb-3 text-sm text-muted">
+                Ninguém mexeu nestes pedidos. Alguns ainda estão dentro do prazo — é agora que dá
+                para agir, antes de virarem atraso.
+              </p>
+              <ul className="space-y-2">
+                {parados.slice(0, 8).map((pedido) => (
+                  <li
+                    key={pedido.numero}
+                    className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-warning-line bg-warning-soft px-3 py-2"
+                  >
+                    <span className="text-sm">
+                      <span className="font-mono font-semibold text-muted">#{pedido.numero}</span>
+                      <span className="ml-2 font-medium">{pedido.cliente}</span>
+                    </span>
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="text-muted">
+                        {pedido.nuncaMoveu ? "nunca saiu de" : "em"} {pedido.etapa}
+                      </span>
+                      <StatusBadge tone="warn">
+                        {pedido.diasParado} {pedido.diasParado === 1 ? "dia" : "dias"}
+                      </StatusBadge>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </SectionCard>
 

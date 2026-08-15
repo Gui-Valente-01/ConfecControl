@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Factory } from "lucide-react";
@@ -5,6 +6,11 @@ import { SignupForm } from "@/components/signup-form";
 import { getSessionUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Criar conta",
+  description: "Crie a conta da sua confecção no ConfecControl e comece a controlar pedidos e produção no mesmo dia.",
+};
 
 export default async function CadastroPage() {
   const user = await getSessionUser();

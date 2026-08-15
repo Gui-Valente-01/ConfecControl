@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { AvisoDemo } from "@/components/aviso-demo";
 import { DbDashboard } from "@/components/db-dashboard";
 import { LandingPage } from "@/components/landing/landing-page";
 import { PrimeirosPassos } from "@/components/primeiros-passos";
@@ -65,6 +66,8 @@ export default async function Home() {
 
   return (
     <AppShell eyebrow="Hoje" title="Painel da produção" user={user}>
+      {/* Só aparece dentro da confecção de demonstração. */}
+      <AvisoDemo companyName={user.companyName} />
       {/* Some sozinha quando os cinco passos estiverem feitos. */}
       <PrimeirosPassos
         contagens={{
