@@ -28,5 +28,5 @@ export const config = {
   // sistema. O /planos é a página de vendas: mandá-la para o login escondia o
   // produto de quem ainda não é cliente, que é justamente quem ela existe para
   // atender.
-  matcher: ["/((?!login|cadastro|planos|portal|manual|_next/static|_next/image|favicon.ico|.*\\.).*)"],
+  matcher: ["/((?!login|cadastro|planos|para/|portal|manual|_next/static|_next/image|favicon.ico|.*\\.).*)"],
 };

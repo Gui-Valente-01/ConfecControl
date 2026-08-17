@@ -1,3 +1,5 @@
+import { rotasDosSegmentos } from "@/lib/segmentos";
+
 // Endereço público do site e quais páginas o Google pode ver.
 //
 // Existe porque sitemap, robots e as tags de compartilhamento precisam do
@@ -24,6 +26,13 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.confecc
 export const rotasPublicas = [
   { caminho: "/", prioridade: 1, frequencia: "weekly" as const },
   { caminho: "/planos", prioridade: 0.8, frequencia: "monthly" as const },
+  // As páginas por tipo de confecção vêm da mesma lista que as monta, para o
+  // sitemap não ficar para trás quando um segmento novo for escrito.
+  ...rotasDosSegmentos.map((caminho) => ({
+    caminho,
+    prioridade: 0.9,
+    frequencia: "monthly" as const,
+  })),
   { caminho: "/login", prioridade: 0.3, frequencia: "yearly" as const },
   { caminho: "/cadastro", prioridade: 0.3, frequencia: "yearly" as const },
 ];

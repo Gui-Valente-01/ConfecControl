@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Factory } from "lucide-react";
+import { segmentos } from "@/lib/segmentos";
 
 // Cabeçalho, rodapé e botão da área pública. Ficam aqui porque a landing e a
 // página de planos são a mesma casa: se cada uma tivesse o seu, o menu
@@ -69,15 +70,32 @@ export function LandingHeader({ base = "" }: { base?: string }) {
 export function LandingFooter() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 md:px-8">
-        <div className="flex items-center gap-3">
-          <Logo />
-          <span className="hidden text-sm text-soft sm:inline">Gestão de produção para confecções.</span>
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+        {/* As páginas por tipo de confecção ficam no rodapé de todo o site: é
+            assim que o robô de busca chega até elas a partir de qualquer
+            página, e que o visitante encontra a que fala da operação dele. */}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line pb-6 text-sm">
+          <span className="font-semibold text-body">Para a sua confecção:</span>
+          {segmentos.map((segmento) => (
+            <Link
+              key={segmento.slug}
+              href={`/para/${segmento.slug}`}
+              className="text-muted transition hover:text-primary"
+            >
+              {segmento.nome}
+            </Link>
+          ))}
         </div>
-        <div className="flex items-center gap-5 text-sm font-medium text-body">
-          <Link href="/planos" className="transition hover:text-primary">Planos</Link>
-          <Link href="/login" className="transition hover:text-primary">Entrar</Link>
-          <Link href="/cadastro" className="transition hover:text-primary">Criar minha conta</Link>
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-6">
+          <div className="flex items-center gap-3">
+            <Logo />
+            <span className="hidden text-sm text-soft sm:inline">Gestão de produção para confecções.</span>
+          </div>
+          <div className="flex items-center gap-5 text-sm font-medium text-body">
+            <Link href="/planos" className="transition hover:text-primary">Planos</Link>
+            <Link href="/login" className="transition hover:text-primary">Entrar</Link>
+            <Link href="/cadastro" className="transition hover:text-primary">Criar minha conta</Link>
+          </div>
         </div>
       </div>
     </footer>
