@@ -4,10 +4,16 @@
 // endereço ABSOLUTO, e cada um inventando o seu levava a link quebrado no
 // WhatsApp e a página fora do índice. Aqui é um lugar só.
 
-// Em produção vem da variável; sem ela, o endereço atual da Vercel. O fallback
-// importa: sem endereço, o Next monta as tags com "localhost", e foi assim que
-// o site ficou sem aparecer na busca nem pelo próprio nome.
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://confeccontrolapp.vercel.app").replace(/\/$/, "");
+// O endereço de verdade do site, com "www" porque é para lá que o domínio sem
+// www redireciona — apontar para o outro faria cada link do sitemap custar um
+// desvio a mais, e o Google trata endereço que redireciona como endereço de
+// segunda.
+//
+// O padrão já é o domínio final, e não o da Vercel, para o site não depender de
+// alguém lembrar de cadastrar a variável: sem endereço certo aqui, o Next monta
+// as tags com "localhost" ou com o endereço de teste, e foi assim que o site
+// ficou fora da busca até pelo próprio nome.
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.confeccontrol.com").replace(/\/$/, "");
 
 /**
  * Páginas que existem para quem ainda não é cliente.

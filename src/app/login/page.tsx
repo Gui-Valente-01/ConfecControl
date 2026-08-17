@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Entrar",
   description: "Acesse a conta da sua confecção no ConfecControl.",
+  alternates: { canonical: "/login" },
 };
 
 export default async function LoginPage() {

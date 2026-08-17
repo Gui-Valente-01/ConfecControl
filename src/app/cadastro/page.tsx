@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Criar conta",
   description: "Crie a conta da sua confecção no ConfecControl e comece a controlar pedidos e produção no mesmo dia.",
+  alternates: { canonical: "/cadastro" },
 };
 
 export default async function CadastroPage() {

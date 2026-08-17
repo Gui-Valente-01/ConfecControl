@@ -41,6 +41,13 @@ export const metadata: Metadata = {
     "gestão de pedidos confecção",
     "controle de pedidos costura",
   ],
+  // Código que o Google Search Console pede para provar que o site é seu.
+  // Fica em variável de ambiente: é um valor por propriedade, e quem trocar de
+  // conta do Google não deveria precisar de um build novo. Sem a variável, a
+  // tag simplesmente não sai.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   appleWebApp: {
     capable: true,
     title: "ConfecControl",

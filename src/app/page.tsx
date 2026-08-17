@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import { AvisoDemo } from "@/components/aviso-demo";
 import { DbDashboard } from "@/components/db-dashboard";
@@ -9,6 +10,13 @@ import { canManageOrders, canSeeFinance } from "@/lib/roles";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+// O mesmo site responde em confeccontrol.com, no www e no endereço da Vercel.
+// Sem dizer qual é o oficial, o Google trata como três sites iguais e divide a
+// relevância entre eles — ou escolhe sozinho, e às vezes escolhe o de teste.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   // Visitante sem sessão vê a página de apresentação; usuário logado vê o painel.
