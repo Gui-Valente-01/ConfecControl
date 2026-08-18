@@ -1,8 +1,9 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, Grid3x3, Plus, Trash2 } from "lucide-react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { GradeDialog, type ItemDaGrade } from "@/components/grade-dialog";
 import { useActionFeedback } from "@/components/toast";
 import { centsToCurrency, centsToInput, moneyToCents, priceExpressionToCents } from "@/lib/format";
 import { describeAtypicalPrices, findAtypicalPrices } from "@/lib/price-check";
@@ -162,6 +163,22 @@ export function OrderForm({
   const addItem = () => setItems((prev) => [...prev, newRow()]);
   const removeItem = (key: string) =>
     setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.key !== key) : prev));
+
+  const [mostrarGrade, setMostrarGrade] = useState(false);
+
+  // A grade chega como várias linhas prontas. A linha em branco que o
+  // formulário abre por padrão é descartada: deixá-la faria o pedido nascer com
+  // um item vazio no meio das doze peças que acabaram de entrar.
+  const adicionarGrade = (novos: ItemDaGrade[]) => {
+    if (novos.length === 0) return;
+    setItems((prev) => {
+      const preenchidos = prev.filter(
+        (item) => item.productId || item.description.trim() || item.unitPrice.trim(),
+      );
+      return [...preenchidos, ...novos.map((novo) => newRow(novo))];
+    });
+    setMostrarGrade(false);
+  };
 
   const [services, setServices] = useState<EditableService[]>(() =>
     defaults?.services?.length
@@ -444,17 +461,39 @@ export function OrderForm({
       {/* ETAPA 2 — Peças e serviços */}
       <div className={secao(1)}>
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="text-sm font-semibold text-body">Itens do pedido</span>
-          <button
-            type="button"
-            onClick={addItem}
-            className="inline-flex items-center gap-1 rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-body transition hover:bg-tint"
-          >
-            <Plus size={14} aria-hidden="true" />
-            Adicionar item
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Vem antes de "adicionar item" porque, para uniforme e peça em
+                vários tamanhos, a grade é o caminho normal — e o item avulso é
+                a exceção. */}
+            <button
+              type="button"
+              onClick={() => setMostrarGrade((antes) => !antes)}
+              aria-expanded={mostrarGrade}
+              className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary-dark transition hover:bg-tint"
+            >
+              <Grid3x3 size={14} aria-hidden="true" />
+              Grade de tamanhos
+            </button>
+            <button
+              type="button"
+              onClick={addItem}
+              className="inline-flex items-center gap-1 rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-xs font-semibold text-body transition hover:bg-tint"
+            >
+              <Plus size={14} aria-hidden="true" />
+              Adicionar item
+            </button>
+          </div>
         </div>
+
+        {mostrarGrade ? (
+          <GradeDialog
+            products={products}
+            onAdicionar={adicionarGrade}
+            onFechar={() => setMostrarGrade(false)}
+          />
+        ) : null}
 
         {items.map((item) => (
           <div key={item.key} className="rounded-lg border border-line bg-canvas p-3">
