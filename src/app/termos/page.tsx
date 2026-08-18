@@ -32,7 +32,7 @@ const SUMARIO = [
 
 export default function TermosPage() {
   const dados = dadosLegais();
-  const nos = dados.razaoSocial ?? "a empresa que opera o ConfecControl";
+  const nos = dados.nomeControlador ?? "o responsável pelo ConfecControl";
 
   return (
     <PaginaLegal

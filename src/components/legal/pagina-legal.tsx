@@ -24,6 +24,17 @@ export function PaginaLegal({
   const dados = dadosLegais();
   const pendencias = pendenciasLegais(dados);
 
+  // Pessoa fisica nao tem CNPJ, e endereco residencial so aparece se a pessoa
+  // escolher publicar. Mostrar "nao informado" nesses casos sugeriria falta de
+  // dado, quando na verdade o campo nao se aplica.
+  const identificacao: { rotulo: string; valor: string | null }[] = [
+    { rotulo: dados.rotuloNome, valor: dados.nomeControlador },
+    ...(dados.tipo === "pj" ? [{ rotulo: "CNPJ", valor: dados.cnpj }] : []),
+    ...(dados.tipo === "pj" || dados.endereco ? [{ rotulo: "Endereço", valor: dados.endereco }] : []),
+    { rotulo: "Encarregado de dados", valor: dados.encarregadoNome },
+    { rotulo: "Contato para privacidade", valor: dados.encarregadoEmail },
+  ];
+
   return (
     <div className="bg-shell text-fg">
       <LandingHeader base="/" />
@@ -75,13 +86,7 @@ export function PaginaLegal({
         <section className="mt-14 rounded-lg border border-line bg-canvas p-5">
           <h2 className="text-lg font-semibold">Quem responde por este sistema</h2>
           <dl className="mt-3 space-y-1.5 text-sm">
-            {[
-              ["Razão social", dados.razaoSocial],
-              ["CNPJ", dados.cnpj],
-              ["Endereço", dados.endereco],
-              ["Encarregado de dados", dados.encarregadoNome],
-              ["Contato para privacidade", dados.encarregadoEmail],
-            ].map(([rotulo, valor]) => (
+            {identificacao.map(({ rotulo, valor }) => (
               <div key={rotulo} className="flex flex-wrap gap-x-2">
                 <dt className="font-medium text-body">{rotulo}:</dt>
                 <dd className={valor ? "text-muted" : "font-mono text-xs text-danger-dark"}>

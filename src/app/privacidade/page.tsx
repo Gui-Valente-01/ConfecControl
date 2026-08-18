@@ -56,7 +56,7 @@ function Tratamento({
 export default function PrivacidadePage() {
   const dados = dadosLegais();
   const contato = dados.encarregadoEmail;
-  const operador = dados.razaoSocial ?? "a empresa que opera o ConfecControl";
+  const operador = dados.nomeControlador ?? "o responsável pelo ConfecControl";
 
   return (
     <PaginaLegal
