@@ -1,5 +1,6 @@
 "use client";
 
+import { ACCEPT_DO_FORMULARIO } from "@/lib/upload-validation";
 import { Upload } from "lucide-react";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
@@ -32,6 +33,7 @@ export function AttachmentUploadForm({ orderId }: { orderId: string }) {
       <input type="hidden" name="orderId" value={orderId} />
       <input
         type="file"
+      accept={ACCEPT_DO_FORMULARIO}
         name="file"
         required
         className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"

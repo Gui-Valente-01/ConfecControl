@@ -1,3 +1,4 @@
+import { comLinkAssinado } from "@/lib/anexos-link";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MessageCircle, Paperclip, Pencil, Printer } from "lucide-react";
@@ -42,6 +43,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   });
 
   if (!order) notFound();
+
+  // O bucket e privado: o banco guarda o caminho, e a tela recebe um link que
+  // expira em minutos. Feito aqui, na busca dos dados, para os componentes de
+  // exibicao continuarem recebendo apenas "url".
+  const anexos = await comLinkAssinado(order.attachments, user.companyId);
 
   const canManage = canManageOrders(user.role);
   const showFinance = canSeeFinance(user.role);
@@ -287,11 +293,11 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <SectionCard eyebrow="Arquivos" title="Anexos (arte, molde, foto)">
         {canManage ? <AttachmentUploadForm orderId={order.id} /> : null}
 
-        {order.attachments.length === 0 ? (
+        {anexos.length === 0 ? (
           <p className={`text-sm text-soft ${canManage ? "mt-4" : ""}`}>Nenhum anexo neste pedido.</p>
         ) : (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {order.attachments.map((attachment) => {
+            {anexos.map((attachment) => {
               const isImage = (attachment.type ?? "").startsWith("image/");
               return (
                 <li key={attachment.id} className="rounded-lg border border-line bg-surface p-3 shadow-sm transition hover:border-line-strong">

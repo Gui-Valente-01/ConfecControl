@@ -15,9 +15,9 @@ import { computeProductConsumption } from "@/lib/production";
 import { registrarAviso } from "@/app/avisos/actions";
 import { prisma, type TransactionClient } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
-import { removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
+import { removeAttachmentByPath, removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
+import { caminhoNoBucket, normalizarNome, validarArquivo } from "@/lib/upload-validation";
 
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8 MB
 
 const orderPriorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
 
@@ -55,25 +55,47 @@ export async function uploadAttachmentAction(_prev: FormState, formData: FormDat
   const orderId = String(formData.get("orderId") ?? "");
   const file = formData.get("file");
   if (!orderId || !(file instanceof File) || file.size === 0) return { error: "Selecione um arquivo para enviar." };
-  if (file.size > MAX_UPLOAD_BYTES) return { error: "Arquivo acima de 8 MB. Envie um arquivo menor." };
   if (!storageConfigured()) {
     return { error: "Armazenamento de anexos não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY." };
   }
 
   // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
   // mas nao se esta pessoa podia mexer nele.
+  const autor = await requireUser();
   const companyId = await companyIdWithCapability("orders.write");
   if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
   const order = await prisma.order.findFirst({ where: { id: orderId, companyId }, select: { id: true } });
   if (!order) return { error: "Pedido não encontrado." };
 
-  const safeName = file.name.replace(/[^\w.\-]/g, "_").slice(-60) || "arquivo";
-  const path = `${companyId}/${orderId}/${randomUUID()}-${safeName}`;
-  const url = await uploadAttachmentToStorage(path, await file.arrayBuffer(), file.type || null);
-  if (!url) return { error: "Falha ao enviar o arquivo. Tente novamente." };
+  // O tipo informado pelo navegador e escrito pelo cliente, entao nao vale como
+  // prova: a checagem que decide e a assinatura dos primeiros bytes. Um .html
+  // renomeado para .jpg morre aqui -- e num bucket publico ele viraria pagina
+  // hospedada no dominio do Storage.
+  const conteudo = await file.arrayBuffer();
+  const validacao = validarArquivo({
+    nome: file.name,
+    tamanho: file.size,
+    declarado: file.type || null,
+    bytesIniciais: new Uint8Array(conteudo.slice(0, 16)),
+  });
+  if (!validacao.ok) return { error: validacao.erro };
+
+  const path = caminhoNoBucket({
+    companyId,
+    orderId,
+    nomeArquivo: normalizarNome(file.name, validacao.extensao),
+    sufixoUnico: randomUUID(),
+  });
+
+  // Sobe com o tipo REAL, e nao com o declarado: o navegador respeita o
+  // content-type devolvido pelo Storage.
+  const storagePath = await uploadAttachmentToStorage(path, conteudo, validacao.mime);
+  if (!storagePath) return { error: "Falha ao enviar o arquivo. Tente novamente." };
 
   await prisma.attachment.create({
-    data: { orderId, name: file.name, url, type: file.type || null },
+    // url fica vazia: o endereco agora e assinado na hora de exibir, e guardar
+    // URL permanente no banco foi exatamente o problema anterior.
+    data: { orderId, name: file.name, url: "", storagePath, type: validacao.mime, sentBy: autor.name },
   });
 
   revalidatePath(`/pedidos/${orderId}`);
@@ -92,7 +114,7 @@ export async function deleteAttachmentAction(_prev: FormState, formData: FormDat
   if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
   const attachment = await prisma.attachment.findFirst({
     where: { id, order: { companyId } },
-    select: { id: true, url: true, orderId: true },
+    select: { id: true, url: true, storagePath: true, orderId: true },
   });
   if (!attachment) return { error: "Anexo não encontrado." };
 
@@ -106,7 +128,13 @@ export async function deleteAttachmentAction(_prev: FormState, formData: FormDat
       // arquivo já removido
     }
   } else {
-    await removeAttachmentFromStorage(attachment.url);
+    // Anexo novo guarda o caminho; o antigo, a URL publica. Enquanto os dois
+    // formatos convivem, os dois precisam saber ser apagados.
+    if (attachment.storagePath) {
+      await removeAttachmentByPath(attachment.storagePath);
+    } else if (attachment.url) {
+      await removeAttachmentFromStorage(attachment.url);
+    }
   }
 
   revalidatePath(`/pedidos/${attachment.orderId}`);

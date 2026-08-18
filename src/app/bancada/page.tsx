@@ -1,3 +1,4 @@
+import { comLinkAssinado } from "@/lib/anexos-link";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ChevronDown, Hand, History, LayoutGrid, Shirt } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -43,7 +44,7 @@ export default async function BancadaPage() {
             number: true,
             client: { select: { name: true } },
             items: { select: { description: true, quantity: true }, take: 1 },
-            attachments: { select: { id: true, name: true, url: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
+            attachments: { select: { id: true, name: true, url: true, storagePath: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
           },
         },
       },
@@ -67,18 +68,34 @@ export default async function BancadaPage() {
       include: {
         client: { select: { name: true } },
         items: { select: { description: true, quantity: true } },
-        attachments: { select: { id: true, name: true, url: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
+        attachments: { select: { id: true, name: true, url: true, storagePath: true, type: true, origem: true, sentBy: true }, orderBy: { createdAt: "asc" } },
         currentStage: { select: { name: true } },
       },
     }),
   ]);
+
+  // Bucket privado: o banco guarda o caminho, e a tela precisa de um link que
+  // expira. Assinado aqui, de uma vez, para os componentes continuarem
+  // recebendo apenas "url" e para nao assinar o mesmo arquivo duas vezes.
+  const tarefasAtivas = await Promise.all(
+    activeTasks.map(async (task) => ({
+      ...task,
+      order: { ...task.order, attachments: await comLinkAssinado(task.order.attachments, companyId) },
+    })),
+  );
+  const pedidosAbertos = await Promise.all(
+    openOrders.map(async (order) => ({
+      ...order,
+      attachments: await comLinkAssinado(order.attachments, companyId),
+    })),
+  );
 
   // O pedido sai da fila enquanto alguém está com ele e continua fora depois de
   // concluído na etapa em que está — senão ele voltaria para "pegar trabalho"
   // como se nada tivesse sido feito. Ao mudar de etapa, volta a ficar disponível.
   const activeOrderIds = new Set(activeTasks.map((task) => task.orderId));
   const doneKeys = new Set(doneStages.map((task) => `${task.orderId}::${task.stageName ?? ""}`));
-  const available = openOrders.filter(
+  const available = pedidosAbertos.filter(
     (order) => !activeOrderIds.has(order.id) && !doneKeys.has(`${order.id}::${order.currentStage?.name ?? ""}`),
   );
 
@@ -100,8 +117,8 @@ export default async function BancadaPage() {
   // Quem coordena continua vendo tudo em destaque: para ele a pergunta é
   // justamente o que está em cada mesa agora.
   const veTudo = seesAllBancadaWork(user.role);
-  const minhasTarefas = veTudo ? activeTasks : activeTasks.filter((task) => task.pickedById === user.id);
-  const tarefasDosColegas = veTudo ? [] : activeTasks.filter((task) => task.pickedById !== user.id);
+  const minhasTarefas = veTudo ? tarefasAtivas : tarefasAtivas.filter((task) => task.pickedById === user.id);
+  const tarefasDosColegas = veTudo ? [] : tarefasAtivas.filter((task) => task.pickedById !== user.id);
 
   // "Um por vez": a tela mostra só o que a pessoa está fazendo. A fila de
   // pedidos e os concluídos ficam recolhidos, para não competir com o trabalho
