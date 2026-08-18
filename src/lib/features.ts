@@ -18,6 +18,12 @@ export const sellableFeatures: {
   label: string;
   description: string;
   route: string;
+  /**
+   * Falso enquanto o módulo existir no sistema mas não puder ser anunciado como
+   * pronto. Módulo listado aqui vira automaticamente vitrine em /planos e nas
+   * páginas por segmento — foi assim que a NF-e apareceu à venda sem existir.
+   */
+  anunciavel?: boolean;
 }[] = [
   { key: "producao", label: "Quadro de produção", description: "Kanban por etapa: corte, costura, acabamento, entrega.", route: "/producao" },
   { key: "estoque", label: "Estoque de peças", description: "Quantidade na prateleira, baixa automática por pedido e alerta de mínimo.", route: "/estoque" },
@@ -27,10 +33,20 @@ export const sellableFeatures: {
   { key: "equipe", label: "Vários funcionários", description: "Mais de um login, com cargos e acessos por pessoa.", route: "/usuarios" },
   { key: "portal", label: "Portal do cliente", description: "O cliente acompanha pedidos e envia solicitações que você aprova.", route: "/solicitacoes" },
   { key: "bancada", label: "Bancada (chão de fábrica)", description: "Funcionário pega o pedido, marca a mesa e conclui, com controle por mesa.", route: "/bancada" },
-  { key: "fiscal", label: "Nota fiscal (NF-e)", description: "Emissão e acompanhamento de NF-e a partir do pedido, com XML e DANFE.", route: "/fiscal" },
+  // Existe tela e fluxo, mas o provedor configurado é o falso e não há
+  // integração com a SEFAZ. Anunciar emissão seria vender o que não entregamos.
+  { key: "fiscal", label: "Nota fiscal (NF-e)", description: "Emissão e acompanhamento de NF-e a partir do pedido, com XML e DANFE.", route: "/fiscal", anunciavel: false },
 ];
 
 export const featureKeys: FeatureKey[] = sellableFeatures.map((feature) => feature.key);
+
+/**
+ * O que pode aparecer em página pública de venda.
+ *
+ * Toda vitrine deve ler daqui, nunca de sellableFeatures: a lista completa
+ * inclui módulo que ainda não está pronto para ser prometido a quem compra.
+ */
+export const publicFeatures = sellableFeatures.filter((feature) => feature.anunciavel !== false);
 
 // Combinações prontas por tipo de confecção. São só atalhos: depois de aplicar
 // um plano dá para marcar/desmarcar qualquer módulo à mão, porque cada cliente
@@ -57,7 +73,7 @@ export const featurePresets: {
     key: "completo",
     label: "Completo",
     who: "Marca própria, uniformes, quem terceiriza",
-    features: [...featureKeys],
+    features: publicFeatures.map((feature) => feature.key),
   },
 ];
 

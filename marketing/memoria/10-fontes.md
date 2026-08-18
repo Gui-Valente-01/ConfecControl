@@ -41,6 +41,13 @@ Fontes internas verificadas:
 - [Pagamentos](../../src/lib/payments.ts)
 - [Analytics de produção](../../src/lib/producao-analytics.ts)
 
+Páginas públicas verificadas em 18/08/2026:
+
+| Título/URL | Plataforma | Consulta | Assunto | Confiabilidade | Observações |
+|---|---|---|---|---|---|
+| [ConfecControl — página inicial](https://www.confeccontrol.com/) | site oficial | 18/08/2026 | proposta, recursos e ativação | Alta para o texto exibido | afirma “No ar em uma tarde”, aprendizado por familiaridade com WhatsApp e conta em menos de dois minutos; benefícios ainda precisam de medição própria |
+| [ConfecControl — planos](https://www.confeccontrol.com/planos) | site oficial | 18/08/2026 | módulos e oferta consultiva | Alta para o texto exibido | listava NF-e no plano Completo com emissão via XML/DANFE, em conflito com a ausência de provedor real/SEFAZ. **Corrigido em 18/08/2026**; reverificar após cada release que mexa em recursos |
+
 **Limite:** presença no código não substitui teste em produção. A memória descreve recurso existente na base, mas qualquer campanha deve confirmar ambiente publicado, plano e comportamento real.
 
 ## Mercado e indústria

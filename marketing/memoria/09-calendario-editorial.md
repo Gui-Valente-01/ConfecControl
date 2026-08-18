@@ -1,5 +1,7 @@
 # Calendário editorial — 4 semanas
 
+**Pré-condição para mídia — atendida em 18/08/2026.** `/planos` não anuncia mais NF-e e pode receber tráfego. A regra permanece para qualquer destino novo: conferir a página antes de apontar anúncio para ela.
+
 **Cadência:** 3 conteúdos principais por semana + Stories de apoio.  
 **Objetivo do ciclo:** sair do reconhecimento da dor, provar simplicidade e gerar demonstrações qualificadas.
 

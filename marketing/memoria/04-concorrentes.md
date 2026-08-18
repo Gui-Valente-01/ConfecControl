@@ -24,7 +24,7 @@ Preços, recursos, disponibilidade e resultados podem mudar e são declarações
 | [Confectus](https://www.confectus.com.br/) | direto/emergente | R$ 147 / R$ 297; 14 dias | produção ao vivo, DRE e CTA | alguns recursos/fiscal aparecem “em breve” | NF-e futura no plano Fábrica |
 | [Tramma](https://tramma360.com/) | direto; produção/facção | demonstração via WhatsApp | rastreabilidade e terceiros | fluxo mais amplo pedido–cobrança | não destacado |
 | [Brinderoz](https://www.brinderoz.com.br/) | adjacente; personalizados | R$ 39,90 / R$ 94,90; 10 dias grátis | verticalização para estamparia/gráfica | evitar métricas quebradas; mostrar produto real | NF-e como adicional desde R$ 13/mês |
-| [Sisplan](https://sisplansistemas.com.br/) | especializado, médio/grande | consultivo; implantação declarada 60–120 dias | profundidade, marca e conteúdo | “no ar em uma tarde” com escopo claro | fiscal/contábil, NF-e e reforma tributária |
+| [Sisplan](https://sisplansistemas.com.br/) | especializado, médio/grande | consultivo; implantação declarada 60–120 dias | profundidade, marca e conteúdo | mostrar etapas e medir a implantação antes de prometer prazo | fiscal/contábil, NF-e e reforma tributária |
 | [Vexta](https://www.vexta.com.br/) | especializado | consultivo | casos, BI e operação ampla | cotidiano e proximidade | venda gera nota; NF-e/NFC-e em documentação |
 | [Systêxtil](https://systextil.com.br/) | cadeia têxtil completa | consultivo | autoridade técnica e escala | reduzir percepção de complexidade | fiscal, contábil, NFS-e, IBS/CBS |
 | [TOTVS Moda](https://www.totvs.com/moda/) | indústria/atacado/varejo | demonstração; sem preço | marca, ecossistema e fiscal | foco pequeno, agilidade e adoção | NF-e, NFC-e, CC-e e integrações |
@@ -64,7 +64,7 @@ Preços, recursos, disponibilidade e resultados podem mudar e são declarações
 
 **Fatos:** pedidos, PCP, ficha técnica, grade, terceirizados, estoque, financeiro, fiscal, código de barras e aplicativo de vendas. Afirma 15 anos, clientes identificados e suporte humano.  
 **Inferência:** benchmark mais perigoso porque combina especialização, prova, teste e fiscal.  
-**Resposta:** não disputar quantidade de módulos. Demonstrar o caminho mais simples para produção sob encomenda e implantação curta.
+**Resposta:** não disputar quantidade de módulos. Demonstrar o caminho mais simples para produção sob encomenda; comunicar prazo de implantação somente depois de medi-lo em operações reais.
 
 ### Atentor
 

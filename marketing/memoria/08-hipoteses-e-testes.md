@@ -4,6 +4,8 @@
 
 Gerar **conversas com empresas que produzem por pedido**, transformar as qualificadas em demonstrações e aprender quais segmentos, dores e provas geram clientes — não apenas cliques.
 
+**Bloqueio zero — resolvido em 18/08/2026.** A página `/planos` chegou a anunciar “Nota fiscal (NF-e) — emissão e acompanhamento com XML e DANFE”, promessa que conflitava com o produto: o provedor é o falso e não há integração com a SEFAZ. A causa não foi um texto escrito à mão — o módulo entrou na lista de recursos e a vitrine lia a lista inteira. Corrigido na origem: vitrine passou a ler só recursos anunciáveis, com teste de regressão. `/planos` está liberada como destino de mídia.
+
 ## Oferta inicial
 
 ### Principal
@@ -255,4 +257,5 @@ Todo mês:
 - Não usar ROAS de terceiros como meta.
 - Não escalar criativo que gera lead barato e venda ruim.
 - Não anunciar NF-e disponível antes da emissão real em produção.
+- Não usar como destino uma página que apresente NF-e como recurso atual; corrigir e revisar `/planos` antes do lançamento.
 - Não inventar depoimento, cliente, número, fila ou urgência.

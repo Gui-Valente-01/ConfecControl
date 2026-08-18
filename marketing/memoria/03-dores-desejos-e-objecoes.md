@@ -192,7 +192,7 @@ CTA: agendar diagnóstico.
 3. Mostrar o produto no celular aumenta confiança.
 4. Cobrança ligada ao pedido diferencia melhor que financeiro genérico.
 5. Uniformes respondem melhor a grade/prazo; estamparias, a versão/retrabalho.
-6. “No ar em uma tarde” converte se houver prova operacional e escopo claro.
+6. Implantação rápida pode reduzir a objeção; não usar prazo específico antes de medir operações reais com escopo definido.
 7. NF-e aumenta fechamento em B2B, mas não gera interesse sozinha.
 
 O plano para validar está em [08-hipoteses-e-testes.md](08-hipoteses-e-testes.md).

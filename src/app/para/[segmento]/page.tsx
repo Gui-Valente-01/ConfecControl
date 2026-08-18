@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import { LandingFooter, LandingHeader, PrimaryCta } from "@/components/landing/landing-chrome";
 import { Reveal } from "@/components/landing/reveal";
-import { sellableFeatures } from "@/lib/features";
+import { publicFeatures } from "@/lib/features";
 import { acharSegmento, segmentos } from "@/lib/segmentos";
 
 type Params = Promise<{ segmento: string }>;
@@ -37,7 +37,7 @@ export default async function SegmentoPage({ params }: { params: Params }) {
   const segmento = acharSegmento(slug);
   if (!segmento) notFound();
 
-  const recursos = sellableFeatures.filter((f) => segmento.recursos.includes(f.key));
+  const recursos = publicFeatures.filter((f) => segmento.recursos.includes(f.key));
   const outros = segmentos.filter((s) => s.slug !== segmento.slug);
 
   return (

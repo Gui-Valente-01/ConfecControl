@@ -5,7 +5,7 @@ import { Check, Mail, MessageCircle, Minus } from "lucide-react";
 import { LandingFooter, LandingHeader } from "@/components/landing/landing-chrome";
 import { Reveal } from "@/components/landing/reveal";
 import { getSessionUser } from "@/lib/auth";
-import { featurePresets, sellableFeatures } from "@/lib/features";
+import { featurePresets, publicFeatures } from "@/lib/features";
 import { formatPhone, resolveSupportContact } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
@@ -63,8 +63,8 @@ export default async function PlanosPage() {
               // bancada. Fica em destaque para não deixar o visitante decidir no
               // escuro entre três caixas iguais.
               const destaque = preset.key === "producao";
-              const modulos = sellableFeatures.filter((f) => preset.features.includes(f.key));
-              const ausentes = sellableFeatures.filter((f) => !preset.features.includes(f.key));
+              const modulos = publicFeatures.filter((f) => preset.features.includes(f.key));
+              const ausentes = publicFeatures.filter((f) => !preset.features.includes(f.key));
 
               return (
                 <Reveal key={preset.key} delay={i * 80}>

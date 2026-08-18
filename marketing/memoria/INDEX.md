@@ -1,6 +1,6 @@
 # Memória de marketing do ConfecControl
 
-**Pesquisa-base:** 18/08/2026 · **auditada em** 18/08/2026 (v1.2)  
+**Pesquisa-base:** 18/08/2026 · **auditada em** 18/08/2026 (v1.3)
 **Mercado:** Brasil  
 **Produto:** ConfecControl — gestão para confecções  
 **Uso:** fonte de verdade para posicionamento, conteúdo, anúncios, páginas e entrevistas  
@@ -33,7 +33,7 @@ Confiança:
 
 6. **Inferência | alta:** a melhor prova não é uma lista de módulos. É uma demonstração curta: pedido entra, avança pelo celular, equipe enxerga prioridade, cliente recebe atualização e o saldo continua visível.
 7. **Fato + inferência | alta/média:** muitos ERPs maduros declaram publicamente oferecer NF-e. Para operações que precisam emitir, ela tende a ser critério de seleção e dificilmente diferencia sozinha; a importância precisa ser validada por segmento.
-8. **Fato do produto | alta:** o repositório possui apenas um fluxo fiscal de teste, ligado a um provedor falso. **Não existe integração com provedor fiscal real nem com a SEFAZ.** Comercialmente, NF-e está em desenvolvimento e indisponível; nunca deve parecer um recurso atual.
+8. **Fato do produto | alta:** o repositório possui apenas um fluxo fiscal de teste, ligado a um provedor falso. **Não existe integração com provedor fiscal real nem com a SEFAZ.** Comercialmente, NF-e está em desenvolvimento e indisponível; nunca deve parecer um recurso atual. **Inconsistência pública crítica:** em 18/08/2026, a página `/planos` do site ao vivo ainda listava NF-e no plano Completo e descrevia emissão com XML e DANFE. Corrigir essa página antes de levar tráfego pago para o site.
 9. **Inferência | alta:** a vantagem do ConfecControl deve ser simplicidade operacional: linguagem da confecção, implantação acompanhada, uso no celular e caminho direto entre pedido recebido e dinheiro recebido.
 10. **Hipótese de crescimento:** conteúdos que mostram uma ação real da tela resolvendo uma dor específica devem superar posts genéricos de gestão.
 
@@ -61,6 +61,12 @@ Verificado no código em 18/08/2026.
 - Integração nativa com WhatsApp: hoje o sistema monta a mensagem e abre o canal; não é uma integração de caixa de entrada.
 - Cálculo de capacidade, MRP, previsão por IA, leitura de pedido por foto, e-commerce, marketplace, PDV ou operação totalmente off-line.
 - Resultados percentuais sem estudo de cliente autorizado.
+
+## Bloqueios antes de qualquer campanha
+
+1. **Corrigir a página pública de planos:** retirar NF-e como recurso disponível ou identificá-la inequivocamente como futura e indisponível. Hoje a promessa pública contradiz a implementação real.
+2. **Validar promessas de ativação:** a página inicial afirma “No ar em uma tarde”, “Quem sabe usar WhatsApp aprende” e criação de conta em menos de dois minutos. Tratar essas frases como hipóteses até medir tempo de cadastro, configuração, primeiro pedido e primeira etapa em clientes reais.
+3. **Confirmar destino e oferta:** anúncios só devem apontar para uma página cuja oferta, módulos e limitações estejam consistentes com o produto publicado.
 
 ## Posicionamento recomendado
 
@@ -96,6 +102,7 @@ Cada pedido reúne prazo, peças, etapa, responsável e pagamento. A equipe atua
 
 ### 1. Fundamento comercial
 
+- Corrigir a comunicação pública de NF-e e suspender esse tema em campanhas enquanto não houver integração real.
 - Gravar demonstração principal e cinco recortes.
 - Criar formulário de qualificação com segmento, equipe, pedidos ativos, etapas e forma atual de controle.
 - Definir uma oferta única de entrada: diagnóstico de 15 minutos + demonstração no fluxo do lead.

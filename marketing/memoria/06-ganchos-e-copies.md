@@ -219,7 +219,7 @@ Redação própria construída a partir dos padrões da pesquisa. Os IDs das ref
 - **Copy:** “Cada função vê o que precisa. A implantação começa pelos pedidos em aberto e é acompanhada.”
 - **Visual:** três funções com telas relevantes.
 - **CTA:** “Teste o fluxo com sua equipe.”
-- **Restrição:** trocar “no ar em uma tarde” por prova real quando possível; não garantir para qualquer operação.
+- **Restrição:** não usar “no ar em uma tarde” antes de medir operações reais; até lá, mostrar passos, responsáveis e escopo sem garantir prazo.
 
 ### A10 — NF-e no fluxo, campanha futura
 

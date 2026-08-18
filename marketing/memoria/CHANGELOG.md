@@ -1,5 +1,45 @@
 # Changelog da memória de marketing
 
+## 2026-08-18 — versão 1.3
+
+### Achado crítico, corrigido
+
+A auditoria das páginas públicas encontrou `/planos` vendendo “Nota fiscal
+(NF-e) — emissão e acompanhamento a partir do pedido, com XML e DANFE”. O
+recurso não existe: o provedor configurado é o falso e não há integração com a
+SEFAZ. A página estava no ar assim.
+
+- **Causa:** ninguém escreveu esse anúncio. O módulo fiscal foi acrescentado à
+  lista de recursos vendáveis e a vitrine lia a lista inteira; o plano
+  “Completo” usava todas as chaves. Um módulo interno virou promessa comercial
+  sozinho.
+- **Correção:** recurso passa a declarar se é anunciável; `/planos` e as páginas
+  por segmento leem só os anunciáveis; nenhum preset concede módulo não
+  anunciável. Teste de regressão em `tests/features-vitrine.test.ts`, incluindo
+  verificação de que as vitrines não voltem a importar a lista completa.
+- **Efeito na memória:** o bloqueio de mídia sobre `/planos` foi levantado.
+
+### Lição registrada
+
+A regra “não anunciar NF-e” não bastou, porque a promessa não passou por texto —
+passou por configuração. Antes de campanha, conferir a página renderizada, e não
+só o que se pretendeu escrever.
+
+## 2026-08-18 — versão 1.3
+
+### Auditoria do site público
+
+- página inicial e página de planos verificadas no ambiente ao vivo;
+- registrado o conflito crítico de `/planos`: NF-e aparece como disponível no plano Completo, embora o produto só possua provedor falso e nenhuma integração real com a SEFAZ;
+- campanha e destino `/planos` bloqueados até a correção da comunicação fiscal;
+- promessas de “no ar em uma tarde”, aprendizado por familiaridade com WhatsApp e cadastro em menos de dois minutos classificadas como hipóteses até medição operacional;
+- referências públicas e limites adicionados ao catálogo de fontes.
+
+### Correções de consistência
+
+- removida a recomendação não comprovada de “implantação curta” da análise competitiva;
+- arquivos de hipóteses/testes e calendário passaram a explicitar a pré-condição fiscal para mídia.
+
 ## 2026-08-18 — versão 1.2
 
 ### Auditoria de conformidade
