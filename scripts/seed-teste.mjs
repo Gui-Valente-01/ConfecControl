@@ -1,9 +1,8 @@
-// Cria (ou recria) a confecção de demonstração pela linha de comando.
+// Cria (ou recria) a confecção de teste pela linha de comando.
 //
-//   npm run db:seed-demo
+//   npm run db:seed-teste
 //
-// O cenário em si mora em src/lib/seed-demo.ts, que é o mesmo arquivo usado
-// pelo botão "recomeçar demonstração" dentro do sistema. Aqui só entram as
+// O cenário em si mora em src/lib/seed-teste.ts. Aqui só entram as
 // coisas que a linha de comando precisa: abrir a conexão, dizer qual hash de
 // senha usar e imprimir os logins no fim.
 //
@@ -12,7 +11,7 @@
 
 import { randomBytes, scryptSync } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { EMPRESA_DEMO, recriarEmpresaDemo } from "../src/lib/seed-demo.ts";
+import { EMPRESA_TESTE, recriarEmpresaTeste } from "../src/lib/seed-teste.ts";
 
 // Tranca contra rodar no banco errado.
 //
@@ -26,7 +25,7 @@ const eLocal = /^(localhost|127\.0\.0\.1|host\.docker\.internal)$/.test(host);
 
 if (!eLocal && !process.argv.includes("--producao")) {
   console.error(`\nRecusando rodar: "${host}" não é um banco local.`);
-  console.error("Este script APAGA e recria a empresa de demonstração.");
+  console.error("Este script APAGA e recria a empresa de teste.");
   console.error("Se for mesmo isso que você quer, repita com --producao no fim.\n");
   process.exit(1);
 }
@@ -44,24 +43,24 @@ function hashPassword(plain) {
 }
 
 try {
-  const resumo = await recriarEmpresaDemo({
+  const resumo = await recriarEmpresaTeste({
     prisma,
     hashPassword,
     // Fora de produção o next.config libera as fotos de exemplo.
     comFotos: process.env.NODE_ENV !== "production",
   });
 
-  console.log("\n=== CENÁRIO DE DEMONSTRAÇÃO CRIADO ===");
-  console.log("Empresa:", EMPRESA_DEMO.nome);
+  console.log("\n=== EMPRESA DE TESTE CRIADA ===");
+  console.log("Empresa:", EMPRESA_TESTE.nome);
   console.log("Pedidos:", resumo.pedidos);
-  console.log(`\nEquipe (senha: ${EMPRESA_DEMO.senhaEquipe}):`);
-  console.log(`  dono         ${EMPRESA_DEMO.emailDono}`);
+  console.log(`\nEquipe (senha: ${EMPRESA_TESTE.senhaEquipe}):`);
+  console.log(`  dono         ${EMPRESA_TESTE.emailDono}`);
   console.log("  gerente      gerente@costuraviva.com");
   console.log("  produção     producao@costuraviva.com");
   console.log("  financeiro   financeiro@costuraviva.com");
   console.log("  vendas       vendas@costuraviva.com");
   console.log("\nPortal do cliente (/portal/entrar):");
-  console.log(`  marta@costuraviva.com  |  senha: ${EMPRESA_DEMO.senhaPortal}`);
+  console.log(`  marta@costuraviva.com  |  senha: ${EMPRESA_TESTE.senhaPortal}`);
   console.log("\nOK.");
 } catch (erro) {
   console.error(erro);

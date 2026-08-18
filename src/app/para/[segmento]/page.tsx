@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
-import { BotaoDemo } from "@/components/landing/botao-demo";
 import { LandingFooter, LandingHeader, PrimaryCta } from "@/components/landing/landing-chrome";
 import { Reveal } from "@/components/landing/reveal";
 import { sellableFeatures } from "@/lib/features";
@@ -58,7 +57,6 @@ export default async function SegmentoPage({ params }: { params: Params }) {
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted">{segmento.subtitulo}</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <PrimaryCta />
-              <BotaoDemo />
             </div>
           </Reveal>
         </section>
@@ -145,7 +143,6 @@ export default async function SegmentoPage({ params }: { params: Params }) {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <PrimaryCta className="h-12 px-7 text-base" />
-                <BotaoDemo tom="escuro" className="h-12 px-6 text-base" />
               </div>
             </Reveal>
           </div>

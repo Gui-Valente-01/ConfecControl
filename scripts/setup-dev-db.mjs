@@ -1,5 +1,5 @@
 // Prepara o banco de DESENVOLVIMENTO: aplica as migrations e cria a empresa
-// de demonstração. Roda com: node scripts/setup-dev-db.mjs
+// de teste. Roda com: node scripts/setup-dev-db.mjs
 //
 // Lê a conexão de .env.local (e nunca de .env), justamente para não haver como
 // apontar sem querer para o banco de produção. Se .env.local não tiver
@@ -80,8 +80,8 @@ console.log(`Banco de desenvolvimento: projeto ${projeto(url)}\n`);
 console.log("1/2  Aplicando as migrations...");
 execFileSync("npx", ["prisma", "migrate", "deploy"], { env, stdio: "inherit", shell: true });
 
-console.log("\n2/2  Criando a empresa de demonstração...");
-execFileSync(process.execPath, ["scripts/seed-demo.mjs"], { env, stdio: "inherit" });
+console.log("\n2/2  Criando a empresa de teste...");
+execFileSync(process.execPath, ["scripts/seed-teste.mjs"], { env, stdio: "inherit" });
 
 console.log(`
 Pronto. O ${ENV_FILE} manda no desenvolvimento local, então "npm run dev" agora

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Check, Mail, MessageCircle, Minus } from "lucide-react";
-import { BotaoDemo } from "@/components/landing/botao-demo";
 import { LandingFooter, LandingHeader } from "@/components/landing/landing-chrome";
 import { Reveal } from "@/components/landing/reveal";
 import { getSessionUser } from "@/lib/auth";
@@ -140,13 +139,10 @@ export default async function PlanosPage() {
             })}
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-            <p className="max-w-xl text-sm text-muted">
-              O valor depende do tamanho da operação e dos módulos escolhidos. Fale com a gente e
-              receba a proposta da sua confecção.
-            </p>
-            <BotaoDemo />
-          </div>
+          <p className="mt-6 max-w-xl text-sm text-muted">
+            O valor depende do tamanho da operação e dos módulos escolhidos. Fale com a gente e
+            receba a proposta da sua confecção.
+          </p>
         </section>
 
         {/* O núcleo */}

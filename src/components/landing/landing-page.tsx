@@ -6,7 +6,6 @@ import {
   Printer,
   Ruler,
 } from "lucide-react";
-import { BotaoDemo } from "./botao-demo";
 import { LandingFooter, LandingHeader, PrimaryCta } from "./landing-chrome";
 import { MiniBoard, MiniChat, MiniFinance, MiniPhone, MiniStock } from "./landing-previews";
 import { Reveal } from "./reveal";
@@ -81,7 +80,6 @@ export function LandingPage() {
             </p>
             <div className="lp-hero-item mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "220ms" }}>
               <PrimaryCta />
-              <BotaoDemo />
               <Link
                 href="/login"
                 className="inline-flex h-11 items-center rounded-lg border border-line-strong bg-surface px-5 text-sm font-semibold text-body transition hover:bg-canvas"
@@ -269,7 +267,6 @@ export function LandingPage() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <PrimaryCta className="h-12 px-7 text-base" />
-                <BotaoDemo tom="escuro" className="h-12 px-6 text-base" />
               </div>
             </Reveal>
           </div>

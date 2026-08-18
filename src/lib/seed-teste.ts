@@ -1,18 +1,17 @@
-// Cenário de demonstração: uma confecção fictícia completa, com pedido
-// atrasado, estoque no vermelho, bancada em uso e solicitação no portal.
+// Empresa de teste: uma confecção fictícia completa, com pedido atrasado,
+// estoque no vermelho, bancada em uso e solicitação no portal.
 //
-// Fica em src/lib e não no script porque duas coisas precisam dele: o botão
-// "recomeçar demonstração" dentro do sistema e o script de linha de comando.
-// Duas cópias dos mesmos dados envelheceriam em direções diferentes.
+// Serve para dois momentos: encher um banco de desenvolvimento recém-criado, e
+// montar a conta que se usa para mostrar o sistema a alguém.
 //
 // Não importa nada do Next nem caminho com "@/": o script de linha de comando
 // carrega este arquivo direto pelo Node, e qualquer um dos dois quebraria ali.
 
 import type { PrismaClient } from "@prisma/client";
 
-// Identidade da empresa demo. São constantes de código, nunca vindas de
+// Identidade da empresa de teste. São constantes de código, nunca vindas de
 // formulário: é o que garante que o "recomeçar" só possa apagar ESTA empresa.
-export const EMPRESA_DEMO = {
+export const EMPRESA_TESTE = {
   nome: "Costura Viva Confecções",
   emailDono: "dono@costuraviva.com",
   senhaEquipe: "costura123",
@@ -63,14 +62,14 @@ const ETAPAS = [
 ] as const;
 
 const EQUIPE = [
-  { name: "Marina Prado", email: EMPRESA_DEMO.emailDono, role: "ADMIN", sector: "Direção", phone: "(41) 99988-7766" },
+  { name: "Marina Prado", email: EMPRESA_TESTE.emailDono, role: "ADMIN", sector: "Direção", phone: "(41) 99988-7766" },
   { name: "Rafael Nunes", email: "gerente@costuraviva.com", role: "MANAGER", sector: "Operação", phone: "(41) 99977-6655" },
   { name: "Camila Torres", email: "producao@costuraviva.com", role: "PRODUCTION", sector: "Costura", phone: "(41) 99966-5544" },
   { name: "Bruno Alves", email: "financeiro@costuraviva.com", role: "FINANCE", sector: "Financeiro", phone: "(41) 99955-4433" },
   { name: "Leticia Ramos", email: "vendas@costuraviva.com", role: "SALES", sector: "Atendimento", phone: "(41) 99944-3322" },
 ] as const;
 
-export type ResumoDemo = {
+export type ResumoTeste = {
   companyId: string;
   /** Dono da demo: é com ele que o visitante entra. */
   emailDono: string;
@@ -78,30 +77,30 @@ export type ResumoDemo = {
 };
 
 /**
- * Apaga a empresa de demonstração anterior e cria tudo de novo.
+ * Apaga a empresa de teste anterior e cria tudo de novo.
  *
  * A remoção é feita pelo e-mail do dono E pelo nome da empresa, os dois fixos
  * aqui em cima. É proposital: mesmo que alguém chame esta função por engano,
  * ela não tem como alcançar a empresa de um cliente de verdade.
  */
-export async function recriarEmpresaDemo({ prisma, hashPassword, comFotos }: Dependencias): Promise<ResumoDemo> {
+export async function recriarEmpresaTeste({ prisma, hashPassword, comFotos }: Dependencias): Promise<ResumoTeste> {
   const agora = new Date();
   const emDias = (d: number) => new Date(agora.getTime() + d * 86400000);
   const reais = (v: number) => Math.round(v * 100);
 
   const donoAnterior = await prisma.user.findUnique({
-    where: { email: EMPRESA_DEMO.emailDono },
+    where: { email: EMPRESA_TESTE.emailDono },
     select: { company: { select: { id: true, name: true } } },
   });
   // A conferência do nome é a segunda tranca: sem ela, um cadastro futuro que
   // reaproveitasse este e-mail levaria a empresa junto na exclusão.
-  if (donoAnterior && donoAnterior.company.name === EMPRESA_DEMO.nome) {
+  if (donoAnterior && donoAnterior.company.name === EMPRESA_TESTE.nome) {
     await prisma.company.delete({ where: { id: donoAnterior.company.id } });
   }
 
   const company = await prisma.company.create({
     data: {
-      name: EMPRESA_DEMO.nome,
+      name: EMPRESA_TESTE.nome,
       document: "12.345.678/0001-90",
       phone: "(41) 3322-1100",
       email: "contato@costuraviva.com",
@@ -120,7 +119,7 @@ export async function recriarEmpresaDemo({ prisma, hashPassword, comFotos }: Dep
   }
 
   // ---- Funcionários (um de cada cargo) ----
-  const senhaEquipe = hashPassword(EMPRESA_DEMO.senhaEquipe);
+  const senhaEquipe = hashPassword(EMPRESA_TESTE.senhaEquipe);
   const usuarioPorCargo: Record<string, { id: string; name: string }> = {};
   for (const u of EQUIPE) {
     const user = await prisma.user.create({
@@ -170,7 +169,7 @@ export async function recriarEmpresaDemo({ prisma, hashPassword, comFotos }: Dep
       phone: "(41) 3212-0005",
       email: "marta@costuraviva.com",
       document: "10.222.333/0001-44",
-      passwordHash: hashPassword(EMPRESA_DEMO.senhaPortal),
+      passwordHash: hashPassword(EMPRESA_TESTE.senhaPortal),
       portalEnabled: true,
     },
   });
@@ -378,7 +377,7 @@ export async function recriarEmpresaDemo({ prisma, hashPassword, comFotos }: Dep
 
   return {
     companyId: company.id,
-    emailDono: EMPRESA_DEMO.emailDono,
+    emailDono: EMPRESA_TESTE.emailDono,
     pedidos: Object.keys(pedidos).length,
   };
 }
