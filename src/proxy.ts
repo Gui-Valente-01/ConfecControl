@@ -22,11 +22,17 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
+  // O /monitoring e o tunel do Sentry (tunnelRoute no next.config.ts): o
+  // navegador faz POST nele para relatar erro. Ele casava o matcher, entao
+  // visitante SEM cookie -- landing, login, planos, paginas por segmento --
+  // tinha o relato redirecionado 307 para /login. O canal que avisaria de erro
+  // em usuario deslogado estava morto, e em silencio.
+  //
   // Protege tudo, exceto /login, /cadastro, /planos, /portal, /manual, assets do
   // Next e arquivos estaticos. O /manual fica aberto de proposito: e o material
   // que a pessoa consulta justamente quando ainda nao consegue entrar no
   // sistema. O /planos é a página de vendas: mandá-la para o login escondia o
   // produto de quem ainda não é cliente, que é justamente quem ela existe para
   // atender.
-  matcher: ["/((?!login|cadastro|planos|para/|portal|manual|_next/static|_next/image|favicon.ico|.*\\.).*)"],
+  matcher: ["/((?!login|cadastro|planos|para/|portal|manual|monitoring|_next/static|_next/image|favicon.ico|.*\\.).*)"],
 };

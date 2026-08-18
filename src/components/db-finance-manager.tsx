@@ -1,5 +1,6 @@
 import { AlertTriangle, CheckCircle2, CircleDollarSign, CreditCard, MessageCircle, Trash2 } from "lucide-react";
 import { deletePaymentAction, registerPaymentAction } from "@/app/financeiro/actions";
+import { CampoIdempotencia } from "@/components/campo-idempotencia";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -146,6 +147,8 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
                           ) : null}
                           <ToastForm action={registerPaymentAction} className="flex items-center gap-1.5">
                             <input type="hidden" name="orderId" value={order.id} />
+                            {/* Sem isto, o duplo clique vira dois recebimentos. */}
+                            <CampoIdempotencia />
                             <input
                               name="amount"
                               placeholder={centsToCurrency(balance)}

@@ -494,7 +494,7 @@ model Material {
 }
 
 model StockMovement {
-  id String @id @default(cuid())
+  id         String            @id @default(cuid())
   // Um movimento aponta para exatamente um lado: peça (daqui pra frente) ou
   // material (histórico anterior à mudança). O banco garante isso na
   // constraint movimento_material_ou_peca.
@@ -520,18 +520,24 @@ model StockMovement {
 // linha só por pedido, com o valor total, atualizada a cada pagamento — não
 // dava para saber quando a entrada entrou nem provar recebimento ao cliente.
 model Payment {
-  id            String        @id @default(cuid())
-  orderId       String
-  amountInCents Int
-  status        PaymentStatus @default(PENDING)
-  method        String?
+  id             String        @id @default(cuid())
+  orderId        String
+  // Impede o mesmo recebimento de entrar duas vezes. O formulario manda uma
+  // chave por tentativa; se o duplo clique (ou o retry do navegador) repetir a
+  // chave, o banco recusa a segunda insercao. E o unico ponto que resiste a
+  // duas requisicoes simultaneas, porque a decisao acontece no banco e nao na
+  // aplicacao.
+  idempotencyKey String?       @unique
+  amountInCents  Int
+  status         PaymentStatus @default(PENDING)
+  method         String?
   // O que foi este recebimento (ex.: "Entrada do pedido"). Ajuda o dono a se
   // situar no histórico quando há vários no mesmo pedido.
-  note          String?
-  dueDate       DateTime?
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  note           String?
+  dueDate        DateTime?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -540,26 +546,37 @@ model Payment {
 }
 
 model Attachment {
-  id        String   @id @default(cuid())
-  orderId   String
-  name      String
-  url       String
-  type      String?
+  id          String    @id @default(cuid())
+  orderId     String
+  name        String
+  // Endereco publico do arquivo. Mantido apenas para os anexos antigos, que
+  // foram gravados assim quando o bucket era publico; anexo novo nao preenche.
+  url         String
+  // Caminho interno no bucket privado (ex.: "empresa/pedido/arquivo.jpg").
+  // Guardar o caminho, e nao a URL, e o que permite o link assinado expirar:
+  // URL publica gravada no banco vale para sempre e vaza com um copiar e colar.
+  storagePath String?
+  type        String?
   // De onde veio o arquivo. Vazio = arte do cliente, que é o caso de tudo que
   // já existe. "BANCADA" = foto tirada pelo funcionário durante a produção.
   //
   // A separação importa: foto do que ficou pronto, ou de um problema, não pode
   // ser confundida com a arte aprovada — senão o próximo funcionário produz
   // olhando a foto errada.
-  origem    String?
+  origem      String?
   // Quem enviou. Só preenchido no que vem da bancada: é o que permite voltar e
   // perguntar para a pessoa certa quando a foto mostra um problema.
-  sentBy    String?
-  createdAt DateTime @default(now())
+  sentBy      String?
+  createdAt   DateTime  @default(now())
+  // Quem apagou e quando. O arquivo some da tela na hora, mas o registro fica:
+  // "sumiu a foto do problema" precisa ter dono e data para ser investigado.
+  deletedAt   DateTime?
+  deletedBy   String?
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([deletedAt])
   @@map("anexos")
 }
 
@@ -631,4 +648,25 @@ model PushInscricao {
   @@index([companyId])
   @@index([userId])
   @@map("push_inscricoes")
+}
+
+// Freio de tentativas compartilhado entre todas as instancias.
+//
+// O limitador anterior vivia num Map na memoria do processo. Em serverless cada
+// requisicao pode cair numa instancia nova, entao o contador reiniciava sozinho
+// e o freio nao freava nada: bastava insistir para acertar a senha.
+//
+// Uma linha por chave ("login:maria@x.com", "portal:ip"). A decisao acontece no
+// banco, que e o unico lugar que todas as instancias enxergam igual.
+model RateLimit {
+  chave        String    @id
+  tentativas   Int       @default(0)
+  janelaInicio DateTime  @default(now())
+  // Bloqueio progressivo: cada faixa de tentativas empurra este horario para
+  // mais longe. Nulo quando a chave nunca estourou o limite.
+  bloqueadoAte DateTime?
+  atualizadoEm DateTime  @updatedAt
+
+  @@index([bloqueadoAte])
+  @@map("rate_limit")
 }
