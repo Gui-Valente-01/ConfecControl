@@ -1,5 +1,7 @@
 "use server";
 
+import { headers } from "next/headers";
+import { registrarTentativa } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { createSession, hashPassword } from "@/lib/auth";
 import { seedCompanyStages } from "@/lib/db-bootstrap";
@@ -14,7 +16,15 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  if (!accessCode) return { error: "Informe o token de acesso recebido na contratação." };
+  if (!accessCode) return { error: "Informe o código de acesso recebido na contratação." };
+
+  // O codigo tem 8 digitos: sem freio, da para varrer o intervalo inteiro e
+  // criar empresa com o codigo de outra pessoa. A chave e a origem, porque aqui
+  // nao ha conta para proteger -- ha um segredo curto para adivinhar.
+  const cabecalhos = await headers();
+  const origem = cabecalhos.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const freio = await registrarTentativa(`cadastro:${origem}`);
+  if (freio.bloqueado) return { error: freio.mensagem ?? "Muitas tentativas. Tente mais tarde." };
   if (!companyName || !name || !email) return { error: "Preencha empresa, nome e e-mail." };
   if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };
 

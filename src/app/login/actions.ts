@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createSession, destroySession, verifyPassword } from "@/lib/auth";
-import { clearRateLimit, isRateLimited } from "@/lib/rate-limit";
+import { limparTentativas, registrarTentativa } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 
 export type LoginState = { error?: string };
@@ -18,9 +18,12 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
 
   const headerStore = await headers();
   const ip = headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  const rateKey = `${email}|${ip}`;
-  if (isRateLimited(rateKey)) {
-    return { error: "Muitas tentativas de login. Aguarde 15 minutos e tente novamente." };
+  const rateKey = `login:${email}|${ip}`;
+  const freio = await registrarTentativa(rateKey);
+  if (freio.bloqueado) {
+    // A mensagem nao diz quantas tentativas restam nem se o e-mail existe:
+    // as duas coisas ajudariam quem esta tentando adivinhar.
+    return { error: freio.mensagem ?? "Muitas tentativas. Tente de novo mais tarde." };
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
@@ -40,7 +43,7 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     };
   }
 
-  clearRateLimit(rateKey);
+  await limparTentativas(rateKey);
   await createSession(user.id);
   redirect("/");
 }

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createSession, hashPassword } from "@/lib/auth";
 import { demoHabilitada, EMPRESA_DEMO } from "@/lib/demo";
 import { prisma } from "@/lib/prisma";
-import { isRateLimited } from "@/lib/rate-limit";
+import { registrarTentativa } from "@/lib/rate-limit";
 import { recriarEmpresaDemo, type PrismaDoSeed } from "@/lib/seed-demo";
 
 // Fotos de exemplo só fora de produção: o next.config libera o picsum.photos
@@ -77,7 +77,8 @@ export async function recomecarDemoAction(): Promise<void> {
 
   // Recriar custa dezenas de escritas no banco. Sem freio, um único visitante
   // insistindo no botão viraria carga permanente em cima do banco de produção.
-  if (isRateLimited(`demo:${await origem()}`)) redirect("/?demo=espere");
+  const freio = await registrarTentativa(`demo:${await origem()}`);
+  if (freio.bloqueado) redirect("/?demo=espere");
 
   const donoId = await recriar();
   await createSession(donoId);

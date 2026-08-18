@@ -1,13 +1,21 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { hashPassword, verifyPassword } from "@/lib/auth";
+import { registrarTentativa, limparTentativas } from "@/lib/rate-limit";
 import { createClientSession, destroyClientSession } from "@/lib/client-auth";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 
 // 1º acesso pelo link de convite: o cliente define a senha e é conectado à confecção.
+/** Identifica quem esta tentando, para o freio nao ser global. */
+async function origemDaTentativa(): Promise<string> {
+  const cabecalhos = await headers();
+  return cabecalhos.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+}
+
 export async function portalActivateAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const token = String(formData.get("token") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -44,6 +52,13 @@ export async function portalLoginAction(_prev: FormState, formData: FormData): P
 
   if (!email || !password) return { error: "Informe e-mail e senha." };
 
+  // O portal e a porta do CLIENTE da confeccao, e nao tinha freio nenhum: dava
+  // para tentar senha a vontade. A chave junta e-mail e origem para o ataque a
+  // uma conta nao travar as demais.
+  const chave = `portal:${email}|${await origemDaTentativa()}`;
+  const freio = await registrarTentativa(chave);
+  if (freio.bloqueado) return { error: freio.mensagem ?? "Muitas tentativas. Tente mais tarde." };
+
   const clients = await prisma.client.findMany({
     where: { email, portalEnabled: true, passwordHash: { not: null } },
     include: { company: { select: { features: true } } },
@@ -56,6 +71,8 @@ export async function portalLoginAction(_prev: FormState, formData: FormData): P
       planHasFeature(client.company.features, "portal"),
   );
   if (!match) return { error: "E-mail ou senha inválidos." };
+
+  await limparTentativas(chave);
 
   await createClientSession(match.id);
   redirect("/portal");
