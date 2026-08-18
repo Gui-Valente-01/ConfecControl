@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { userWithCapability } from "@/lib/auth";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +16,11 @@ function formatDate(date: Date | null) {
 }
 
 export async function GET(req: NextRequest) {
-  const user = await getSessionUser();
+  // Exportar e ler o financeiro em arquivo, entao exige a MESMA permissao da
+  // tela -- e nao apenas estar logado. Sem isto, qualquer pessoa da empresa
+  // baixava o total e o pago de todos os pedidos digitando a URL, inclusive a
+  // Producao, que o sistema proibe de ver dinheiro.
+  const user = await userWithCapability("reports.export");
   if (!user) {
     return NextResponse.redirect(new URL("/login", req.url));
   }

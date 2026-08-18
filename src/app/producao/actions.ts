@@ -2,7 +2,7 @@
 
 import { OrderPriority } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { requireCompanyId, requireUser } from "@/lib/auth";
+import { companyIdWithCapability, requireUser } from "@/lib/auth";
 import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { registrarAviso } from "@/app/avisos/actions";
@@ -24,7 +24,10 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
   const note = String(formData.get("note") ?? "").trim();
   if (!orderId || !currentStageId) return { error: "Pedido ou etapa inválidos." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("production.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mover a producao." };
 
   // Garante que o pedido pertence a empresa do usuário logado.
   const order = await prisma.order.findFirst({
@@ -104,7 +107,10 @@ export async function setOrderProductionAction(_prev: FormState, formData: FormD
   const partnerIdRaw = String(formData.get("partnerId") ?? "").trim();
   if (!orderId) return { error: "Pedido não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("production.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mover a producao." };
 
   const data: { priority?: OrderPriority; assignee: string | null; partnerId: string | null } = {
     assignee: assignee || null,

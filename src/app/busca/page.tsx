@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { requireUser } from "@/lib/auth";
+import { roleHasCapability } from "@/lib/capabilities";
 import { centsToCurrency } from "@/lib/format";
 import { orderStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
@@ -27,9 +28,17 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
   const type = params.type ?? "";
   const asNumber = Number(q.replace(/\D/g, ""));
 
-  const showOrders = q !== "" && (type === "" || type === "pedidos");
-  const showClients = q !== "" && (type === "" || type === "clientes");
-  const showProducts = q !== "" && (type === "" || type === "produtos");
+  // A busca respeita a mesma matriz do resto do sistema: ela nao pode virar a
+  // porta dos fundos para quem nao abre a tela correspondente. Antes, qualquer
+  // pessoa logada achava cliente, peca e o total de cada pedido por aqui.
+  const podeVerPedidos = roleHasCapability(user.role, "orders.read");
+  const podeVerClientes = roleHasCapability(user.role, "clients.read");
+  const podeVerPecas = roleHasCapability(user.role, "products.read");
+  const mostraValores = roleHasCapability(user.role, "finance.read");
+
+  const showOrders = q !== "" && podeVerPedidos && (type === "" || type === "pedidos");
+  const showClients = q !== "" && podeVerClientes && (type === "" || type === "clientes");
+  const showProducts = q !== "" && podeVerPecas && (type === "" || type === "produtos");
 
   const [clients, products, orders] = await Promise.all([
     showClients
@@ -59,7 +68,9 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
           },
           orderBy: { createdAt: "desc" },
           take: 12,
-          select: { id: true, number: true, status: true, totalAmountInCents: true, client: { select: { name: true } } },
+          // O total nao e mostrado nesta lista: nao buscar o que nao se exibe evita
+          // que um ajuste futuro no layout vaze valor sem ninguem notar.
+          select: { id: true, number: true, status: true, client: { select: { name: true } } },
         })
       : Promise.resolve([]),
   ]);
@@ -150,7 +161,9 @@ export default async function BuscaPage({ searchParams }: { searchParams: Search
                         <Shirt size={15} className="text-muted" aria-hidden="true" />
                         {product.name}
                       </span>
-                      <span className="text-muted">{centsToCurrency(product.standardPriceInCents)}</span>
+                      {mostraValores ? (
+                        <span className="text-muted">{centsToCurrency(product.standardPriceInCents)}</span>
+                      ) : null}
                     </Link>
                   </li>
                 ))}

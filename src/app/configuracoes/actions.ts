@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireCompanyId, requireUser } from "@/lib/auth";
+import { companyIdWithCapability, requireUser } from "@/lib/auth";
+import { roleHasCapability } from "@/lib/capabilities";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,10 @@ import { prisma } from "@/lib/prisma";
 async function requireBancadaCompany(): Promise<string | null> {
   const user = await requireUser();
   if (!planHasFeature(user.features, "bancada")) return null;
+  // Duas perguntas diferentes: o PLANO libera o modulo, a CAPACIDADE autoriza a
+  // pessoa. Faltava a segunda -- e sem ela quem produz podia apagar a propria
+  // mesa em que os colegas estavam trabalhando.
+  if (!roleHasCapability(user.role, "settings.write")) return null;
   return user.companyId;
 }
 
@@ -91,7 +96,11 @@ export async function deleteMesaAction(_prev: FormState, formData: FormData): Pr
 }
 
 export async function updateCompanyAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const companyId = await requireCompanyId();
+  // Mexer em empresa, etapa e mesa e configuracao do sistema: sem a
+  // capacidade, qualquer pessoa logada renomeava ou apagava etapa de
+  // producao -- e etapa apagada leva o pedido junto para o limbo.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar as configuracoes." };
   const name = String(formData.get("name") ?? "").trim();
   const document = String(formData.get("document") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
@@ -126,7 +135,11 @@ export async function createStageAction(_prev: FormState, formData: FormData): P
   const color = String(formData.get("color") ?? "").trim();
   if (!name) return { error: "Informe o nome da etapa." };
 
-  const companyId = await requireCompanyId();
+  // Mexer em empresa, etapa e mesa e configuracao do sistema: sem a
+  // capacidade, qualquer pessoa logada renomeava ou apagava etapa de
+  // producao -- e etapa apagada leva o pedido junto para o limbo.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar as configuracoes." };
 
   const duplicate = await prisma.productionStage.findFirst({ where: { companyId, name }, select: { id: true } });
   if (duplicate) return { error: "Já existe uma etapa com esse nome." };
@@ -149,7 +162,11 @@ export async function updateStageAction(_prev: FormState, formData: FormData): P
   const active = String(formData.get("active") ?? "") === "on";
   if (!id || !name) return { error: "Informe o nome da etapa." };
 
-  const companyId = await requireCompanyId();
+  // Mexer em empresa, etapa e mesa e configuracao do sistema: sem a
+  // capacidade, qualquer pessoa logada renomeava ou apagava etapa de
+  // producao -- e etapa apagada leva o pedido junto para o limbo.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar as configuracoes." };
   const updated = await prisma.productionStage.updateMany({
     where: { id, companyId },
     data: { name, color: color || null, position: Number.isFinite(position) ? position : 0, active },
@@ -164,7 +181,11 @@ export async function deleteStageAction(_prev: FormState, formData: FormData): P
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Etapa não encontrada." };
 
-  const companyId = await requireCompanyId();
+  // Mexer em empresa, etapa e mesa e configuracao do sistema: sem a
+  // capacidade, qualquer pessoa logada renomeava ou apagava etapa de
+  // producao -- e etapa apagada leva o pedido junto para o limbo.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar as configuracoes." };
   const stage = await prisma.productionStage.findFirst({
     where: { id, companyId },
     select: { id: true, _count: { select: { currentOrders: true, toHistory: true } } },

@@ -10,6 +10,7 @@ import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import { canAccessRoute, roleLabels } from "@/lib/roles";
+import { roleHasCapability, roleCanOpenRoute, type Capability } from "@/lib/capabilities";
 import { planAllowsRoute } from "@/lib/features";
 
 export { roleLabels, canAccessRoute };
@@ -138,15 +139,59 @@ export async function requireRole(roles: UserRole[]): Promise<SessionUser> {
 // inclua o módulo; senao volta para o painel.
 export async function requireRouteUser(href: string): Promise<SessionUser> {
   const user = await requireUser();
-  if (!canAccessRoute(user.role, href)) redirect("/");
+  // A rota agora responde pela MESMA matriz das operacoes (capabilities.ts).
+  // Com duas listas separadas, uma podia dizer sim enquanto a outra dizia nao.
+  if (!roleCanOpenRoute(user.role, href)) redirect("/");
   if (!planAllowsRoute(user.features, href)) redirect("/");
   return user;
+}
+
+/**
+ * Exige que o cargo possa executar a operação. É a guarda do servidor.
+ *
+ * Usada por página, Server Action e Route Handler. Esconder o botão na tela
+ * não protege nada: o botão escondido continua sendo uma URL que alguém
+ * digita, e foi assim que o export de relatórios entregava o financeiro
+ * inteiro para quem não podia vê-lo.
+ *
+ * Quem não tem a capacidade volta ao painel em vez de receber uma tela de
+ * erro: para a pessoa, aquilo simplesmente não faz parte do trabalho dela.
+ */
+export async function requireCapability(capability: Capability): Promise<SessionUser> {
+  const user = await requireUser();
+  if (!roleHasCapability(user.role, capability)) redirect("/");
+  return user;
+}
+
+/**
+ * A mesma checagem para quem responde fora de uma tela (Route Handler, API).
+ *
+ * Devolve o usuário ou null, sem redirecionar: um endpoint precisa responder
+ * com o código certo, e não mandar o navegador para outro lugar.
+ */
+export async function userWithCapability(capability: Capability): Promise<SessionUser | null> {
+  const user = await getSessionUser();
+  if (!user) return null;
+  return roleHasCapability(user.role, capability) ? user : null;
 }
 
 // Atalho para server actions: retorna o companyId do usuário logado.
 export async function requireCompanyId(): Promise<string> {
   const user = await requireUser();
   return user.companyId;
+}
+
+/**
+ * companyId apenas se o cargo puder executar a operação; senão null.
+ *
+ * Existe porque quase toda action precisa das duas coisas ao mesmo tempo: a
+ * empresa, que isola os dados, e a permissão, que autoriza a operação. Pedir
+ * as duas numa chamada só é o que evita alguém lembrar de uma e esquecer da
+ * outra.
+ */
+export async function companyIdWithCapability(capability: Capability): Promise<string | null> {
+  const user = await requireUser();
+  return roleHasCapability(user.role, capability) ? user.companyId : null;
 }
 
 // Retorna o companyId apenas se o usuário for Dono (ADMIN); senão null.

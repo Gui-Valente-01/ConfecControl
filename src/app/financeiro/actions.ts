@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireCompanyId } from "@/lib/auth";
+import { companyIdWithCapability } from "@/lib/auth";
 import { moneyToCents } from "@/lib/format";
 import type { FormState } from "@/lib/form-state";
 import { computeBalance, resolveReceiptAmount, resolveStatusFromReceipts, sumReceipts } from "@/lib/payments";
@@ -29,7 +29,11 @@ export async function registerPaymentAction(_prev: FormState, formData: FormData
   const informado = String(formData.get("amount") ?? "").trim();
   const informadoEmCentavos = informado ? moneyToCents(informado) : null;
 
-  const companyId = await requireCompanyId();
+  // Registrar e apagar recebimento mexe em dinheiro: exige a capacidade, e
+  // nao apenas estar logado. Antes, qualquer pessoa da empresa (inclusive a
+  // Producao) podia lancar e excluir pagamento chamando a action direto.
+  const companyId = await companyIdWithCapability("finance.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer em recebimentos." };
 
   const order = await prisma.order.findFirst({
     where: { id: orderId, companyId },
@@ -82,7 +86,11 @@ export async function deletePaymentAction(_prev: FormState, formData: FormData):
   const paymentId = String(formData.get("paymentId") ?? "");
   if (!paymentId) return { error: "Recebimento não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Registrar e apagar recebimento mexe em dinheiro: exige a capacidade, e
+  // nao apenas estar logado. Antes, qualquer pessoa da empresa (inclusive a
+  // Producao) podia lancar e excluir pagamento chamando a action direto.
+  const companyId = await companyIdWithCapability("finance.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer em recebimentos." };
 
   const payment = await prisma.payment.findFirst({
     where: { id: paymentId, order: { companyId } },

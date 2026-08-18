@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { adminCompanyId, companyIdWithCapability, requireUser } from "@/lib/auth";
 import { moneyToCents } from "@/lib/format";
 import type { FormState } from "@/lib/form-state";
 import { canManageStock } from "@/lib/roles";
@@ -26,7 +26,10 @@ export async function createServiceAction(_prev: FormState, formData: FormData):
   const price = moneyToCents(String(formData.get("price") ?? ""));
   if (!name) return { error: "Informe o nome do serviço." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar servicos." };
 
   const existing = await prisma.service.findFirst({ where: { companyId, name }, select: { id: true } });
   if (existing) return { error: `Já existe um serviço chamado ${name}.` };
@@ -53,7 +56,10 @@ export async function updateServiceAction(_prev: FormState, formData: FormData):
   const name = String(formData.get("name") ?? "").trim();
   if (!id || !name) return { error: "Informe o nome do serviço." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("settings.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar servicos." };
   const updated = await prisma.service.updateMany({
     where: { id, companyId },
     data: {

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import { adminCompanyId, companyIdWithCapability } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { validateContactFields } from "@/lib/validation";
@@ -19,7 +19,10 @@ export async function createPartnerAction(_prev: FormState, formData: FormData):
   const invalido = validateContactFields({ phone, email });
   if (invalido) return { error: invalido.message, field: invalido.field };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("partners.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar terceirizadas." };
 
   await prisma.partner.create({
     data: {
@@ -74,7 +77,10 @@ export async function togglePartnerActiveAction(_prev: FormState, formData: Form
   const active = String(formData.get("active") ?? "") === "true";
   if (!id) return { error: "Terceirizada não encontrada." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("partners.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar terceirizadas." };
   const updated = await prisma.partner.updateMany({ where: { id, companyId }, data: { active } });
   if (updated.count === 0) return { error: "Terceirizada não encontrada." };
 
@@ -87,7 +93,10 @@ export async function deletePartnerAction(_prev: FormState, formData: FormData):
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Terceirizada não encontrada." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("partners.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar terceirizadas." };
   // Vai para a lixeira: pedido antigo que aponta para ela continua inteiro.
   const deleted = await prisma.partner.updateMany({
     where: { id, companyId, deletedAt: null },

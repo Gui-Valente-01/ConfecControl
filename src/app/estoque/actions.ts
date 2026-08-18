@@ -2,7 +2,7 @@
 
 import { StockMovementType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { adminCompanyId, companyIdWithCapability, requireUser } from "@/lib/auth";
 import { canManageStock } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { moneyToCents } from "@/lib/format";
@@ -38,7 +38,10 @@ export async function createMaterialAction(_prev: FormState, formData: FormData)
 
   if (!name) return { error: "Informe o nome do material." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("stock.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer no estoque." };
 
   const material = await prisma.material.create({
     data: {
@@ -95,7 +98,10 @@ export async function deleteMaterialAction(_prev: FormState, formData: FormData)
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Material não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("stock.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer no estoque." };
 
   const material = await prisma.material.findFirst({
     where: { id, companyId },
@@ -140,7 +146,10 @@ export async function registerStockMovementAction(_prev: FormState, formData: Fo
   }
   const type = typeRaw as StockMovementType;
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("stock.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer no estoque." };
 
   const achou = await prisma.$transaction(async (tx) => {
     const peca = await tx.product.findFirst({ where: { id: productId, companyId }, select: { id: true } });
@@ -176,7 +185,10 @@ export async function setProductMinimumAction(_prev: FormState, formData: FormDa
   const minimum = Math.round(quantityFromText(String(formData.get("minimumQuantity") ?? "")));
   if (!productId || minimum < 0) return { error: "Quantidade mínima inválida." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("stock.write");
+  if (!companyId) return { error: "Voce nao tem permissao para mexer no estoque." };
   const { count } = await prisma.product.updateMany({
     where: { id: productId, companyId },
     data: { minimumQuantity: minimum },

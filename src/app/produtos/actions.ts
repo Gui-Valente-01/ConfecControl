@@ -2,7 +2,7 @@
 
 import type { ProductKind } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId } from "@/lib/auth";
+import { adminCompanyId, companyIdWithCapability } from "@/lib/auth";
 import { describeBlockedDeletion } from "@/lib/deletion";
 import type { FormState } from "@/lib/form-state";
 import { moneyToCents } from "@/lib/format";
@@ -28,7 +28,10 @@ export async function createProductAction(_prev: FormState, formData: FormData):
 
   if (!name) return { error: "Informe o nome da peça." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("products.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pecas." };
 
   await prisma.product.create({
     data: {
@@ -77,7 +80,10 @@ export async function deleteProductAction(_prev: FormState, formData: FormData):
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Peça não encontrada." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("products.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pecas." };
 
   const product = await prisma.product.findFirst({
     where: { id, companyId },

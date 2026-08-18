@@ -7,7 +7,7 @@ import { OrderPriority, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { dateInputToDate, moneyToCents } from "@/lib/format";
-import { requireCompanyId, requireUser } from "@/lib/auth";
+import { companyIdWithCapability, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
@@ -60,7 +60,10 @@ export async function uploadAttachmentAction(_prev: FormState, formData: FormDat
     return { error: "Armazenamento de anexos não configurado. Defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY." };
   }
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("orders.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
   const order = await prisma.order.findFirst({ where: { id: orderId, companyId }, select: { id: true } });
   if (!order) return { error: "Pedido não encontrado." };
 
@@ -83,7 +86,10 @@ export async function deleteAttachmentAction(_prev: FormState, formData: FormDat
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Anexo não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("orders.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
   const attachment = await prisma.attachment.findFirst({
     where: { id, order: { companyId } },
     select: { id: true, url: true, orderId: true },
@@ -120,7 +126,10 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
 
   if (!clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("orders.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
 
   // Confirma que o cliente pertence a empresa do usuário.
   const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true, name: true } });
@@ -313,7 +322,10 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
 
   if (!id || !clientId || items.length === 0) return { error: "Informe o cliente e ao menos um item do pedido." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("orders.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
 
   const order = await prisma.order.findFirst({
     where: { id, companyId },
@@ -421,7 +433,10 @@ export async function deleteOrderAction(_prev: FormState, formData: FormData): P
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Pedido não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("orders.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar pedidos." };
 
   const attachmentUrls = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findFirst({

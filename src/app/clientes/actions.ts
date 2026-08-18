@@ -2,7 +2,7 @@
 
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { adminCompanyId, requireCompanyId, requireUser } from "@/lib/auth";
+import { adminCompanyId, companyIdWithCapability, requireUser } from "@/lib/auth";
 import { describeBlockedDeletion } from "@/lib/deletion";
 import { planHasFeature } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
@@ -47,7 +47,10 @@ export async function createClientAction(_prev: FormState, formData: FormData): 
   const invalido = validateContactFields({ phone, document, email });
   if (invalido) return { error: invalido.message, field: invalido.field };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("clients.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar clientes." };
 
   await prisma.client.create({
     data: {
@@ -103,7 +106,10 @@ export async function deleteClientAction(_prev: FormState, formData: FormData): 
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Cliente não encontrado." };
 
-  const companyId = await requireCompanyId();
+  // Isolamento por empresa NAO e autorizacao: dizia de quem era o dado,
+  // mas nao se esta pessoa podia mexer nele.
+  const companyId = await companyIdWithCapability("clients.write");
+  if (!companyId) return { error: "Voce nao tem permissao para alterar clientes." };
 
   const client = await prisma.client.findFirst({
     where: { id, companyId },

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PrintTrigger } from "@/components/print-trigger";
-import { requireUser } from "@/lib/auth";
+import { requireCapability } from "@/lib/auth";
+import { roleHasCapability } from "@/lib/capabilities";
 import { centsToCurrency, formatLongDate } from "@/lib/format";
 import { orderPriorityLabels, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
@@ -8,8 +9,12 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 export default async function OrderPrintPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
+  const user = await requireCapability("orders.print");
   const { id } = await params;
+
+  // A oficina precisa da ficha, mas a Producao nao pode ver dinheiro. Entao a
+  // ficha sai para os dois -- e o que muda e o que vem impresso nela.
+  const mostraValores = roleHasCapability(user.role, "finance.read");
 
   const order = await prisma.order.findFirst({
     where: { id, companyId: user.companyId },
@@ -64,20 +69,30 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
       {/* Larguras fixas para os números não dançarem entre um pedido e outro:
           duas folhas do mesmo dia saem com as colunas no mesmo lugar. */}
       <table className="mt-6 w-full table-fixed border-collapse text-sm print:mt-4">
+        {/* Sem as colunas de dinheiro a largura precisa ser redistribuida:
+            colgroup com mais colunas do que a tabela desalinha tudo. */}
         <colgroup>
-          <col className="w-[38%]" />
-          <col className="w-[17%]" />
-          <col className="w-[9%]" />
-          <col className="w-[18%]" />
-          <col className="w-[18%]" />
+          <col className={mostraValores ? "w-[38%]" : "w-[55%]"} />
+          <col className={mostraValores ? "w-[17%]" : "w-[30%]"} />
+          <col className={mostraValores ? "w-[9%]" : "w-[15%]"} />
+          {mostraValores ? (
+            <>
+              <col className="w-[18%]" />
+              <col className="w-[18%]" />
+            </>
+          ) : null}
         </colgroup>
         <thead>
           <tr className="border-b-2 border-ink text-left">
             <th className="py-2">Descrição</th>
             <th className="py-2">Tam./Cor</th>
             <th className="py-2 text-right">Qtd.</th>
-            <th className="py-2 text-right">Preço un.</th>
-            <th className="py-2 text-right">Total</th>
+            {mostraValores ? (
+              <>
+                <th className="py-2 text-right">Preço un.</th>
+                <th className="py-2 text-right">Total</th>
+              </>
+            ) : null}
           </tr>
         </thead>
         <tbody>
@@ -86,8 +101,12 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
               <td className="py-2 align-top break-words">{item.description}</td>
               <td className="py-2 align-top break-words">{[item.size, item.color].filter(Boolean).join(" / ") || "-"}</td>
               <td className="py-2 text-right align-top tabular-nums">{item.quantity}</td>
-              <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(item.unitPriceInCents)}</td>
-              <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(item.totalPriceInCents)}</td>
+              {mostraValores ? (
+                <>
+                  <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(item.unitPriceInCents)}</td>
+                  <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(item.totalPriceInCents)}</td>
+                </>
+              ) : null}
             </tr>
           ))}
           {order.services.map((service) => (
@@ -97,13 +116,18 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
               </td>
               <td className="py-2 align-top">-</td>
               <td className="py-2 text-right align-top">-</td>
-              <td className="py-2 text-right align-top">-</td>
-              <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(service.priceInCents)}</td>
+              {mostraValores ? (
+                <>
+                  <td className="py-2 text-right align-top">-</td>
+                  <td className="py-2 text-right align-top tabular-nums">{centsToCurrency(service.priceInCents)}</td>
+                </>
+              ) : null}
             </tr>
           ))}
         </tbody>
       </table>
 
+      {mostraValores ? (
       <section className="print-keep mt-6 flex justify-end print:mt-4">
         <table className="text-sm">
           <tbody>
@@ -114,6 +138,7 @@ export default async function OrderPrintPage({ params }: { params: Promise<{ id:
           </tbody>
         </table>
       </section>
+      ) : null}
 
       {order.internalNotes ? (
         <section className="print-keep mt-6 text-sm print:mt-4">
