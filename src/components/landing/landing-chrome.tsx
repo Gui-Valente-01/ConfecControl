@@ -103,6 +103,8 @@ export function LandingFooter() {
             <Link href="/planos" className="transition hover:text-primary">Planos</Link>
             <Link href="/login" className="transition hover:text-primary">Entrar</Link>
             <Link href="/cadastro" className="transition hover:text-primary">Ativar minha empresa</Link>
+            <Link href="/privacidade" className="transition hover:text-primary">Privacidade</Link>
+            <Link href="/termos" className="transition hover:text-primary">Termos</Link>
           </div>
         </div>
       </div>

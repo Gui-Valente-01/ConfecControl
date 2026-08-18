@@ -55,15 +55,39 @@ enum OrderPriority {
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  document  String?  @unique
-  phone     String?
-  email     String?
-  address   String?
-  features  String[] @default([]) // módulos vendáveis liberados p/ esta empresa (o núcleo é sempre incluso)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id       String   @id @default(cuid())
+  name     String
+  document String?  @unique
+  phone    String?
+  email    String?
+  address  String?
+  features String[] @default([]) // módulos vendáveis liberados p/ esta empresa (o núcleo é sempre incluso)
+
+  // ---- Dados fiscais do emitente (NF-e) ----
+  // Todos anuláveis: quem não emite nota não precisa preencher nada, e o
+  // painel da nota lista o que falta quando chega a hora.
+  //
+  // O endereço já existe acima como texto livre, que serve para a ficha
+  // impressa mas NÃO serve para a SEFAZ: ela exige logradouro, número e
+  // bairro separados, e o município pelo código do IBGE — o nome da cidade
+  // não é aceito.
+  razaoSocial       String?
+  nomeFantasia      String?
+  inscricaoEstadual String?
+  /// CRT: 1 Simples Nacional, 2 Simples com excesso de sublimite, 3 Regime normal.
+  /// Quem decide isto é o contador da empresa.
+  regimeTributario  String?
+  logradouro        String?
+  numero            String?
+  complemento       String?
+  bairro            String?
+  /// Código do IBGE do município. É o que a NF-e usa.
+  codigoMunicipio   String?
+  municipio         String?
+  uf                String?
+  cep               String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   users            User[]
   clients          Client[]
@@ -154,26 +178,40 @@ model User {
 }
 
 model Client {
-  id            String    @id @default(cuid())
-  companyId     String
-  name          String
-  document      String?
-  contact       String?
-  phone         String?
-  email         String?
-  address       String?
-  notes         String?   @db.Text
+  id        String  @id @default(cuid())
+  companyId String
+  name      String
+  document  String?
+  contact   String?
+  phone     String?
+  email     String?
+  address   String?
+  notes     String? @db.Text
+
+  // ---- Dados fiscais do destinatário (NF-e) ----
+  inscricaoEstadual String?
+  /// indIEDest: 1 contribuinte com IE, 2 isento, 9 não contribuinte.
+  /// O caso comum numa confecção — escola, igreja, pessoa física — é 9.
+  indicadorIe       String?
+  logradouro        String?
+  numero            String?
+  complemento       String?
+  bairro            String?
+  codigoMunicipio   String?
+  municipio         String?
+  uf                String?
+  cep               String?
   // Portal do cliente (login próprio, conectado à confecção por convite).
-  passwordHash  String?
-  inviteToken   String?   @unique
-  portalEnabled Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  passwordHash      String?
+  inviteToken       String?   @unique
+  portalEnabled     Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   // Lixeira: quando preenchido, o cadastro sai das telas mas continua no
   // banco, junto com tudo que depende dele. Sem isso, apagar um material
   // levava embora a ficha tecnica das pecas e o historico de estoque, sem
   // volta. O filtro e aplicado de uma vez so, em src/lib/soft-delete.ts.
-  deletedAt     DateTime?
+  deletedAt         DateTime?
 
   company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
   orders        Order[]
@@ -290,13 +328,29 @@ model Product {
   kind                  ProductKind @default(PRODUCT)
   averageProductionDays Int?
   imageUrl              String?
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
+
+  // ---- Dados fiscais da peça (NF-e) ----
+  /// Nomenclatura Comum do Mercosul. Obrigatório e específico de cada peça:
+  /// camiseta de malha e boné não têm o mesmo NCM.
+  ncm              String?
+  /// Só se aplica a mercadoria sujeita a substituição tributária.
+  cest             String?
+  /// Unidade comercial da NF-e (UN, PC, DZ...). Não é a mesma coisa que a
+  /// unidade do estoque de material.
+  unidadeComercial String?
+  /// Origem da mercadoria: 0 nacional, 1 importação direta, 2 mercado interno...
+  origem           String?
+  /// CFOP SUGERIDO, e nunca fixo: o correto depende da UF de origem e destino
+  /// e da natureza da operação (venda, industrialização, devolução). Fica aqui
+  /// como ponto de partida que o contador confirma.
+  cfopSugerido     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
   // Lixeira: quando preenchido, o cadastro sai das telas mas continua no
   // banco, junto com tudo que depende dele. Sem isso, apagar um material
   // levava embora a ficha tecnica das pecas e o historico de estoque, sem
   // volta. O filtro e aplicado de uma vez so, em src/lib/soft-delete.ts.
-  deletedAt             DateTime?
+  deletedAt        DateTime?
 
   company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
   items     OrderItem[]

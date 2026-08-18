@@ -33,6 +33,8 @@ export const rotasPublicas = [
     prioridade: 0.9,
     frequencia: "monthly" as const,
   })),
+  { caminho: "/privacidade", prioridade: 0.3, frequencia: "yearly" as const },
+  { caminho: "/termos", prioridade: 0.3, frequencia: "yearly" as const },
   { caminho: "/login", prioridade: 0.3, frequencia: "yearly" as const },
   { caminho: "/cadastro", prioridade: 0.3, frequencia: "yearly" as const },
 ];

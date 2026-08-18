@@ -395,3 +395,29 @@ html {
     transform: none;
   }
 }
+
+/* Texto corrido das páginas legais. Elas são feitas para ser LIDAS inteiras,
+   então a medida da linha e o respiro entre seções importam mais aqui do que
+   em qualquer tela do sistema. */
+.legal h2 {
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.legal h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.legal p,
+.legal li {
+  color: var(--cc-muted);
+  line-height: 1.7;
+  max-width: 68ch;
+}
+.legal p { margin-top: 0.75rem; }
+.legal ul { margin-top: 0.75rem; padding-left: 1.25rem; list-style: disc; }
+.legal li { margin-top: 0.35rem; }
+.legal strong { color: var(--cc-body); font-weight: 600; }
