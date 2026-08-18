@@ -17,13 +17,21 @@ export function Logo() {
   );
 }
 
+/**
+ * A chamada principal do site.
+ *
+ * Dizia "Criar minha conta", mas o cadastro exige um codigo que so e entregue
+ * na contratacao — entao o botao prometia uma coisa e a tela seguinte pedia
+ * outra. Enquanto a venda for assistida, a chamada precisa dizer a verdade:
+ * o proximo passo e conversar, e nao se cadastrar.
+ */
 export function PrimaryCta({ className }: { className?: string }) {
   return (
     <Link
-      href="/cadastro"
+      href="/planos"
       className={`inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-dark active:scale-[0.98] ${className ?? ""}`}
     >
-      Criar minha conta
+      Falar com um especialista
     </Link>
   );
 }
@@ -94,7 +102,7 @@ export function LandingFooter() {
           <div className="flex items-center gap-5 text-sm font-medium text-body">
             <Link href="/planos" className="transition hover:text-primary">Planos</Link>
             <Link href="/login" className="transition hover:text-primary">Entrar</Link>
-            <Link href="/cadastro" className="transition hover:text-primary">Criar minha conta</Link>
+            <Link href="/cadastro" className="transition hover:text-primary">Ativar minha empresa</Link>
           </div>
         </div>
       </div>

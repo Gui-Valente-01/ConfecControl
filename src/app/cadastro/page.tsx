@@ -9,8 +9,8 @@ import { formatPhone, resolveSupportContact } from "@/lib/support";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Criar conta",
-  description: "Crie a conta da sua confecção no ConfecControl e comece a controlar pedidos e produção no mesmo dia.",
+  title: "Ativar minha empresa",
+  description: "Ative a conta da sua confecção no ConfecControl com o código recebido na contratação.",
   alternates: { canonical: "/cadastro" },
 };
 
@@ -69,8 +69,11 @@ export default async function CadastroPage() {
                   <p className="text-sm text-muted">Nova empresa</p>
                 </div>
               </div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Nova empresa</p>
-              <h2 className="mt-1 text-2xl font-semibold">Criar conta</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Ativação</p>
+              <h2 className="mt-1 text-2xl font-semibold">Ativar minha empresa</h2>
+              <p className="mt-1 text-sm text-muted">
+                A ativação acontece depois da contratação, com o código que enviamos.
+              </p>
 
               {/* Vem antes do formulário de propósito: o primeiro campo pede um
                   código, e quem não tem precisa saber como conseguir antes de

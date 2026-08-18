@@ -143,7 +143,7 @@ export default async function PlanosPage() {
           <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
             <p className="max-w-xl text-sm text-muted">
               O valor depende do tamanho da operação e dos módulos escolhidos. Fale com a gente e
-              recebe a proposta da sua confecção — sem formulário e sem esperar retorno de vendedor.
+              receba a proposta da sua confecção.
             </p>
             <BotaoDemo />
           </div>
