@@ -1,5 +1,6 @@
 "use server";
 
+import { problemaDaSenha } from "@/lib/validation";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { hashPassword, verifyPassword } from "@/lib/auth";
@@ -22,7 +23,8 @@ export async function portalActivateAction(_prev: FormState, formData: FormData)
   const confirm = String(formData.get("confirm") ?? "");
 
   if (!token) return { error: "Link de acesso inválido. Peça um novo link à confecção." };
-  if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };
+  const problemaSenha = problemaDaSenha(password);
+  if (problemaSenha) return { error: problemaSenha };
   if (password !== confirm) return { error: "As senhas não conferem." };
 
   const client = await prisma.client.findUnique({

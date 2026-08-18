@@ -115,3 +115,33 @@ export function validateContactFields(input: {
   }
   return null;
 }
+
+// ---------- Senha ----------
+
+/**
+ * Tamanho mínimo da senha.
+ *
+ * Eram 6 caracteres, que é o padrão de formulário antigo e hoje se quebra por
+ * força bruta offline em minutos se o banco vazar. Dez é o piso recomendado
+ * quando não há segundo fator — e este sistema guarda o cadastro de clientes e
+ * o financeiro de uma empresa inteira.
+ *
+ * Não exigimos símbolo nem maiúscula de propósito: regra de composição empurra
+ * a pessoa para "Senha@123" e para o papelzinho colado no monitor. Comprimento
+ * é o que realmente encarece o ataque.
+ */
+export const SENHA_MINIMA = 10;
+
+/** Diz o que há de errado com a senha, ou null quando ela serve. */
+export function problemaDaSenha(senha: string): string | null {
+  const valor = String(senha ?? "");
+  if (valor.length < SENHA_MINIMA) {
+    return `A senha deve ter ao menos ${SENHA_MINIMA} caracteres.`;
+  }
+  // Sequência óbvia é o que mais aparece quando se exige só comprimento.
+  if (/^(.)\1+$/.test(valor)) return "A senha não pode ser um único caractere repetido.";
+  if (/^0123456789|^1234567890|^abcdefghij/i.test(valor)) {
+    return "Essa senha é sequencial demais. Escolha outra.";
+  }
+  return null;
+}

@@ -56,7 +56,7 @@ export function SignupForm() {
         <span className="text-sm font-medium text-body">Senha</span>
         <div className={wrapClass}>
           <LockKeyhole className={iconClass} size={17} aria-hidden="true" />
-          <input name="password" type="password" required minLength={6} autoComplete="new-password" className={inputClass} placeholder="mínimo 6 caracteres" />
+          <input name="password" type="password" required minLength={10} autoComplete="new-password" className={inputClass} placeholder="mínimo 10 caracteres" />
         </div>
       </label>
 

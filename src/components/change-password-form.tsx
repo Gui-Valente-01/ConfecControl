@@ -22,11 +22,11 @@ export function ChangePasswordForm() {
       </label>
       <label className="block">
         <span className="text-sm font-medium text-body">Nova senha</span>
-        <input name="next" type="password" required minLength={6} autoComplete="new-password" className={fieldClass} placeholder="mínimo 6 caracteres" />
+        <input name="next" type="password" required minLength={10} autoComplete="new-password" className={fieldClass} placeholder="mínimo 10 caracteres" />
       </label>
       <label className="block">
         <span className="text-sm font-medium text-body">Confirmar nova senha</span>
-        <input name="confirm" type="password" required minLength={6} autoComplete="new-password" className={fieldClass} />
+        <input name="confirm" type="password" required minLength={10} autoComplete="new-password" className={fieldClass} />
       </label>
       {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}
       <SubmitButton>

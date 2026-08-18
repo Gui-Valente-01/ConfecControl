@@ -7,7 +7,7 @@ import { createSession, hashPassword } from "@/lib/auth";
 import { seedCompanyStages } from "@/lib/db-bootstrap";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
-import { validateContactFields } from "@/lib/validation";
+import { problemaDaSenha, validateContactFields } from "@/lib/validation";
 
 export async function signupAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const accessCode = String(formData.get("accessCode") ?? "").replace(/\D/g, "");
@@ -26,7 +26,8 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   const freio = await registrarTentativa(`cadastro:${origem}`);
   if (freio.bloqueado) return { error: freio.mensagem ?? "Muitas tentativas. Tente mais tarde." };
   if (!companyName || !name || !email) return { error: "Preencha empresa, nome e e-mail." };
-  if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres." };
+  const problemaSenha = problemaDaSenha(password);
+  if (problemaSenha) return { error: problemaSenha };
 
   // Esse e-mail vira o login do dono e o token só pode ser usado uma vez:
   // errar aqui queima o acesso da empresa inteira.

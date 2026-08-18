@@ -26,14 +26,14 @@ export function PortalActivateForm({ token, companyName }: { token: string; comp
         <span className="text-sm font-medium text-body">Criar senha</span>
         <div className={wrap}>
           <LockKeyhole className={icon} size={17} aria-hidden="true" />
-          <input name="password" type="password" required minLength={6} autoComplete="new-password" className={input} placeholder="mínimo 6 caracteres" />
+          <input name="password" type="password" required minLength={10} autoComplete="new-password" className={input} placeholder="mínimo 10 caracteres" />
         </div>
       </label>
       <label className="block">
         <span className="text-sm font-medium text-body">Confirmar senha</span>
         <div className={wrap}>
           <LockKeyhole className={icon} size={17} aria-hidden="true" />
-          <input name="confirm" type="password" required minLength={6} autoComplete="new-password" className={input} placeholder="repita a senha" />
+          <input name="confirm" type="password" required minLength={10} autoComplete="new-password" className={input} placeholder="repita a senha" />
         </div>
       </label>
       {state.error ? <p className="rounded-lg bg-danger-soft px-3 py-2 text-sm font-medium text-danger-dark">{state.error}</p> : null}

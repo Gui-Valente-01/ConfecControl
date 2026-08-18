@@ -451,7 +451,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                                   <input
                                     name="password"
                                     type="password"
-                                    minLength={6}
+                                    minLength={10}
                                     required
                                     autoComplete="new-password"
                                     placeholder="Mínimo de 6 caracteres"
@@ -536,7 +536,7 @@ export function DbUsersManager({ users, currentUserId }: DbUsersManagerProps) {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    minLength={6}
+                    minLength={10}
                     autoComplete="new-password"
                     aria-describedby="new-password-help"
                     className={`${fieldClass} pr-12`}

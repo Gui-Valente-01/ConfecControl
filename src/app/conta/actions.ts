@@ -1,5 +1,6 @@
 "use server";
 
+import { problemaDaSenha } from "@/lib/validation";
 import { revalidatePath } from "next/cache";
 import { hashPassword, requireUser, verifyPassword } from "@/lib/auth";
 import type { FormState } from "@/lib/form-state";
@@ -10,7 +11,8 @@ export async function changePasswordAction(_prev: FormState, formData: FormData)
   const next = String(formData.get("next") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
 
-  if (next.length < 6) return { error: "A nova senha deve ter ao menos 6 caracteres." };
+  const problemaSenha = problemaDaSenha(next);
+  if (problemaSenha) return { error: problemaSenha };
   if (next !== confirm) return { error: "A confirmacao não confere com a nova senha." };
 
   const session = await requireUser();

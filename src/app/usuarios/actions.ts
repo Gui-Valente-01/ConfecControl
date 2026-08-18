@@ -1,5 +1,6 @@
 "use server";
 
+import { problemaDaSenha } from "@/lib/validation";
 import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -30,7 +31,8 @@ export async function createUserAction(_prev: UserFormState, formData: FormData)
 
   if (!name) return { error: "Informe o nome do funcionário.", field: "name" };
   if (!email) return { error: "Informe o e-mail de login.", field: "email" };
-  if (password.length < 6) return { error: "A senha deve ter ao menos 6 caracteres.", field: "password" };
+  const problemaSenha = problemaDaSenha(password);
+  if (problemaSenha) return { error: problemaSenha, field: "password" };
   if (!roles.includes(roleRaw as UserRole)) return { error: "Cargo inválido.", field: "role" };
 
   // O e-mail aqui é o login do funcionário: errar deixa a pessoa sem entrar.
@@ -112,7 +114,9 @@ export async function resetUserPasswordAction(_prev: UserFormState, formData: Fo
   const actor = await requireOwner();
   const id = String(formData.get("id") ?? "");
   const password = String(formData.get("password") ?? "");
-  if (!id || password.length < 6) return { error: "A nova senha deve ter ao menos 6 caracteres." };
+  if (!id) return { error: "Funcionário não encontrado." };
+  const problemaSenha = problemaDaSenha(password);
+  if (problemaSenha) return { error: problemaSenha };
 
   const updated = await prisma.user.updateMany({
     where: { id, companyId: actor.companyId },

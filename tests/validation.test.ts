@@ -5,6 +5,7 @@ import {
   isValidDocument,
   isValidEmail,
   isValidPhone,
+  problemaDaSenha,
   validateContactFields,
 } from "@/lib/validation";
 
@@ -128,5 +129,34 @@ describe("validateContactFields", () => {
         email: "dono@costuraviva.com",
       }),
     ).toBeNull();
+  });
+});
+
+describe("problemaDaSenha", () => {
+  it("recusa senha curta: 6 caracteres se quebram offline em minutos", () => {
+    expect(problemaDaSenha("abc123")).toContain("10 caracteres");
+    expect(problemaDaSenha("123456789")).toContain("10 caracteres");
+  });
+
+  it("aceita senha com o tamanho minimo", () => {
+    expect(problemaDaSenha("malhapv2026")).toBeNull();
+    expect(problemaDaSenha("costura viva 2026")).toBeNull();
+  });
+
+  it("nao exige simbolo nem maiuscula: regra de composicao empurra para Senha@123", () => {
+    expect(problemaDaSenha("minhasenhalonga")).toBeNull();
+  });
+
+  it("recusa caractere unico repetido, mesmo longo", () => {
+    expect(problemaDaSenha("aaaaaaaaaaaa")).not.toBeNull();
+  });
+
+  it("recusa sequencia obvia", () => {
+    expect(problemaDaSenha("0123456789")).not.toBeNull();
+    expect(problemaDaSenha("abcdefghij")).not.toBeNull();
+  });
+
+  it("entrada vazia ou nula nao passa", () => {
+    expect(problemaDaSenha("")).not.toBeNull();
   });
 });
