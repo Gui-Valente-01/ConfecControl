@@ -420,4 +420,39 @@ html {
 .legal p { margin-top: 0.75rem; }
 .legal ul { margin-top: 0.75rem; padding-left: 1.25rem; list-style: disc; }
 .legal li { margin-top: 0.35rem; }
-.legal strong { color: var(--cc-body); font-weight: 600; }
+.legal strong { color: var(--cc-muted-strong); font-weight: 600; }
+
+/* Tabelas dos documentos legais. Elas carregam o que há de mais consultável
+   nessas páginas — base legal e prazo de guarda — então precisam rolar sozinhas
+   no celular em vez de empurrar a página inteira para o lado. */
+.tabela-legal {
+  margin-top: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--cc-border);
+  border-radius: 0.5rem;
+}
+.tabela-legal table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.tabela-legal th,
+.tabela-legal td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--cc-border);
+}
+.tabela-legal thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cc-muted);
+  background: var(--cc-surface-muted);
+}
+.tabela-legal td { color: var(--cc-muted); }
+.tabela-legal tbody tr:last-child td { border-bottom: none; }
+
+/* Âncora do índice não pode parar embaixo do cabeçalho fixo. */
+.legal h2 { scroll-margin-top: 5rem; }

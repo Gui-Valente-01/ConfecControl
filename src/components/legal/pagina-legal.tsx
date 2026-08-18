@@ -8,9 +8,19 @@ import { dadosLegais, pendenciasLegais } from "@/lib/legal";
  *
  * O aviso de pendência aparece na PRÓPRIA página, e não só num log: documento
  * legal com lacuna precisa ser visível para quem publicou, senão fica no ar
- * por meses com "[preencher]" no meio.
+ * por meses com um campo em branco no meio.
  */
-export function PaginaLegal({ titulo, resumo, children }: { titulo: string; resumo: string; children: ReactNode }) {
+export function PaginaLegal({
+  titulo,
+  resumo,
+  sumario,
+  children,
+}: {
+  titulo: string;
+  resumo: string;
+  sumario: { id: string; texto: string }[];
+  children: ReactNode;
+}) {
   const dados = dadosLegais();
   const pendencias = pendenciasLegais(dados);
 
@@ -20,36 +30,57 @@ export function PaginaLegal({ titulo, resumo, children }: { titulo: string; resu
       <main className="mx-auto max-w-3xl px-4 pb-20 pt-14 md:px-8">
         <h1 className="text-4xl font-semibold leading-tight tracking-tight">{titulo}</h1>
         <p className="mt-4 text-lg leading-relaxed text-muted">{resumo}</p>
-        <p className="mt-2 text-sm text-soft">Última atualização: {dados.atualizadoEm}.</p>
+        <p className="mt-2 text-sm text-soft">
+          Versão {dados.versao} · em vigor desde {dados.atualizadoEm}.
+        </p>
 
         {pendencias.length > 0 ? (
           <div className="mt-8 rounded-lg border border-warning-line bg-warning-soft p-4">
             <p className="flex items-center gap-2 font-semibold text-warning-ink">
               <AlertTriangle size={16} aria-hidden="true" />
-              Este documento está incompleto.
+              Este documento ainda não está pronto para valer.
             </p>
             <p className="mt-1 text-sm text-warning-ink">
               Faltam dados que só o responsável pela empresa pode informar. Cadastre estas variáveis
               de ambiente antes de considerar a página publicada:
             </p>
             <ul className="mt-2 space-y-1">
-              {pendencias.map((chave) => (
-                <li key={chave} className="font-mono text-xs text-warning-ink">{chave}</li>
+              {pendencias.map((p) => (
+                <li key={p.chave} className="text-sm text-warning-ink">
+                  <span className="font-mono text-xs">{p.chave}</span> — {p.oQue}
+                </li>
               ))}
             </ul>
           </div>
         ) : null}
 
-        <article className="legal mt-10">{children}</article>
+        {/* Documento longo pede índice: quem chega aqui quase sempre procura uma
+            seção específica, e não vai ler do começo ao fim. */}
+        <nav className="mt-10 rounded-lg border border-line bg-canvas p-5" aria-label="Índice">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">Nesta página</p>
+          <ol className="mt-3 grid gap-x-8 gap-y-1.5 sm:grid-cols-2">
+            {sumario.map((item, i) => (
+              <li key={item.id} className="text-sm">
+                <a href={`#${item.id}`} className="text-body transition hover:text-primary">
+                  <span className="font-mono text-xs text-soft">{String(i + 1).padStart(2, "0")}</span>{" "}
+                  {item.texto}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
 
-        <section className="mt-12 rounded-lg border border-line bg-canvas p-5">
+        <article className="legal mt-12">{children}</article>
+
+        <section className="mt-14 rounded-lg border border-line bg-canvas p-5">
           <h2 className="text-lg font-semibold">Quem responde por este sistema</h2>
           <dl className="mt-3 space-y-1.5 text-sm">
             {[
               ["Razão social", dados.razaoSocial],
               ["CNPJ", dados.cnpj],
               ["Endereço", dados.endereco],
-              ["Contato para privacidade", dados.emailPrivacidade],
+              ["Encarregado de dados", dados.encarregadoNome],
+              ["Contato para privacidade", dados.encarregadoEmail],
             ].map(([rotulo, valor]) => (
               <div key={rotulo} className="flex flex-wrap gap-x-2">
                 <dt className="font-medium text-body">{rotulo}:</dt>
