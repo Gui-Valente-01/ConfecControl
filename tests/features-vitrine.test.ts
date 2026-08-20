@@ -12,26 +12,23 @@ import {
 
 // O que este arquivo protege
 // ---------------------------------------------------------------------------
-// Em 18/08/2026 a pagina publica /planos passou a vender "Nota fiscal (NF-e) --
-// emissao e acompanhamento com XML e DANFE". O recurso nao existe: o provedor
-// configurado e o falso e nao ha integracao com a SEFAZ.
+// Ja aconteceu de a pagina publica /planos passar a vender um modulo que o
+// sistema nao entregava. Ninguem escreveu o anuncio: bastou acrescentar a
+// feature em sellableFeatures, porque a vitrine lia a lista inteira e o preset
+// "Completo" usava [...featureKeys]. Um modulo interno virou promessa
+// comercial sozinho.
 //
-// Ninguem escreveu esse anuncio. Bastou acrescentar a feature em
-// sellableFeatures: a vitrine lia a lista inteira, e o preset "Completo" usava
-// [...featureKeys]. Um modulo interno virou promessa comercial sozinho.
+// A regra desde entao: vitrine le publicFeatures; sellableFeatures continua
+// completa para o painel interno e para o controle de acesso por rota.
 //
-// A regra agora: vitrine le publicFeatures; sellableFeatures continua completa
-// para o painel interno e para o controle de acesso por rota.
+// Hoje nenhum modulo esta marcado anunciavel:false, entao os testes que varrem
+// essa lista passam a vazio. Eles ficam de proposito: sao a rede para o
+// proximo modulo que entrar antes de estar pronto.
 
 const RAIZ = process.cwd();
 const lerFonte = (rel: string) => readFileSync(join(RAIZ, rel), "utf-8");
 
 describe("separacao entre modulo existente e modulo anunciavel", () => {
-  it("fiscal existe no sistema mas nao e anunciavel", () => {
-    expect(featureKeys).toContain("fiscal");
-    expect(publicFeatures.map((f) => f.key)).not.toContain("fiscal");
-  });
-
   it("publicFeatures e subconjunto de sellableFeatures", () => {
     const todas = new Set(sellableFeatures.map((f) => f.key));
     for (const f of publicFeatures) expect(todas.has(f.key)).toBe(true);
@@ -79,13 +76,13 @@ describe("as paginas publicas nao leem a lista completa", () => {
 });
 
 describe("o que a separacao nao pode quebrar", () => {
-  it("a rota /fiscal continua protegida por plano", () => {
-    expect(planAllowsRoute([], "/fiscal")).toBe(false);
-    expect(planAllowsRoute(["fiscal"], "/fiscal")).toBe(true);
+  it("uma rota de modulo continua protegida por plano", () => {
+    expect(planAllowsRoute([], "/bancada")).toBe(false);
+    expect(planAllowsRoute(["bancada"], "/bancada")).toBe(true);
   });
 
-  it("o painel interno ainda consegue atribuir fiscal a mao", () => {
-    expect(sanitizeFeatures(["fiscal"])).toContain("fiscal");
+  it("o painel interno ainda consegue atribuir modulo a mao", () => {
+    expect(sanitizeFeatures(["bancada"])).toContain("bancada");
   });
 
   it("as rotas dos modulos nao anunciaveis seguem mapeadas", () => {

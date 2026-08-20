@@ -1,7 +1,4 @@
 import { roleHasCapability } from "@/lib/capabilities";
-import { conferirDados, type DadosDaPeca } from "@/lib/fiscal/montar-pedido";
-import { ambienteFiscal, provedorFiscal } from "@/lib/fiscal/config";
-import { PainelNota } from "@/components/fiscal/painel-nota";
 import { comLinkAssinado } from "@/lib/anexos-link";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -52,34 +49,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   // expira em minutos. Feito aqui, na busca dos dados, para os componentes de
   // exibicao continuarem recebendo apenas "url".
   const anexos = await comLinkAssinado(order.attachments, user.companyId);
-
-  // ---- Nota fiscal ----
-  // Só monta o painel para quem pode ver fiscal: Produção e Vendas não têm
-  // nada a fazer com CNPJ, chave de acesso e valor de nota.
-  const vejaFiscal = roleHasCapability(user.role, "fiscal.read");
-  const [empresa, documentosFiscais, pecasDoPedido] = vejaFiscal
-    ? await Promise.all([
-        prisma.company.findUnique({ where: { id: user.companyId } }),
-        prisma.fiscalDocument.findMany({
-          where: { orderId: order.id, companyId: user.companyId },
-          orderBy: { createdAt: "desc" },
-          include: { events: { orderBy: { createdAt: "desc" }, take: 12 } },
-        }),
-        prisma.product.findMany({
-          where: { companyId: user.companyId, id: { in: order.items.map((i) => i.productId).filter((id): id is string => Boolean(id)) } },
-        }),
-      ])
-    : [null, [], []];
-
-  const pendenciasFiscais =
-    vejaFiscal && empresa
-      ? conferirDados({
-          empresa,
-          cliente: order.client,
-          itens: order.items,
-          pecas: new Map<string, DadosDaPeca>(pecasDoPedido.map((p) => [p.id, p])),
-        })
-      : [];
 
   const canManage = canManageOrders(user.role);
   const showFinance = canSeeFinance(user.role);
@@ -320,18 +289,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         <SectionCard eyebrow="Anotações" title="Observações internas">
           <p className="whitespace-pre-line text-sm leading-6 text-body">{order.internalNotes}</p>
         </SectionCard>
-      ) : null}
-
-      {vejaFiscal ? (
-        <PainelNota
-          orderId={order.id}
-          documentos={documentosFiscais}
-          pendencias={pendenciasFiscais}
-          ambiente={ambienteFiscal()}
-          provedorEhFalso={provedorFiscal().nome === "falso"}
-          podeEmitir={roleHasCapability(user.role, "fiscal.issue")}
-          podeCancelar={roleHasCapability(user.role, "fiscal.cancel")}
-        />
       ) : null}
 
       <SectionCard eyebrow="Arquivos" title="Anexos (arte, molde, foto)">

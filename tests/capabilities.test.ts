@@ -38,16 +38,13 @@ describe("matriz de cargos", () => {
 });
 
 // O bloco que o pedido do usuario exige explicitamente.
-describe("Producao nao alcanca dinheiro, relatorio, configuracao nem fiscal", () => {
+describe("Producao nao alcanca dinheiro, relatorio nem configuracao", () => {
   const proibidas: Capability[] = [
     "finance.read",
     "finance.write",
     "reports.read",
     "reports.export",
     "settings.write",
-    "fiscal.read",
-    "fiscal.issue",
-    "fiscal.cancel",
   ];
 
   for (const capacidade of proibidas) {
@@ -92,10 +89,6 @@ describe("Vendas", () => {
     expect(roleHasCapability("SALES", "orders.write")).toBe(true);
   });
 
-  it("nao emite nota", () => {
-    expect(roleHasCapability("SALES", "fiscal.issue")).toBe(false);
-    expect(roleHasCapability("SALES", "fiscal.read")).toBe(false);
-  });
 });
 
 describe("Gerente", () => {
@@ -104,25 +97,12 @@ describe("Gerente", () => {
     expect(roleHasCapability("MANAGER", "trash.purge")).toBe(false);
   });
 
-  it("no fiscal apenas acompanha", () => {
-    expect(roleHasCapability("MANAGER", "fiscal.read")).toBe(true);
-    expect(roleHasCapability("MANAGER", "fiscal.issue")).toBe(false);
-    expect(roleHasCapability("MANAGER", "fiscal.cancel")).toBe(false);
-  });
-
   it("restaura da lixeira, porque e ele quem apaga material e terceirizada", () => {
     expect(roleHasCapability("MANAGER", "trash.restore")).toBe(true);
   });
 });
 
 describe("Financeiro", () => {
-  it("e quem emite e cancela nota, junto do Dono", () => {
-    for (const capacidade of ["fiscal.read", "fiscal.issue", "fiscal.cancel"] as Capability[]) {
-      expect(roleHasCapability("FINANCE", capacidade), capacidade).toBe(true);
-      expect(roleHasCapability("ADMIN", capacidade), capacidade).toBe(true);
-    }
-  });
-
   it("exporta relatorio, que e trabalho dele", () => {
     expect(roleHasCapability("FINANCE", "reports.export")).toBe(true);
   });
@@ -131,16 +111,6 @@ describe("Financeiro", () => {
     expect(roleHasCapability("FINANCE", "production.write")).toBe(false);
     expect(roleHasCapability("FINANCE", "stock.write")).toBe(false);
     expect(roleHasCapability("FINANCE", "settings.write")).toBe(false);
-  });
-});
-
-describe("emitir e cancelar nota", () => {
-  it("so Dono e Financeiro", () => {
-    const podem = CARGOS.filter((c) => roleHasCapability(c, "fiscal.issue"));
-    expect(podem.sort()).toEqual(["ADMIN", "FINANCE"]);
-
-    const cancelam = CARGOS.filter((c) => roleHasCapability(c, "fiscal.cancel"));
-    expect(cancelam.sort()).toEqual(["ADMIN", "FINANCE"]);
   });
 });
 
@@ -178,8 +148,8 @@ describe("rotas", () => {
     }
   });
 
-  it("Producao nao abre financeiro, relatorio, configuracao nem fiscal", () => {
-    for (const rota of ["/financeiro", "/relatorios", "/configuracoes", "/fiscal", "/usuarios"]) {
+  it("Producao nao abre financeiro, relatorio nem configuracao", () => {
+    for (const rota of ["/financeiro", "/relatorios", "/configuracoes", "/usuarios"]) {
       expect(roleCanOpenRoute("PRODUCTION", rota), rota).toBe(false);
     }
   });

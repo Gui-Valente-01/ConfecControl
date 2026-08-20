@@ -57,10 +57,6 @@ const navPrincipal = [
 ];
 
 const navMais = [
-  // A nota fica em "Mais" porque nem toda confeccao emite: quem nao tem o
-  // modulo no plano nem enxerga o item, e para quem tem, emitir nota nao e
-  // tarefa de todo dia como pedido e producao.
-  { label: "Notas fiscais", href: "/fiscal", icon: FileText },
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Peças", href: "/produtos", icon: Shirt },
   { label: "Materiais", href: "/estoque", icon: Package },
