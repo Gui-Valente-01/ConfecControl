@@ -10,8 +10,7 @@ export type FeatureKey =
   | "terceirizadas"
   | "equipe"
   | "portal"
-  | "bancada"
-  | "fiscal";
+  | "bancada";
 
 export const sellableFeatures: {
   key: FeatureKey;
@@ -21,7 +20,8 @@ export const sellableFeatures: {
   /**
    * Falso enquanto o módulo existir no sistema mas não puder ser anunciado como
    * pronto. Módulo listado aqui vira automaticamente vitrine em /planos e nas
-   * páginas por segmento — foi assim que a NF-e apareceu à venda sem existir.
+   * páginas por segmento — foi assim que um módulo incompleto já apareceu à
+   * venda sem existir de verdade.
    */
   anunciavel?: boolean;
 }[] = [
@@ -33,9 +33,6 @@ export const sellableFeatures: {
   { key: "equipe", label: "Vários funcionários", description: "Mais de um login, com cargos e acessos por pessoa.", route: "/usuarios" },
   { key: "portal", label: "Portal do cliente", description: "O cliente acompanha pedidos e envia solicitações que você aprova.", route: "/solicitacoes" },
   { key: "bancada", label: "Bancada (chão de fábrica)", description: "Funcionário pega o pedido, marca a mesa e conclui, com controle por mesa.", route: "/bancada" },
-  // Existe tela e fluxo, mas o provedor configurado é o falso e não há
-  // integração com a SEFAZ. Anunciar emissão seria vender o que não entregamos.
-  { key: "fiscal", label: "Nota fiscal (NF-e)", description: "Emissão e acompanhamento de NF-e a partir do pedido, com XML e DANFE.", route: "/fiscal", anunciavel: false },
 ];
 
 export const featureKeys: FeatureKey[] = sellableFeatures.map((feature) => feature.key);

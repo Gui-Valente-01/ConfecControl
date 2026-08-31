@@ -139,10 +139,4 @@ export const SUBOPERADORES: {
     local: "Estados Unidos",
     dados: "Rota, mensagem e pilha do erro. Sem dados pessoais — ver a seção de segurança",
   },
-  {
-    nome: "Provedor de nota fiscal",
-    papel: "Emissão de NF-e (somente para quem contrata o módulo)",
-    local: "Brasil",
-    dados: "Dados exigidos pela legislação fiscal para emitir a nota",
-  },
 ];

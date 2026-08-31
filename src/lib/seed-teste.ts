@@ -105,7 +105,7 @@ export async function recriarEmpresaTeste({ prisma, hashPassword, comFotos }: De
       phone: "(41) 3322-1100",
       email: "contato@costuraviva.com",
       address: "Rua das Agulhas, 245 - Curitiba/PR",
-      features: ["producao", "estoque", "financeiro", "relatorios", "terceirizadas", "equipe", "portal", "bancada", "fiscal"],
+      features: ["producao", "estoque", "financeiro", "relatorios", "terceirizadas", "equipe", "portal", "bancada"],
     },
   });
 

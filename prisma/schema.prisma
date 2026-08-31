@@ -63,26 +63,16 @@ model Company {
   address  String?
   features String[] @default([]) // módulos vendáveis liberados p/ esta empresa (o núcleo é sempre incluso)
 
-  // ---- Dados fiscais do emitente (NF-e) ----
-  // Todos anuláveis: quem não emite nota não precisa preencher nada, e o
-  // painel da nota lista o que falta quando chega a hora.
-  //
-  // O endereço já existe acima como texto livre, que serve para a ficha
-  // impressa mas NÃO serve para a SEFAZ: ela exige logradouro, número e
-  // bairro separados, e o município pelo código do IBGE — o nome da cidade
-  // não é aceito.
+  // ---- Identificação e endereço estruturado ----
+  // Todos anuláveis. O campo `address` acima é texto livre e serve para a
+  // ficha impressa; estes existem para quando o endereço precisa vir em
+  // partes (etiqueta, entrega, cadastro formal).
   razaoSocial       String?
   nomeFantasia      String?
-  inscricaoEstadual String?
-  /// CRT: 1 Simples Nacional, 2 Simples com excesso de sublimite, 3 Regime normal.
-  /// Quem decide isto é o contador da empresa.
-  regimeTributario  String?
   logradouro        String?
   numero            String?
   complemento       String?
   bairro            String?
-  /// Código do IBGE do município. É o que a NF-e usa.
-  codigoMunicipio   String?
   municipio         String?
   uf                String?
   cep               String?
@@ -103,7 +93,6 @@ model Company {
   bancadaTasks     BancadaTask[]
   avisos           Aviso[]
   pushInscricoes   PushInscricao[]
-  fiscalDocuments  FiscalDocument[]
 
   @@map("empresas")
 }
@@ -188,16 +177,11 @@ model Client {
   address   String?
   notes     String? @db.Text
 
-  // ---- Dados fiscais do destinatário (NF-e) ----
-  inscricaoEstadual String?
-  /// indIEDest: 1 contribuinte com IE, 2 isento, 9 não contribuinte.
-  /// O caso comum numa confecção — escola, igreja, pessoa física — é 9.
-  indicadorIe       String?
+  // ---- Endereço estruturado (entrega) ----
   logradouro        String?
   numero            String?
   complemento       String?
   bairro            String?
-  codigoMunicipio   String?
   municipio         String?
   uf                String?
   cep               String?
@@ -329,21 +313,6 @@ model Product {
   averageProductionDays Int?
   imageUrl              String?
 
-  // ---- Dados fiscais da peça (NF-e) ----
-  /// Nomenclatura Comum do Mercosul. Obrigatório e específico de cada peça:
-  /// camiseta de malha e boné não têm o mesmo NCM.
-  ncm              String?
-  /// Só se aplica a mercadoria sujeita a substituição tributária.
-  cest             String?
-  /// Unidade comercial da NF-e (UN, PC, DZ...). Não é a mesma coisa que a
-  /// unidade do estoque de material.
-  unidadeComercial String?
-  /// Origem da mercadoria: 0 nacional, 1 importação direta, 2 mercado interno...
-  origem           String?
-  /// CFOP SUGERIDO, e nunca fixo: o correto depende da UF de origem e destino
-  /// e da natureza da operação (venda, industrialização, devolução). Fica aqui
-  /// como ponto de partida que o contador confirma.
-  cfopSugerido     String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   // Lixeira: quando preenchido, o cadastro sai das telas mas continua no
@@ -451,7 +420,6 @@ model Order {
   stockMovements  StockMovement[]
   bancadaTasks    BancadaTask[]
   services        OrderService[]
-  fiscalDocuments FiscalDocument[]
 
   @@unique([companyId, number])
   @@index([companyId])
@@ -725,120 +693,4 @@ model RateLimit {
 
   @@index([bloqueadoAte])
   @@map("rate_limit")
-}
-
-// ---------------------------------------------------------------------------
-// Fiscal (NF-e modelo 55)
-// ---------------------------------------------------------------------------
-//
-// O escopo desta entrega e NF-e de venda. NFS-e (servico) NAO entra agora, mas
-// o campo `model` existe justamente para ela caber depois sem refazer a tabela.
-//
-// NADA de regra tributaria mora aqui. Aliquota, CST/CSOSN e beneficio fiscal
-// sao decisao do contador da empresa e variam por UF, regime e operacao --
-// codificar isso seria dar palpite contabil com cara de software.
-
-enum FiscalModel {
-  NFE_55
-}
-
-enum FiscalEnvironment {
-  HOMOLOGACAO
-  PRODUCAO
-}
-
-enum FiscalStatus {
-  DRAFT
-  VALIDATING
-  PROCESSING
-  AUTHORIZED
-  REJECTED
-  CANCELLATION_PENDING
-  CANCELLED
-  ERROR
-}
-
-/// Um documento fiscal. Sempre de uma empresa; quase sempre de um pedido.
-model FiscalDocument {
-  id              String  @id @default(cuid())
-  companyId       String
-  /// Nulo permite nota avulsa, que nao nasce de um pedido do sistema.
-  orderId         String?
-  /// Quem mandou emitir. Fica para auditoria mesmo se a pessoa sair da empresa.
-  createdByUserId String?
-
-  model             FiscalModel       @default(NFE_55)
-  /// Nasce em HOMOLOGACAO de proposito. Producao exige decisao explicita.
-  environment       FiscalEnvironment @default(HOMOLOGACAO)
-  /// Nome do provedor que emitiu ("falso", "focus", ...). Guardado no
-  /// documento porque trocar de provedor nao pode reescrever o passado.
-  provider          String
-  /// O identificador do documento no provedor, para consultar depois.
-  providerReference String?
-
-  series    Int?
-  number    Int?
-  /// 44 digitos. Unica: a mesma chave nao pode existir duas vezes.
-  accessKey String? @unique
-
-  status             FiscalStatus @default(DRAFT)
-  totalAmountInCents Int          @default(0)
-  protocol           String?
-
-  issuedAt     DateTime?
-  authorizedAt DateTime?
-  cancelledAt  DateTime?
-
-  /// Codigo e motivo da recusa, como vieram da SEFAZ. Sem traduzir: o contador
-  /// precisa do codigo original para saber o que corrigir.
-  rejectionCode    String?
-  rejectionMessage String?
-
-  /// Caminhos no bucket PRIVADO. XML e DANFE nao podem ser publicos: tem CNPJ,
-  /// endereco e valor do cliente.
-  xmlStoragePath   String?
-  danfeStoragePath String?
-
-  /// Impede a mesma emissao de sair duas vezes quando o botao e clicado de novo.
-  idempotencyKey String? @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  order   Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  events  FiscalEvent[]
-
-  @@index([companyId, status])
-  @@index([companyId, createdAt])
-  @@index([orderId])
-  @@map("documentos_fiscais")
-}
-
-/// Tudo que aconteceu com o documento, em ordem.
-///
-/// Existe porque nota fiscal e assunto de fiscalizacao: "por que esta nota foi
-/// cancelada?" precisa de resposta com data e autor, e nao de deducao.
-///
-/// NAO guarda certificado, token nem o XML inteiro: log e o lugar onde segredo
-/// vaza sem ninguem perceber.
-model FiscalEvent {
-  id         String @id @default(cuid())
-  documentId String
-
-  /// "EMISSAO_SOLICITADA", "AUTORIZADA", "REJEITADA", "CANCELAMENTO_PEDIDO"...
-  tipo     String
-  /// Situacao do documento depois deste evento, quando ele muda.
-  status   FiscalStatus?
-  mensagem String?       @db.Text
-  /// Resumo do que o provedor devolveu. Resumo, e nao a resposta inteira.
-  detalhe  String?       @db.Text
-
-  criadoPorUserId String?
-  createdAt       DateTime @default(now())
-
-  document FiscalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@index([documentId, createdAt])
-  @@map("eventos_fiscais")
 }
