@@ -6,7 +6,7 @@ import { dadosLegais } from "@/lib/legal";
 export const metadata: Metadata = {
   title: "Termos de Uso",
   description:
-    "As condições de uso do ConfecControl: contratação, obrigações de cada parte, titularidade dos dados, responsabilidade e encerramento.",
+    "As condições de uso do ConfecControl: contratação, obrigações de cada parte, módulo fiscal, titularidade dos dados, responsabilidade e encerramento.",
   alternates: { canonical: "/termos" },
 };
 
@@ -21,6 +21,7 @@ const SUMARIO = [
   { id: "obrigacoes", texto: "Obrigações do contratante" },
   { id: "nossas", texto: "Nossas obrigações" },
   { id: "disponibilidade", texto: "Disponibilidade e suporte" },
+  { id: "fiscal", texto: "Módulo de nota fiscal" },
   { id: "pagamento", texto: "Preço, pagamento e reajuste" },
   { id: "vigencia", texto: "Vigência, suspensão e rescisão" },
   { id: "responsabilidade", texto: "Limitação de responsabilidade" },
@@ -51,7 +52,8 @@ export default function TermosPage() {
       <h2 id="objeto">2. Objeto</h2>
       <p>
         Estes termos regem o uso do ConfecControl, fornecido como serviço pela internet, para
-        controle de pedidos, produção, estoque de peças e cobrança.
+        controle de pedidos, produção, estoque de peças, cobrança e, quando contratado, emissão de
+        nota fiscal eletrônica.
       </p>
       <p>
         O Sistema é fornecido no modelo de assinatura: não há venda de licença perpétua, entrega de
@@ -194,7 +196,33 @@ export default function TermosPage() {
         houver, constam da Proposta.
       </p>
 
-      <h2 id="pagamento">11. Preço, pagamento e reajuste</h2>
+      <h2 id="fiscal">11. Módulo de nota fiscal</h2>
+      <p>
+        Quando contratado, o módulo fiscal transmite à SEFAZ, por meio de provedor, os dados
+        cadastrados pelo Contratante. Três pontos precisam ficar claros:
+      </p>
+      <ul>
+        <li>
+          <strong>O Sistema não substitui o contador.</strong> Regime tributário, CFOP, CST/CSOSN,
+          alíquotas, benefícios fiscais e classificação de mercadoria são decisões do profissional
+          contábil do Contratante. O Sistema armazena e transmite o que foi configurado.
+        </li>
+        <li>
+          <strong>A responsabilidade pelo conteúdo da nota é do Contratante</strong>, que é o
+          emitente perante o fisco. Cabe a ele conferir os dados antes de emitir.
+        </li>
+        <li>
+          <strong>Nota emitida produz efeitos legais.</strong> Correção depende de cancelamento ou
+          carta de correção, dentro dos prazos da legislação, que variam por unidade federativa.
+        </li>
+      </ul>
+      <p>
+        O ambiente padrão é o de homologação, no qual as notas não possuem validade fiscal. A
+        emissão em produção depende de configuração explícita e da existência de certificado digital
+        válido do Contratante.
+      </p>
+
+      <h2 id="pagamento">12. Preço, pagamento e reajuste</h2>
       <p>
         Valores, forma de pagamento, periodicidade e vencimento são os definidos na Proposta. O
         preço pode ser reajustado anualmente, na menor periodicidade permitida em lei, por índice
@@ -206,7 +234,7 @@ export default function TermosPage() {
         eliminação só ocorre após a rescisão e o decurso do prazo de exportação.
       </p>
 
-      <h2 id="vigencia">12. Vigência, suspensão e rescisão</h2>
+      <h2 id="vigencia">13. Vigência, suspensão e rescisão</h2>
       <p>O contrato vigora pelo prazo da Proposta, renovando-se conforme nela previsto.</p>
       <p>
         <strong>O Contratante pode rescindir a qualquer tempo</strong>, mediante comunicação, sem
@@ -225,7 +253,7 @@ export default function TermosPage() {
         o qual eles são eliminados, ressalvada a guarda obrigatória por lei.
       </p>
 
-      <h2 id="responsabilidade">13. Limitação de responsabilidade</h2>
+      <h2 id="responsabilidade">14. Limitação de responsabilidade</h2>
       <p>
         A Contratada responde pelos danos diretos comprovadamente decorrentes de falha na prestação
         do serviço que lhe seja imputável.
@@ -248,7 +276,7 @@ export default function TermosPage() {
         irrenunciável.
       </p>
 
-      <h2 id="confidencialidade">14. Confidencialidade</h2>
+      <h2 id="confidencialidade">15. Confidencialidade</h2>
       <p>
         Cada parte se obriga a manter sigilo sobre informações confidenciais da outra a que tenha
         acesso, usando-as apenas para executar o contrato, e a estendê-las aos seus empregados e
@@ -260,7 +288,7 @@ export default function TermosPage() {
         caso em que a parte obrigada comunicará a outra, quando permitido.
       </p>
 
-      <h2 id="alteracoes">15. Alterações destes termos</h2>
+      <h2 id="alteracoes">16. Alterações destes termos</h2>
       <p>
         Podemos alterar estes termos para refletir mudança no serviço ou na legislação. Alterações
         relevantes são comunicadas pelo Sistema ou por e-mail com antecedência razoável antes de
@@ -271,7 +299,7 @@ export default function TermosPage() {
         uso continuado após esse prazo caracteriza aceite.
       </p>
 
-      <h2 id="gerais">16. Disposições gerais</h2>
+      <h2 id="gerais">17. Disposições gerais</h2>
       <p>
         A tolerância quanto ao descumprimento de qualquer cláusula não implica novação nem renúncia.
         A nulidade de uma cláusula não prejudica as demais.

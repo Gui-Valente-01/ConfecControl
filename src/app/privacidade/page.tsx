@@ -77,8 +77,8 @@ export default function PrivacidadePage() {
           <strong>Quem trabalha na confecção</strong> e usa o sistema com um acesso próprio.
         </li>
         <li>
-          <strong>Os clientes da confecção</strong>, cujos dados ela cadastra para produzir e
-          cobrar.
+          <strong>Os clientes da confecção</strong>, cujos dados ela cadastra para produzir, cobrar
+          e, quando for o caso, emitir nota fiscal.
         </li>
       </ul>
       <p>
@@ -190,6 +190,12 @@ export default function PrivacidadePage() {
               base="Legítimo interesse do controlador"
               artigo="art. 7º, IX"
             />
+            <Tratamento
+              dados="Dados fiscais (inscrição estadual, regime tributário, endereço fiscal)"
+              finalidade="Emitir nota fiscal quando o módulo é contratado"
+              base="Cumprimento de obrigação legal"
+              artigo="art. 7º, II"
+            />
           </tbody>
         </table>
       </div>
@@ -214,6 +220,12 @@ export default function PrivacidadePage() {
               finalidade="Produzir, entregar e cobrar o pedido"
               base="Execução de contrato ou procedimento preliminar"
               artigo="art. 7º, V"
+            />
+            <Tratamento
+              dados="CPF ou CNPJ, inscrição estadual, endereço fiscal"
+              finalidade="Emitir nota fiscal"
+              base="Cumprimento de obrigação legal"
+              artigo="art. 7º, II"
             />
             <Tratamento
               dados="Pedidos, itens, tamanhos, valores e pagamentos"
@@ -329,6 +341,11 @@ export default function PrivacidadePage() {
               <td>Dados após o encerramento</td>
               <td>Período de exportação combinado, e então eliminação</td>
               <td>Fim da finalidade (art. 15, I)</td>
+            </tr>
+            <tr>
+              <td>Documentos fiscais (XML da NF-e)</td>
+              <td>5 anos</td>
+              <td>Guarda exigida pela legislação tributária</td>
             </tr>
             <tr>
               <td>Registros de acesso à aplicação</td>

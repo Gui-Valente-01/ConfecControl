@@ -15,8 +15,8 @@
 //
 //   DB_PRODUCAO_LIBERADA=sim npm run db:migrate
 //
-// A liberação é explícita de propósito: trocar de ambiente por engano custa
-// caro e não se desfaz.
+// O nome segue FISCAL_PRODUCAO_LIBERADA, que guarda a emissão de NF-e real
+// pelo mesmo motivo: trocar de ambiente por engano custa caro e não se desfaz.
 
 import { existsSync, readFileSync } from "node:fs";
 

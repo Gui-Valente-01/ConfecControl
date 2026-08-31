@@ -52,7 +52,11 @@ export type Capability =
   | "trash.restore"
   | "trash.purge"
   // Portal do cliente
-  | "requests.manage";
+  | "requests.manage"
+  // Fiscal (NF-e)
+  | "fiscal.read"
+  | "fiscal.issue"
+  | "fiscal.cancel";
 
 /**
  * A matriz.
@@ -63,13 +67,13 @@ export type Capability =
  *
  * As exceções que valem explicação:
  *
- *   Produção não tem NADA de dinheiro, relatório ou configuração. Ela
+ *   Produção não tem NADA de dinheiro, relatório, configuração ou fiscal. Ela
  *   lê pedidos e estoque para saber o que produzir, e trabalha na bancada.
  *   Pode imprimir a ficha (a oficina precisa do papel), mas a impressão sai
  *   sem os valores — quem decide isso é a capacidade finance.read, na tela.
  *
- *   Gerente faz quase tudo, menos mexer em funcionário e esvaziar a lixeira
- *   de vez.
+ *   Gerente faz quase tudo, menos mexer em funcionário, esvaziar a lixeira de
+ *   vez e emitir ou cancelar nota. No fiscal ele apenas acompanha.
  *
  *   Vendas cuida de cliente, peça e pedido. Não vê dinheiro nem relatório, e
  *   por isso também não exporta.
@@ -91,6 +95,7 @@ const matriz: Record<UserRole, Capability[] | "todas"> = {
     "settings.read", "settings.write",
     "trash.read", "trash.restore",
     "requests.manage",
+    "fiscal.read",
   ],
 
   PRODUCTION: [
@@ -105,6 +110,7 @@ const matriz: Record<UserRole, Capability[] | "todas"> = {
     "orders.read", "orders.write", "orders.print",
     "finance.read", "finance.write",
     "reports.read", "reports.export",
+    "fiscal.read", "fiscal.issue", "fiscal.cancel",
   ],
 
   SALES: [
@@ -145,6 +151,7 @@ export const TODAS_AS_CAPACIDADES: Capability[] = [
   "settings.read", "settings.write",
   "trash.read", "trash.restore", "trash.purge",
   "requests.manage",
+  "fiscal.read", "fiscal.issue", "fiscal.cancel",
 ];
 
 /**
@@ -168,6 +175,7 @@ export const CAPACIDADE_DA_ROTA: Record<string, Capability> = {
   "/configuracoes": "settings.read",
   "/lixeira": "trash.read",
   "/solicitacoes": "requests.manage",
+  "/fiscal": "fiscal.read",
 };
 
 /**
