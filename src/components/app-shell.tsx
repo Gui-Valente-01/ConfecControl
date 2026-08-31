@@ -10,7 +10,6 @@ import {
   ClipboardList,
   CreditCard,
   Factory,
-  FileText,
   Handshake,
   Inbox,
   LayoutDashboard,

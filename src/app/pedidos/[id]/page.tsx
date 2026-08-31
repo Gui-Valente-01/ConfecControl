@@ -1,4 +1,3 @@
-import { roleHasCapability } from "@/lib/capabilities";
 import { comLinkAssinado } from "@/lib/anexos-link";
 import Link from "next/link";
 import { notFound } from "next/navigation";
