@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Check, Mail, MessageCircle, Minus } from "lucide-react";
+import { Check, Mail, MessageCircle, Minus, X } from "lucide-react";
 import { LandingFooter, LandingHeader } from "@/components/landing/landing-chrome";
 import { Reveal } from "@/components/landing/reveal";
 import { getSessionUser } from "@/lib/auth";
 import { featurePresets, publicFeatures } from "@/lib/features";
+import { compromissosManuais, limites } from "@/lib/limites";
 import { formatPhone, resolveSupportContact } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,43 @@ const NUCLEO = [
 ];
 
 const MENSAGEM_CONTATO = "Olá! Vi os planos no site e quero saber mais sobre o ConfecControl para a minha confecção.";
+
+// A contratação não é autoatendimento: a conta só abre com um código que eu
+// entrego. Quem chega pelo site não tem como adivinhar isso, e descobrir no meio
+// do cadastro é o tipo de surpresa que faz a pessoa desistir achando que quebrou.
+// Por isso o caminho inteiro fica escrito antes de ela decidir.
+const CONTRATACAO = [
+  {
+    titulo: "Conversa de 15 minutos",
+    detalhe:
+      "Você conta quantos pedidos andam ao mesmo tempo, quantas pessoas mexem na produção e o que hoje é caderno, planilha ou WhatsApp.",
+  },
+  {
+    titulo: "Proposta escrita",
+    detalhe:
+      "Digo quais módulos servem, quanto custa por mês e o que não vai resolver. Se nenhum plano servir, eu falo isso — perder uma venda custa menos que um cliente insatisfeito.",
+  },
+  {
+    titulo: "Código de ativação",
+    detalhe:
+      "Aceitando, você recebe um código e cria a conta da sua confecção. Seus dados ficam separados dos de qualquer outra empresa.",
+  },
+  {
+    titulo: "Implantação feita comigo",
+    detalhe:
+      "Eu cadastro com você os clientes, as peças e os pedidos que já estão em andamento. Você não precisa parar a produção nem esperar o mês virar.",
+  },
+  {
+    titulo: "Treino da equipe",
+    detalhe:
+      "Quem trabalha na bancada aprende a parte dele, que é curta de propósito: abrir o pedido, marcar a etapa, concluir.",
+  },
+  {
+    titulo: "Suporte direto comigo",
+    detalhe:
+      "Sem fila e sem robô. Você fala no WhatsApp com quem faz o sistema.",
+  },
+];
 
 export default async function PlanosPage() {
   // Quem já é cliente não precisa da página de vendas: cai no próprio painel.
@@ -167,6 +205,93 @@ export default async function PlanosPage() {
                 </Reveal>
               ))}
             </ul>
+          </div>
+        </section>
+
+        {/* O que o sistema não faz. Fica antes do contato de propósito: quem
+            precisa de nota fiscal deve descobrir aqui, e não depois de pagar. */}
+        <section className="border-t border-line">
+          <div className="mx-auto max-w-6xl px-4 py-20 md:px-8">
+            <Reveal>
+              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+                O que o ConfecControl não faz.
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">
+                Prefiro você saber agora. Se algum destes pontos for essencial para a sua operação,
+                o sistema não serve — e é melhor descobrirmos isso numa conversa do que no
+                primeiro mês.
+              </p>
+            </Reveal>
+
+            <ul className="mt-10 grid gap-4 md:grid-cols-2">
+              {limites.map((limite, i) => (
+                <Reveal key={limite.key} delay={i * 40}>
+                  <li className="h-full rounded-xl border border-line bg-canvas p-5">
+                    <p className="flex items-start gap-2.5 text-base font-semibold text-body">
+                      <X size={17} className="mt-0.5 shrink-0 text-danger-dark" aria-hidden="true" />
+                      {limite.titulo}
+                    </p>
+                    <p className="mt-2.5 text-sm leading-relaxed text-muted">{limite.porque}</p>
+                    <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-body">
+                      <span className="font-medium">Na prática: </span>
+                      {limite.saida}
+                    </p>
+                  </li>
+                </Reveal>
+              ))}
+            </ul>
+
+            <div className="mt-8 rounded-xl border border-line bg-surface p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-soft">
+                Isto existe, mas quem faz sou eu
+              </p>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                {compromissosManuais.map((item) => (
+                  <li key={item.key} className="text-sm leading-relaxed text-muted">
+                    <span className="font-medium text-body">{item.titulo}. </span>
+                    {item.detalhe}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Como funciona a contratação */}
+        <section className="border-t border-line bg-surface">
+          <div className="mx-auto max-w-6xl px-4 py-20 md:px-8">
+            <Reveal>
+              <h2 className="max-w-2xl text-3xl font-semibold tracking-tight md:text-4xl">
+                O que acontece depois que você diz sim.
+              </h2>
+              <p className="mt-3 max-w-xl text-base leading-relaxed text-muted">
+                Não é só receber um link e se virar. A conta da sua confecção só abre com um código
+                que eu entrego, e a configuração inicial é feita junto com você.
+              </p>
+            </Reveal>
+
+            <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {CONTRATACAO.map((passo, i) => (
+                <Reveal key={passo.titulo} delay={i * 50}>
+                  <li className="h-full rounded-xl border border-line bg-canvas p-5">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-primary-soft text-xs font-semibold text-primary-dark">
+                      {i + 1}
+                    </span>
+                    <p className="mt-3 text-base font-semibold text-body">{passo.titulo}</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted">{passo.detalhe}</p>
+                  </li>
+                </Reveal>
+              ))}
+            </ol>
+
+            <p className="mt-8 max-w-xl text-sm leading-relaxed text-muted">
+              Quer parar de usar? Você avisa, eu gero o arquivo com os seus dados e a conta é
+              encerrada. As condições completas estão nos{" "}
+              <Link href="/termos" className="font-medium text-body underline underline-offset-2">
+                Termos de Uso
+              </Link>
+              .
+            </p>
           </div>
         </section>
 

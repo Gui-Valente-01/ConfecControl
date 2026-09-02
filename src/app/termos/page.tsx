@@ -58,6 +58,16 @@ export default function TermosPage() {
         código-fonte nem instalação em servidor do Contratante, salvo se a Proposta disser o
         contrário.
       </p>
+      <p>
+        <strong>
+          O Sistema não emite documentos fiscais e não se comunica com a SEFAZ nem com provedor
+          fiscal.
+        </strong>{" "}
+        Não há geração de NF-e, NFS-e, XML ou DANFE, e o Sistema não apura tributos. A emissão
+        fiscal e as obrigações acessórias continuam inteiramente a cargo do Contratante e do seu
+        contador. O Sistema também não é loja virtual, frente de caixa ou integração com
+        marketplace, e depende de conexão com a internet para funcionar.
+      </p>
 
       <h2 id="contratacao">3. Contratação e ativação</h2>
       <p>
@@ -157,7 +167,11 @@ export default function TermosPage() {
       <h2 id="obrigacoes">8. Obrigações do contratante</h2>
       <ul>
         <li>Fornecer informações verdadeiras no cadastro e mantê-las atualizadas;</li>
-        <li>Conferir os dados fiscais antes de emitir qualquer documento;</li>
+        <li>
+          Cumprir as próprias obrigações fiscais e trabalhistas, que não são executadas pelo
+          Sistema;
+        </li>
+        <li>Conferir os dados cadastrais e os valores registrados no Sistema;</li>
         <li>Usar o Sistema conforme a lei e estes termos;</li>
         <li>Não inserir conteúdo ilícito, ofensivo ou que viole direito de terceiro;</li>
         <li>Não tentar burlar limites técnicos, permissões ou a separação entre empresas;</li>
