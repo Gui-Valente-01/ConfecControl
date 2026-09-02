@@ -3,6 +3,7 @@
 import { randomInt } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
+import { DIAS_DE_VALIDADE_DO_CONVITE, calcularExpiracao } from "@/lib/convite";
 import { sanitizeFeatures } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
@@ -50,12 +51,15 @@ export async function createSignupTokenAction(_prev: FormState, formData: FormDa
       clientName,
       contactEmail: contactEmail || null,
       createdByEmail: user.email,
+      // Todo token novo nasce com prazo. Convite sem validade vira segredo
+      // eterno de 8 dígitos circulando em conversa de WhatsApp.
+      expiresAt: calcularExpiracao(new Date()),
       features,
     },
   });
 
   revalidatePath("/master");
-  return { success: `Token ${code} criado para ${clientName}.` };
+  return { success: `Token ${code} criado para ${clientName}. Vale ${DIAS_DE_VALIDADE_DO_CONVITE} dias.` };
 }
 
 // Altera o plano (módulos) de uma empresa já existente: upgrade/downgrade.

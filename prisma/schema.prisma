@@ -104,6 +104,8 @@ model SignupToken {
   contactEmail   String?
   features       String[]  @default([]) // plano que este token concede à empresa criada
   createdByEmail String
+  /** Prazo do convite. Nulo só nos tokens criados antes de existir prazo. */
+  expiresAt      DateTime?
   usedAt         DateTime?
   revokedAt      DateTime?
   usedCompanyId  String?

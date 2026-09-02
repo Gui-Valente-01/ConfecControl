@@ -2,6 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Ban, Building2, CheckCircle2, ClipboardList, KeyRound, Plus, Users } from "lucide-react";
 import { createSignupTokenAction, revokeSignupTokenAction, updateCompanyFeaturesAction } from "@/app/master/actions";
+import { ConviteDeAtivacao } from "@/components/convite-de-ativacao";
+import { type EstadoDoConvite, estadoDoConvite } from "@/lib/convite";
 import { SubmitButton } from "@/components/submit-button";
 import { ToastForm } from "@/components/toast-form";
 import { requireUser, roleLabels } from "@/lib/auth";
@@ -20,11 +22,15 @@ function superAdminEmails(): string[] {
     .filter(Boolean);
 }
 
-function tokenStatus(token: { usedAt: Date | null; revokedAt: Date | null }) {
-  if (token.revokedAt) return { label: "Revogado", className: "border-danger-line bg-danger-soft text-danger-dark" };
-  if (token.usedAt) return { label: "Usado", className: "border-primary/30 bg-primary-soft text-primary-dark" };
-  return { label: "Disponível", className: "border-line bg-tint text-body" };
-}
+// A etiqueta lê o mesmo estadoDoConvite que o cadastro usa para aceitar ou
+// recusar. Se cada lado decidisse por conta, uma hora esta tela diria
+// "Disponível" num código que o cadastro já estaria recusando.
+const ETIQUETAS: Record<EstadoDoConvite, { label: string; className: string }> = {
+  revogado: { label: "Revogado", className: "border-danger-line bg-danger-soft text-danger-dark" },
+  usado: { label: "Usado", className: "border-primary/30 bg-primary-soft text-primary-dark" },
+  expirado: { label: "Expirado", className: "border-warning-line bg-warning-soft text-warning-ink" },
+  disponivel: { label: "Disponível", className: "border-line bg-tint text-body" },
+};
 
 export default async function MasterPage() {
   const user = await requireUser();
@@ -51,7 +57,13 @@ export default async function MasterPage() {
 
   const totalUsers = companies.reduce((sum, company) => sum + company.users.length, 0);
   const totalOrders = companies.reduce((sum, company) => sum + company._count.orders, 0);
-  const availableTokens = signupTokens.filter((token) => !token.usedAt && !token.revokedAt).length;
+  // Um instante só para a página inteira: se cada cartão chamasse new Date(),
+  // dois tokens que vencem no mesmo segundo poderiam aparecer com estados
+  // diferentes na mesma tela.
+  const agora = new Date();
+  // "Livre" tem que significar "dá para enviar agora". Contar token vencido
+  // aqui faria o painel prometer convites que o cadastro vai recusar.
+  const availableTokens = signupTokens.filter((token) => estadoDoConvite(token, agora) === "disponivel").length;
 
   return (
     <main className="min-h-screen bg-shell px-4 py-8 text-fg md:px-8">
@@ -164,7 +176,10 @@ export default async function MasterPage() {
             ) : (
               <div className="mt-4 grid gap-3 xl:grid-cols-2">
                 {signupTokens.map((token) => {
-                  const status = tokenStatus(token);
+                  const estado = estadoDoConvite(token, agora);
+                  const status = ETIQUETAS[estado];
+                  // Revogar continua valendo para token expirado: serve de
+                  // faxina, e o registro de quem revogou e quando é útil.
                   const canRevoke = !token.usedAt && !token.revokedAt;
 
                   return (
@@ -181,6 +196,18 @@ export default async function MasterPage() {
                       </div>
                       <div className="mt-3 space-y-1 text-xs text-muted">
                         <p>Criado por {token.createdByEmail} em {formatDateTime(token.createdAt)}</p>
+                        {!token.usedAt && !token.revokedAt ? (
+                          token.expiresAt ? (
+                            <p className={estado === "expirado" ? "text-warning-ink" : undefined}>
+                              {estado === "expirado" ? "Expirou" : "Expira"} em {formatDateTime(token.expiresAt)}
+                            </p>
+                          ) : (
+                            // Token criado antes de existir prazo. Continua
+                            // valendo de propósito; aparece assim para o dono
+                            // decidir se revoga.
+                            <p className="text-warning-ink">Sem prazo — criado antes da regra de validade</p>
+                          )
+                        ) : null}
                         {token.usedAt ? (
                           <p className="flex items-center gap-1 text-primary-dark">
                             <CheckCircle2 size={13} aria-hidden="true" />
@@ -206,6 +233,19 @@ export default async function MasterPage() {
                       ) : (
                         <p className="mt-2 text-[11px] text-soft">Somente o núcleo (sem módulos pagos).</p>
                       )}
+                      {/* O convite fica junto do token e só enquanto ele serve:
+                          token usado ou revogado não pode oferecer botão de
+                          enviar, senão alguém manda um código morto e o cliente
+                          trava logo na primeira tela. */}
+                      {estado === "disponivel" ? (
+                        <ConviteDeAtivacao
+                          code={token.code}
+                          clientName={token.clientName}
+                          contactEmail={token.contactEmail}
+                          expiresAt={token.expiresAt}
+                        />
+                      ) : null}
+
                       {canRevoke ? (
                         <ToastForm
                           action={revokeSignupTokenAction}

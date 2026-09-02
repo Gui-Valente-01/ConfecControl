@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { registrarTentativa } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { createSession, hashPassword } from "@/lib/auth";
+import { conviteUtilizavel, emailPodeUsarConvite } from "@/lib/convite";
 import { seedCompanyStages } from "@/lib/db-bootstrap";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
@@ -37,17 +38,35 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   try {
     const userId = await prisma.$transaction(async (tx) => {
       // Lê o plano do token antes de marcá-lo como usado.
+      const agora = new Date();
       const token = await tx.signupToken.findUnique({
         where: { code: accessCode },
-        select: { features: true, usedAt: true, revokedAt: true },
+        select: { features: true, usedAt: true, revokedAt: true, expiresAt: true, contactEmail: true },
       });
       if (!token || token.usedAt || token.revokedAt) {
         throw new Error("TOKEN_INVALID");
       }
+      // Prazo e destinatário são conferidos antes da reivindicação para o
+      // cliente receber o motivo certo, e não um "inválido" genérico que ele
+      // não sabe resolver.
+      if (!conviteUtilizavel(token, agora)) {
+        throw new Error("TOKEN_EXPIRED");
+      }
+      if (!emailPodeUsarConvite(token.contactEmail, email)) {
+        throw new Error("TOKEN_EMAIL_MISMATCH");
+      }
 
       const claimed = await tx.signupToken.updateMany({
-        where: { code: accessCode, usedAt: null, revokedAt: null },
-        data: { usedAt: new Date(), usedByEmail: email },
+        // O prazo entra no WHERE, e não só na conferência acima: entre a
+        // leitura e a escrita o token pode vencer, e é o banco que precisa
+        // recusar. Token antigo (expiresAt nulo) segue valendo.
+        where: {
+          code: accessCode,
+          usedAt: null,
+          revokedAt: null,
+          OR: [{ expiresAt: null }, { expiresAt: { gt: agora } }],
+        },
+        data: { usedAt: agora, usedByEmail: email },
       });
 
       if (claimed.count !== 1) {
@@ -86,6 +105,15 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   } catch (error) {
     if (error instanceof Error && error.message === "TOKEN_INVALID") {
       return { error: "Token inválido, já usado ou revogado." };
+    }
+    if (error instanceof Error && error.message === "TOKEN_EXPIRED") {
+      return { error: "Este convite expirou. Peça um novo para quem enviou o código." };
+    }
+    if (error instanceof Error && error.message === "TOKEN_EMAIL_MISMATCH") {
+      // Não dizemos qual é o e-mail esperado: quem tem o código pode não ser a
+      // pessoa convidada, e a mensagem viraria vazamento de endereço. Quem foi
+      // convidado de verdade tem o e-mail escrito no próprio convite.
+      return { error: "Este convite é para outro e-mail. Use o e-mail combinado ou fale com quem enviou.", field: "email" };
     }
     if (error instanceof Error && error.message === "EMAIL_EXISTS") {
       return { error: "Já existe um usuário com esse e-mail." };
