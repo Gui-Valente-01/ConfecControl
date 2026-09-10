@@ -10,6 +10,7 @@ import { requireUser, roleLabels } from "@/lib/auth";
 import { featureKeys, featureLabel, sanitizeFeatures } from "@/lib/features";
 import { FeaturePicker } from "@/components/feature-picker";
 import { formatDateTime, formatLongDate } from "@/lib/format";
+import { MODELO_PADRAO, MODELOS_DE_CONTA, modeloDaConta } from "@/lib/modelos-de-conta";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -142,6 +143,42 @@ export default async function MasterPage() {
                 />
               </label>
 
+              <label className="block">
+                <span className="text-sm font-medium text-body">Tipo de confecção</span>
+                <select
+                  name="segmento"
+                  defaultValue=""
+                  className="mt-1 h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-sm outline-none ring-primary/20 transition focus:border-primary focus:ring-4"
+                >
+                  <option value="">{MODELO_PADRAO.nome} — etapas padrão</option>
+                  {Object.entries(MODELOS_DE_CONTA).map(([chave, modelo]) => (
+                    <option key={chave} value={chave}>
+                      {modelo.nome}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-1 block text-xs text-soft">
+                  A conta já abre com as etapas e os serviços deste ramo. O cliente pode mudar tudo depois.
+                </span>
+              </label>
+
+              {/* Lista estática, e não prévia que muda com o select: dá para
+                  conferir antes de gerar sem precisar de JavaScript na tela. */}
+              <details className="rounded-lg border border-line bg-canvas px-3 py-2 text-xs">
+                <summary className="cursor-pointer font-medium text-body">Ver as etapas de cada tipo</summary>
+                <dl className="mt-2 space-y-2">
+                  {[MODELO_PADRAO, ...Object.values(MODELOS_DE_CONTA)].map((modelo) => (
+                    <div key={modelo.nome}>
+                      <dt className="font-semibold text-body">{modelo.nome}</dt>
+                      <dd className="text-muted">{modelo.etapas.join(" → ")}</dd>
+                      {modelo.servicos.length > 0 ? (
+                        <dd className="text-soft">Serviços: {modelo.servicos.join(", ")}</dd>
+                      ) : null}
+                    </div>
+                  ))}
+                </dl>
+              </details>
+
               <fieldset className="space-y-2">
                 <legend className="text-sm font-medium text-body">Módulos que este cliente contratou</legend>
                 <p className="text-xs text-soft">
@@ -196,6 +233,7 @@ export default async function MasterPage() {
                       </div>
                       <div className="mt-3 space-y-1 text-xs text-muted">
                         <p>Criado por {token.createdByEmail} em {formatDateTime(token.createdAt)}</p>
+                        <p>Conta nasce como: {modeloDaConta(token.segmento).nome}</p>
                         {!token.usedAt && !token.revokedAt ? (
                           token.expiresAt ? (
                             <p className={estado === "expirado" ? "text-warning-ink" : undefined}>

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { DIAS_DE_VALIDADE_DO_CONVITE, calcularExpiracao } from "@/lib/convite";
 import { sanitizeFeatures } from "@/lib/features";
 import type { FormState } from "@/lib/form-state";
+import { segmentoValido } from "@/lib/modelos-de-conta";
 import { prisma } from "@/lib/prisma";
 
 function superAdminEmails(): string[] {
@@ -42,6 +43,14 @@ export async function createSignupTokenAction(_prev: FormState, formData: FormDa
     return { error: "Informe o nome do cliente ou da empresa." };
   }
 
+  // Vazio = etapas padrão. Qualquer outro valor tem de ser um segmento da
+  // lista: gravar chave inventada no convite faria a conta cair no padrão sem
+  // ninguém perceber que a escolha não valeu.
+  const segmento = String(formData.get("segmento") ?? "").trim();
+  if (segmento && !segmentoValido(segmento)) {
+    return { error: "Tipo de confecção desconhecido. Escolha um da lista." };
+  }
+
   const features = sanitizeFeatures(formData.getAll("features").map(String));
 
   const code = await generateUniqueTokenCode();
@@ -55,6 +64,7 @@ export async function createSignupTokenAction(_prev: FormState, formData: FormDa
       // eterno de 8 dígitos circulando em conversa de WhatsApp.
       expiresAt: calcularExpiracao(new Date()),
       features,
+      segmento: segmento || null,
     },
   });
 

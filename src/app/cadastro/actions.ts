@@ -5,7 +5,7 @@ import { registrarTentativa } from "@/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { createSession, hashPassword } from "@/lib/auth";
 import { conviteUtilizavel, emailPodeUsarConvite } from "@/lib/convite";
-import { seedCompanyStages } from "@/lib/db-bootstrap";
+import { prepararContaNova } from "@/lib/db-bootstrap";
 import type { FormState } from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { problemaDaSenha, validateContactFields } from "@/lib/validation";
@@ -41,7 +41,14 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
       const agora = new Date();
       const token = await tx.signupToken.findUnique({
         where: { code: accessCode },
-        select: { features: true, usedAt: true, revokedAt: true, expiresAt: true, contactEmail: true },
+        select: {
+          features: true,
+          segmento: true,
+          usedAt: true,
+          revokedAt: true,
+          expiresAt: true,
+          contactEmail: true,
+        },
       });
       if (!token || token.usedAt || token.revokedAt) {
         throw new Error("TOKEN_INVALID");
@@ -81,7 +88,9 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
       const company = await tx.company.create({
         data: { name: companyName, email, features: token.features },
       });
-      await seedCompanyStages(company.id, tx);
+      // Etapas e serviços do ramo que foi escolhido no convite. Convite sem
+      // segmento (inclusive os anteriores a esta regra) recebe as etapas padrão.
+      await prepararContaNova(company.id, token.segmento, tx);
 
       const user = await tx.user.create({
         data: {

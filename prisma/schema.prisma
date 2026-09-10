@@ -103,6 +103,9 @@ model SignupToken {
   clientName     String?
   contactEmail   String?
   features       String[]  @default([]) // plano que este token concede à empresa criada
+  /// Tipo de confecção (chave de src/lib/modelos-de-conta.ts). Decide as
+  /// etapas e os serviços com que a conta nasce. Nulo = etapas padrão.
+  segmento       String?
   createdByEmail String
   /** Prazo do convite. Nulo só nos tokens criados antes de existir prazo. */
   expiresAt      DateTime?
