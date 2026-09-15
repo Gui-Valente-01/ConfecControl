@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { userWithCapability } from "@/lib/auth";
+import { resolverPeriodo } from "@/lib/relatorio";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
@@ -11,8 +12,10 @@ function csvCell(value: string | number) {
   return `"${text}"`;
 }
 
+// Data no calendário de Brasília: o servidor roda em UTC, e o pedido lançado
+// às 22h saía na planilha com a data do dia seguinte.
 function formatDate(date: Date | null) {
-  return date ? date.toLocaleDateString("pt-BR") : "";
+  return date ? date.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "";
 }
 
 export async function GET(req: NextRequest) {
@@ -25,10 +28,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
+  // Mesmo período da tela, pelas mesmas regras (Brasília, dia inteiro). Sem
+  // datas, a planilha traz todos os pedidos.
   const from = req.nextUrl.searchParams.get("from");
   const to = req.nextUrl.searchParams.get("to");
-  const fromDate = from ? new Date(`${from}T00:00:00`) : undefined;
-  const toDate = to ? new Date(`${to}T23:59:59`) : undefined;
+  const preset = req.nextUrl.searchParams.get("preset");
+  const temPeriodo = Boolean(from || to || preset);
+  const periodo = temPeriodo ? resolverPeriodo({ from, to, preset }) : null;
+  const fromDate = periodo?.de;
+  const toDate = periodo?.ate;
 
   const orders = await prisma.order.findMany({
     where: {

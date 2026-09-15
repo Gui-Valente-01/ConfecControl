@@ -131,3 +131,21 @@ describe("lerMargem", () => {
     expect(lerMargem(null, false)).toBe("sem receita no período");
   });
 });
+
+describe("servico cobrado no pedido", () => {
+  it("entra no lucro do grupo e nao marca a margem como incompleta", () => {
+    const [grupo] = agruparRentabilidade([
+      { chave: "c", rotulo: "Serigrafia", quantidade: 0, receitaInCents: 40000, custoInCents: 0, servico: true },
+    ]);
+    expect(grupo.lucroInCents).toBe(40000);
+    expect(grupo.custoIncompleto).toBe(false);
+  });
+
+  it("peca sem custo continua marcando, mesmo ao lado de servico", () => {
+    const [grupo] = agruparRentabilidade([
+      { chave: "c", rotulo: "Cliente", quantidade: 0, receitaInCents: 9000, custoInCents: 0, servico: true },
+      { chave: "c", rotulo: "Cliente", quantidade: 10, receitaInCents: 25000, custoInCents: 0 },
+    ]);
+    expect(grupo.custoIncompleto).toBe(true);
+  });
+});

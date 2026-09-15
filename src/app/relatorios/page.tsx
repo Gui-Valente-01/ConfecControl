@@ -3,7 +3,20 @@ import { AlertTriangle, ArrowRight, BarChart3, CalendarRange, Clock, CreditCard,
 import { AppShell } from "@/components/app-shell";
 import { MetricCard } from "@/components/metric-card";
 import { compararValores, periodoAnterior, textoVariacao } from "@/lib/comparacao";
-import { agruparRentabilidade, lerMargem, noPrejuizo, ordenarPorLucro } from "@/lib/rentabilidade";
+import { diaEmBrasilia, diaIso, PRESETS } from "@/lib/datas";
+import { lerMargem, noPrejuizo } from "@/lib/rentabilidade";
+import {
+  entrouNoCaixa,
+  faturamentoPorServico,
+  indexarCatalogo,
+  maisVendidas,
+  quemMaisCompra,
+  rentabilidadePorCliente,
+  rentabilidadePorPeca,
+  resolverPeriodo,
+  resumirVendas,
+  type PedidoDoRelatorio,
+} from "@/lib/relatorio";
 import {
   calcularPontualidade,
   calcularProdutividade,
@@ -13,6 +26,7 @@ import {
   lerDias,
   lerPontualidade,
   pedidosParados,
+  primeiraEntregaPorPedido,
   resumirProblemas,
   DIAS_PARA_PEDIDO_PARADO,
 } from "@/lib/producao-analytics";
@@ -26,10 +40,40 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ from?: string; to?: string }>;
+type SearchParams = Promise<{ from?: string; to?: string; preset?: string }>;
 
+/** Data -> "yyyy-mm-dd" no calendário de Brasília, para os campos de data. */
 function toInputDate(date: Date) {
-  return date.toLocaleDateString("en-CA"); // yyyy-mm-dd
+  return diaIso(diaEmBrasilia(date));
+}
+
+// O mesmo formato para o período atual e o anterior: sem isso a comparação
+// sairia entre contas diferentes.
+const selectPedidoDoRelatorio = {
+  totalAmountInCents: true,
+  client: { select: { id: true, name: true } },
+  items: { select: { description: true, quantity: true, productId: true, totalPriceInCents: true } },
+  services: { select: { name: true, priceInCents: true } },
+  payments: { select: { amountInCents: true } },
+} as const;
+
+type PedidoDoBanco = {
+  totalAmountInCents: number;
+  client: { id: string; name: string };
+  items: { description: string; quantity: number; productId: string | null; totalPriceInCents: number }[];
+  services: { name: string; priceInCents: number }[];
+  payments: { amountInCents: number }[];
+};
+
+function paraRelatorio(o: PedidoDoBanco): PedidoDoRelatorio {
+  return {
+    clienteId: o.client.id,
+    clienteNome: o.client.name,
+    totalInCents: o.totalAmountInCents,
+    itens: o.items.map((i) => ({ productId: i.productId, descricao: i.description, quantidade: i.quantity, totalInCents: i.totalPriceInCents })),
+    servicos: o.services.map((s) => ({ nome: s.name, precoInCents: s.priceInCents })),
+    recebimentos: o.payments,
+  };
 }
 
 export default async function RelatoriosPage({ searchParams }: { searchParams: SearchParams }) {
@@ -37,37 +81,37 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const companyId = user.companyId;
   const params = await searchParams;
 
+  // Período no calendário de Brasília. O servidor roda em UTC, e o "este mês"
+  // dele começava às 21h do último dia do mês anterior.
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const fromDate = params.from ? new Date(`${params.from}T00:00:00`) : monthStart;
-  const toDate = params.to ? new Date(`${params.to}T23:59:59`) : now;
-  const validFrom = Number.isNaN(fromDate.getTime()) ? monthStart : fromDate;
-  const validTo = Number.isNaN(toDate.getTime()) ? now : toDate;
+  const periodo = resolverPeriodo(params, now);
+  const validFrom = periodo.de;
+  const validTo = periodo.ate;
 
-  // Mesmo tamanho de período, imediatamente antes: é o que dá sentido ao
-  // número. "R$ 23 mil" sozinho não diz se foi um bom mês.
-  const anterior = periodoAnterior({ de: validFrom, ate: validTo });
+  // Período equivalente anterior: é o que dá sentido ao número. "R$ 23 mil"
+  // sozinho não diz se foi um bom mês. Semana compara com a semana passada,
+  // mês com o mês passado (ver periodoAnterior).
+  const anterior = periodoAnterior(periodo, periodo.preset);
 
-  const [rangeOrders, ordersAnterior, allOrders, products, pendingPayments, stages, historico, tarefasFeitas, saidasPecas] = await Promise.all([
+  const [rangeOrders, ordersAnterior, recebimentosCaixa, allOrders, products, pendingPayments, stages, historico, tarefasFeitas, saidasPecas] = await Promise.all([
     prisma.order.findMany({
-      where: { companyId, orderDate: { gte: validFrom, lte: validTo } },
-      select: {
-        totalAmountInCents: true,
-        paidAmountInCents: true,
-        client: { select: { name: true } },
-        items: { select: { description: true, quantity: true, productId: true, totalPriceInCents: true } },
-        services: { select: { name: true, priceInCents: true } },
-      },
+      where: { companyId, status: { not: "CANCELED" }, orderDate: { gte: validFrom, lte: validTo } },
+      select: selectPedidoDoRelatorio,
     }),
-    // Só o que a comparação usa: total, recebido e os itens para o lucro.
     prisma.order.findMany({
-      where: { companyId, orderDate: { gte: anterior.de, lte: anterior.ate } },
-      select: {
-        totalAmountInCents: true,
-        paidAmountInCents: true,
-        items: { select: { quantity: true, productId: true, totalPriceInCents: true } },
-        services: { select: { priceInCents: true } },
+      where: { companyId, status: { not: "CANCELED" }, orderDate: { gte: anterior.de, lte: anterior.ate } },
+      select: selectPedidoDoRelatorio,
+    }),
+    // Dinheiro que entrou, pela data do recebimento, nos dois períodos de uma vez.
+    prisma.payment.findMany({
+      where: {
+        order: { companyId, status: { not: "CANCELED" } },
+        OR: [
+          { paidAt: { gte: anterior.de, lte: validTo } },
+          { paidAt: null, createdAt: { gte: anterior.de, lte: validTo } },
+        ],
       },
+      select: { amountInCents: true, paidAt: true, createdAt: true },
     }),
     prisma.order.findMany({
       where: { companyId },
@@ -138,119 +182,50 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     }),
   ]);
 
-  // Custo por peça = o valor digitado no cadastro da peça.
+  // Custo por peça = o valor digitado no cadastro da peça (o de hoje).
   //
   // Antes vinha da ficha técnica (soma dos materiais). Foi removido porque
   // exigia manter o preço de cada material em dia, e o que ninguém mantém
   // acaba fazendo o custo sair por baixo — o lucro do relatório aparecia
   // maior do que era, que é o erro mais caro possível aqui.
-  const productCost = new Map(products.map((p) => [p.id, p.costInCents]));
-  const productKind = new Map(products.map((p) => [p.id, p.kind]));
+  const catalogo = indexarCatalogo(
+    products.map((p) => ({ id: p.id, nome: p.name, custoInCents: p.costInCents, tipo: p.kind })),
+  );
   const productName = new Map(products.map((p) => [p.id, p.name]));
 
-  // Faturamento no período
-  const totalRevenue = rangeOrders.reduce((sum, o) => sum + o.totalAmountInCents, 0);
-  const received = rangeOrders.reduce((sum, o) => sum + o.paidAmountInCents, 0);
-  const toReceive = Math.max(0, totalRevenue - received);
+  // Todas as contas de dinheiro saem de src/lib/relatorio.ts, testadas.
+  const pedidosDoPeriodo = rangeOrders.map(paraRelatorio);
+  const pedidosAnteriores = ordersAnterior.map(paraRelatorio);
+  const resumo = resumirVendas(pedidosDoPeriodo, catalogo);
+  const resumoAnterior = resumirVendas(pedidosAnteriores, catalogo);
+  const caixa = entrouNoCaixa(recebimentosCaixa, periodo);
+  const caixaAnterior = entrouNoCaixa(recebimentosCaixa, anterior);
 
-  // Lucro = receita menos custo. A receita inclui os serviços cobrados: para uma
-  // serigrafia o serviço É o produto, e deixá-lo de fora fazia o lucro sair bem
-  // abaixo do real, enquanto o faturamento já o contava.
-  const rangeItems = rangeOrders.flatMap((o) => o.items);
-  const itemsRevenue = rangeItems.reduce((sum, item) => sum + item.totalPriceInCents, 0);
-  const serviceRevenue = rangeOrders.reduce(
-    (sum, order) => sum + order.services.reduce((s, service) => s + service.priceInCents, 0),
-    0,
-  );
-  const profitRevenue = itemsRevenue + serviceRevenue;
-  const totalCost = rangeItems.reduce((sum, item) => sum + (item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0), 0);
-  const estimatedProfit = profitRevenue - totalCost;
-
-  // Faturamento separado: serviço na peça do cliente x peça feita pela confecção.
-  const byKind = { SERVICE: { revenue: 0, units: 0 }, PRODUCT: { revenue: 0, units: 0 } };
-  for (const item of rangeItems) {
-    if (!item.productId) continue;
-    const kind = productKind.get(item.productId) ?? "PRODUCT";
-    byKind[kind].revenue += item.totalPriceInCents;
-    byKind[kind].units += item.quantity;
-  }
+  const totalRevenue = resumo.faturamentoInCents;
+  const toReceive = resumo.aReceberDestesPedidosInCents;
+  const itemsRevenue = resumo.receitaPecasInCents;
+  const serviceRevenue = resumo.receitaServicosInCents;
+  const totalCost = resumo.custoInCents;
+  const estimatedProfit = resumo.lucroInCents;
+  const margin = resumo.margem;
+  const itemsWithoutCost = resumo.vendasSemCusto;
+  const byKind = {
+    PRODUCT: { revenue: resumo.porTipo.PRODUCT.receitaInCents, units: resumo.porTipo.PRODUCT.unidades },
+    SERVICE: { revenue: resumo.porTipo.SERVICE.receitaInCents, units: resumo.porTipo.SERVICE.unidades },
+  };
 
   // Quanto cada serviço rendeu: vem do que foi cobrado em cada pedido, então é
   // o valor real e não uma estimativa de tabela.
-  const serviceTotals = new Map<string, { revenue: number; count: number }>();
-  for (const order of rangeOrders) {
-    for (const service of order.services) {
-      const current = serviceTotals.get(service.name) ?? { revenue: 0, count: 0 };
-      current.revenue += service.priceInCents;
-      current.count += 1;
-      serviceTotals.set(service.name, current);
-    }
-  }
-  const serviceRows = [...serviceTotals.entries()]
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.revenue - a.revenue);
-  const servicesRevenue = serviceRows.reduce((sum, row) => sum + row.revenue, 0);
-  const margin = profitRevenue > 0 ? Math.round((estimatedProfit / profitRevenue) * 100) : 0;
-  const itemsWithoutCost = rangeItems.filter((item) => !item.productId || (productCost.get(item.productId) ?? 0) === 0).length;
+  const serviceRows = faturamentoPorServico(pedidosDoPeriodo).map((s) => ({ name: s.nome, revenue: s.receitaInCents, count: s.vezes }));
+  const servicesRevenue = serviceRevenue;
 
-  // Custo incompleto é pior do que custo zerado: a peça tem número, mas ele está
-  // por baixo, e o lucro aparece maior do que é. Acontece quando um material da
-  // ficha ainda não tem preço cadastrado no estoque.
+  const topProducts = maisVendidas(pedidosDoPeriodo, catalogo).map((p) => ({ label: p.rotulo, quantity: p.quantidade, revenue: p.receitaInCents }));
+  const topClients = quemMaisCompra(pedidosDoPeriodo).map((c) => ({ name: c.nome, total: c.totalInCents, count: c.pedidos }));
 
-  // Produtos mais vendidos (no período)
-  const productSales = new Map<string, { label: string; quantity: number; revenue: number }>();
-  for (const item of rangeItems) {
-    const key = item.productId ?? `desc:${item.description}`;
-    const label = item.productId ? productName.get(item.productId) ?? item.description : item.description;
-    const entry = productSales.get(key) ?? { label, quantity: 0, revenue: 0 };
-    entry.quantity += item.quantity;
-    entry.revenue += item.totalPriceInCents;
-    productSales.set(key, entry);
-  }
-  const topProducts = [...productSales.values()].sort((a, b) => b.quantity - a.quantity).slice(0, 5);
-
-  // Clientes que mais compram (no período)
-  const clientSales = new Map<string, { count: number; total: number }>();
-  for (const order of rangeOrders) {
-    const entry = clientSales.get(order.client.name) ?? { count: 0, total: 0 };
-    entry.count += 1;
-    entry.total += order.totalAmountInCents;
-    clientSales.set(order.client.name, entry);
-  }
-  const topClients = [...clientSales.entries()]
-    .map(([name, v]) => ({ name, ...v }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5);
-
-  // Rentabilidade: por peça e por cliente, ordenada por LUCRO.
-  //
-  // "Quem mais compra" era por faturamento, e isso engana: cliente que compra
-  // muito com margem apertada pode valer menos que um pequeno com margem boa.
-  const rentPorPeca = ordenarPorLucro(
-    agruparRentabilidade(
-      rangeItems.map((item) => ({
-        chave: item.productId ?? `desc:${item.description}`,
-        rotulo: item.productId ? productName.get(item.productId) ?? item.description : item.description,
-        quantidade: item.quantity,
-        receitaInCents: item.totalPriceInCents,
-        custoInCents: item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0,
-      })),
-    ),
-  );
-
-  const rentPorCliente = ordenarPorLucro(
-    agruparRentabilidade(
-      rangeOrders.flatMap((order) =>
-        order.items.map((item) => ({
-          chave: order.client.name,
-          rotulo: order.client.name,
-          quantidade: item.quantity,
-          receitaInCents: item.totalPriceInCents,
-          custoInCents: item.productId ? (productCost.get(item.productId) ?? 0) * item.quantity : 0,
-        })),
-      ),
-    ),
-  );
+  // Rentabilidade: por peça e por cliente, ordenada por LUCRO. A lista por
+  // cliente inclui os serviços: a soma dela é o "Lucro estimado".
+  const rentPorPeca = rentabilidadePorPeca(pedidosDoPeriodo, catalogo);
+  const rentPorCliente = rentabilidadePorCliente(pedidosDoPeriodo, catalogo);
 
   // A lista que não existia: o que saiu por menos do que custou.
   const pecasNoPrejuizo = noPrejuizo(rentPorPeca);
@@ -269,22 +244,29 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   const temposEtapa = calcularTempoPorEtapa(movimentos);
   const etapaGargalo = gargalo(temposEtapa);
 
-  // Entrega = o momento em que o pedido chegou numa etapa final. É o que existe
-  // de mais próximo de uma "data de entrega real" sem inventar coluna nova.
-  const NOMES_FINAIS = ["entregue", "pronto"];
-  const entregas = historico.filter((h) => NOMES_FINAIS.includes((h.toStage?.name ?? "").toLowerCase()));
+  // Entrega = a PRIMEIRA vez que o pedido chegou na etapa "Entregue". Antes
+  // "Pronto" também contava, e cada pedido virava duas entregas.
+  const entregaPorPedido = primeiraEntregaPorPedido(
+    historico.map((h) => ({ orderId: h.orderId, etapa: h.toStage?.name ?? "", quando: h.changedAt })),
+  );
+  const dadosDoPedido = new Map(historico.map((h) => [h.orderId, h.order]));
+  const entreguesNoPeriodo = [...entregaPorPedido.entries()]
+    .filter(([, quando]) => quando >= validFrom && quando <= validTo)
+    .flatMap(([orderId, quando]) => {
+      const pedido = dadosDoPedido.get(orderId);
+      return pedido ? [{ pedido, quando }] : [];
+    });
 
-  const entreguesNoPeriodo = entregas.filter((h) => h.changedAt >= validFrom && h.changedAt <= validTo);
   const pontualidade = calcularPontualidade(
-    entreguesNoPeriodo.map((h) => ({
-      numero: h.order.number,
-      prazo: h.order.deliveryDate,
-      entregueEm: h.changedAt,
+    entreguesNoPeriodo.map(({ pedido, quando }) => ({
+      numero: pedido.number,
+      prazo: pedido.deliveryDate,
+      entregueEm: quando,
     })),
   );
 
   const tempoTotal = calcularTempoTotal(
-    entreguesNoPeriodo.map((h) => ({ inicio: h.order.orderDate, fim: h.changedAt })),
+    entreguesNoPeriodo.map(({ pedido, quando }) => ({ inicio: pedido.orderDate, fim: quando })),
   );
 
   const produtividade = calcularProdutividade(
@@ -363,33 +345,27 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   }
   const assigneeRows = [...byAssignee.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
 
-  // Os mesmos números do período anterior, pelas mesmas contas — senão a
+  // Os mesmos números do período anterior, pelas mesmas funções — senão a
   // comparação sairia entre coisas diferentes.
-  const faturamentoAnterior = ordersAnterior.reduce((s, o) => s + o.totalAmountInCents, 0);
-  const recebidoAnterior = ordersAnterior.reduce((s, o) => s + o.paidAmountInCents, 0);
-  const itensAnterior = ordersAnterior.flatMap((o) => o.items);
-  const lucroAnterior =
-    itensAnterior.reduce((s, i) => s + i.totalPriceInCents, 0) +
-    ordersAnterior.reduce((s, o) => s + o.services.reduce((x, sv) => x + sv.priceInCents, 0), 0) -
-    itensAnterior.reduce((s, i) => s + (i.productId ? (productCost.get(i.productId) ?? 0) * i.quantity : 0), 0);
-
-  const varFaturamento = compararValores(totalRevenue, faturamentoAnterior);
-  const varRecebido = compararValores(received, recebidoAnterior);
-  const varLucro = compararValores(estimatedProfit, lucroAnterior);
-  const varPedidos = compararValores(rangeOrders.length, ordersAnterior.length);
+  const varFaturamento = compararValores(totalRevenue, resumoAnterior.faturamentoInCents);
+  const varCaixa = compararValores(caixa.totalInCents, caixaAnterior.totalInCents);
+  const varLucro = compararValores(estimatedProfit, resumoAnterior.lucroInCents);
+  const varPedidos = compararValores(resumo.pedidos, resumoAnterior.pedidos);
 
   const kpis = [
     {
       label: "Faturamento (período)",
       value: centsToCurrency(totalRevenue),
-      note: textoVariacao(varFaturamento, centsToCurrency),
+      note: `${centsToCurrency(toReceive)} destes pedidos a receber · ${textoVariacao(varFaturamento, centsToCurrency)}`,
       icon: BarChart3,
       tone: "primary" as const,
     },
     {
-      label: "Recebido",
-      value: centsToCurrency(received),
-      note: `${centsToCurrency(toReceive)} a receber · ${textoVariacao(varRecebido, centsToCurrency)}`,
+      // Caixa: o que ENTROU no período, pela data do recebimento. Antes era
+      // "quanto dos pedidos do período já foi pago", que não é o dinheiro da semana.
+      label: "Entrou no caixa",
+      value: centsToCurrency(caixa.totalInCents),
+      note: `${caixa.recebimentos} recebimento(s) · ${textoVariacao(varCaixa, centsToCurrency)}`,
       icon: CreditCard,
       tone: "primary" as const,
     },
@@ -402,7 +378,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
     },
     {
       label: "Pedidos no período",
-      value: String(rangeOrders.length),
+      value: String(resumo.pedidos),
       note: textoVariacao(varPedidos, (n) => `${n} pedido${n === 1 ? "" : "s"}`),
       icon: Clock,
       tone: "primary" as const,
@@ -412,6 +388,24 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
   return (
     <AppShell eyebrow="Análise" title="Relatórios" actionLabel="Exportar" user={user}>
       <SectionCard eyebrow="Período" title="Intervalo de análise">
+        {/* Botões rápidos: mesmas contas das datas digitadas, só já prontas. */}
+        <nav aria-label="Períodos prontos" className="mb-3 flex flex-wrap gap-2">
+          {PRESETS.map((p) => {
+            const ativo = periodo.preset === p.chave;
+            return (
+              <a
+                key={p.chave}
+                href={`/relatorios?preset=${p.chave}`}
+                aria-current={ativo ? "page" : undefined}
+                className={`inline-flex h-9 items-center rounded-lg px-4 text-sm font-semibold transition ${
+                  ativo ? "bg-primary text-white" : "border border-line-strong bg-surface text-body hover:bg-canvas"
+                }`}
+              >
+                {p.rotulo}
+              </a>
+            );
+          })}
+        </nav>
         <form method="get" className="flex flex-wrap items-end gap-3">
           <label>
             <span className="text-xs text-muted">De</span>
@@ -425,7 +419,6 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
             <CalendarRange size={15} aria-hidden="true" />
             Aplicar
           </button>
-          <a href="/relatorios" className="inline-flex h-9 items-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-body">Mês atual</a>
           <a
             href={`/relatorios/export?from=${toInputDate(validFrom)}&to=${toInputDate(validTo)}`}
             className="inline-flex h-9 items-center gap-2 rounded-lg border border-primary px-4 text-sm font-semibold text-primary-dark"
@@ -917,7 +910,7 @@ export default async function RelatoriosPage({ searchParams }: { searchParams: S
 
         <SectionCard
           eyebrow="Estoque"
-          title="Materiais abaixo do mínimo"
+          title="Peças abaixo do mínimo"
           action={<div className="rounded-lg bg-tint px-3 py-2 text-sm font-semibold text-body">{lowStock.length}</div>}
         >
           {lowStock.length === 0 ? (

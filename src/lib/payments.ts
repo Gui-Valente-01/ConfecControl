@@ -42,3 +42,58 @@ export function resolveReceiptAmount(balanceInCents: number, requestedInCents: n
   if (requestedInCents === null || requestedInCents <= 0) return Math.max(0, balanceInCents);
   return Math.min(requestedInCents, Math.max(0, balanceInCents));
 }
+
+export type PlanoDaEntrada =
+  | { acao: "manter" }
+  | { acao: "atualizar"; valor: number }
+  | { acao: "apagar" }
+  | { acao: "criar"; valor: number }
+  | { erro: string };
+
+/**
+ * O que fazer com a entrada quando alguém edita o pedido.
+ *
+ * O campo "já pago" da edição mostra o TOTAL pago. Só a entrada (o primeiro
+ * recebimento) pode ser mexida por ali; o que entrou depois é histórico de
+ * caixa e só sai pelo Financeiro.
+ *
+ * Por isso digitar menos do que já entrou depois da entrada é recusado. Antes
+ * o sistema aceitava, gravava o número digitado no pedido e mantinha os
+ * recebimentos — e o relatório e o financeiro passavam a discordar.
+ *
+ * `recebimentos` vem na ordem em que foram lançados.
+ *
+ * `pagoMostradoInCents` é o valor que a tela de edição mostrava ao abrir.
+ * Quem não mexeu no campo não mexe em dinheiro nenhum. E se entrou um
+ * recebimento enquanto a tela estava aberta, o valor da tela está velho:
+ * aplicá-lo encolheria a entrada e sumiria com dinheiro que entrou.
+ */
+export function planejarEdicaoDaEntrada(
+  recebimentos: Receipt[],
+  pagoInformadoInCents: number,
+  pagoMostradoInCents: number | null = null,
+): PlanoDaEntrada {
+  if (pagoMostradoInCents !== null) {
+    if (pagoInformadoInCents === pagoMostradoInCents) return { acao: "manter" };
+    if (sumReceipts(recebimentos) !== pagoMostradoInCents) {
+      return {
+        erro: "Entrou um recebimento enquanto esta tela estava aberta, e o valor pago mudou. Abra o pedido de novo para editar com o valor atual.",
+      };
+    }
+  }
+
+  const [entrada, ...depois] = recebimentos;
+  const recebidoDepois = sumReceipts(depois);
+
+  if (pagoInformadoInCents < recebidoDepois) {
+    const reais = (recebidoDepois / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    return {
+      erro: `Já entraram ${reais} depois da entrada. O valor pago não pode ficar abaixo disso: para corrigir um recebimento, apague-o no Financeiro.`,
+    };
+  }
+
+  const novaEntrada = pagoInformadoInCents - recebidoDepois;
+  if (!entrada) return novaEntrada > 0 ? { acao: "criar", valor: novaEntrada } : { acao: "manter" };
+  if (novaEntrada === entrada.amountInCents) return { acao: "manter" };
+  return novaEntrada > 0 ? { acao: "atualizar", valor: novaEntrada } : { acao: "apagar" };
+}

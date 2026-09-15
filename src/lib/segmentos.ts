@@ -80,10 +80,10 @@ export const segmentos: Segmento[] = [
     nome: "Camisetas",
     titulo: "A camiseta que falta é sempre a do tamanho que acabou.",
     subtitulo:
-      "Grade por tamanho em cada item, baixa no estoque a cada pedido e o que falta visível antes da entrega.",
+      "Grade por tamanho em cada item, estoque do que já está pronto e o que falta visível antes da entrega.",
     metaTitulo: "Sistema para confecção de camisetas",
     metaDescricao:
-      "Controle de produção de camisetas por lote: grade de tamanho e cor em cada item, baixa automática no estoque e saldo a receber por pedido.",
+      "Controle de produção de camisetas por lote: grade de tamanho e cor em cada item, estoque automático do que ficou pronto e saldo a receber por pedido.",
     dores: [
       {
         queixa: "Entreguei o lote quase todo e faltou justamente o tamanho maior.",
@@ -93,12 +93,12 @@ export const segmentos: Segmento[] = [
       {
         queixa: "Não sei se a camiseta que saiu era minha ou do cliente.",
         resposta:
-          "Peça sua e peça do cliente são cadastradas de formas diferentes: o que sai da sua prateleira baixa do estoque, o que veio de fora entra como serviço e não mexe no seu saldo. No relatório os dois aparecem separados.",
+          "Peça sua e peça do cliente são cadastradas de formas diferentes: a sua entra na prateleira quando o pedido fica pronto e sai na entrega; o que veio de fora entra como serviço e não mexe no seu estoque. No relatório os dois aparecem separados.",
       },
       {
         queixa: "Descubro que a malha acabou quando a costureira já está parada.",
         resposta:
-          "O estoque tem alerta de mínimo por peça, e a baixa acontece quando o pedido consome. Em vez de descobrir na hora do corte, o aviso chega antes — e quem está na bancada registra a falta na hora, com observação presa ao pedido.",
+          "O sistema não controla malha: o estoque é das peças prontas. O que ele faz é não deixar a falta se perder — quem está na bancada anota “faltou material” na hora, preso ao pedido, e o relatório mostra em que etapa isso mais acontece.",
       },
     ],
     recursos: ["producao", "estoque", "bancada", "relatorios"],
@@ -159,7 +159,7 @@ export const segmentos: Segmento[] = [
       },
       {
         q: "Consigo separar o que é produção própria do que é revenda?",
-        a: "Consegue. O que sai do seu estoque baixa; o que é serviço sobre peça de terceiro não mexe no estoque. O relatório mostra os dois separados.",
+        a: "Consegue. A peça própria entra no estoque quando o pedido fica pronto e sai na entrega; o que é serviço sobre peça de terceiro não mexe no estoque. O relatório mostra os dois separados.",
       },
       {
         q: "E se eu precisar terceirizar parte do pedido?",
@@ -190,7 +190,7 @@ export const segmentos: Segmento[] = [
       {
         queixa: "Recebo peça do cliente para bordar e ela se mistura com a minha.",
         resposta:
-          "O que você faz sobre a peça de terceiro é cadastrado como serviço e não movimenta o seu estoque. A peça própria baixa normalmente. No fim do mês o relatório mostra quanto veio de serviço e quanto veio de peça vendida.",
+          "O que você faz sobre a peça de terceiro é cadastrado como serviço e não movimenta o seu estoque. A peça própria entra na prateleira quando fica pronta e sai na entrega. No fim do mês o relatório mostra quanto veio de serviço e quanto veio de peça vendida.",
       },
     ],
     recursos: ["bancada", "producao", "relatorios", "equipe"],
@@ -226,7 +226,7 @@ export const segmentos: Segmento[] = [
       {
         queixa: "O cliente traz as camisetas dele e no fim eu não sei de quem era cada lote.",
         resposta:
-          "Cada peça é cadastrada como sua ou como serviço na peça do cliente. O que sai da sua prateleira baixa do estoque; o que veio de fora, não. No fim do mês o relatório mostra os dois separados, e você enxerga quanto o serviço rendeu de verdade.",
+          "Cada peça é cadastrada como sua ou como serviço na peça do cliente. O que é seu entra na prateleira quando fica pronto e sai na entrega; o que veio de fora, não. No fim do mês o relatório mostra os dois separados, e você enxerga quanto o serviço rendeu de verdade.",
       },
       {
         queixa: "Duas mesas de silk e ninguém sabe qual pedido é o da vez.",

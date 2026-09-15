@@ -8,6 +8,7 @@ import {
   lerDias,
   lerPontualidade,
   pedidosParados,
+  primeiraEntregaPorPedido,
   resumirProblemas,
   type MovimentoEtapa,
   type PedidoEmAndamento,
@@ -288,5 +289,55 @@ describe("pedidosParados", () => {
     const r = pedidosParados([pedido({ ultimaMudanca: dia(13) })], 7, agora);
     expect(r).toHaveLength(1);
     expect(r[0].diasParado).toBe(7);
+  });
+});
+
+describe("entrega: so 'Entregue' conta, e so a primeira vez", () => {
+  const brt = (t: string) => new Date(`${t}-03:00`);
+
+  it("Pronto nao e entrega; Entregue e", () => {
+    const m = primeiraEntregaPorPedido([
+      { orderId: "p1", etapa: "Pronto", quando: brt("2026-09-09T10:00:00") },
+      { orderId: "p1", etapa: "Entregue", quando: brt("2026-09-12T10:00:00") },
+    ]);
+    expect(m.get("p1")?.toISOString()).toBe(brt("2026-09-12T10:00:00").toISOString());
+    expect(m.size).toBe(1);
+  });
+
+  it("pedido que passou duas vezes por Entregue conta a primeira", () => {
+    const m = primeiraEntregaPorPedido([
+      { orderId: "p1", etapa: "Entregue", quando: brt("2026-09-15T10:00:00") },
+      { orderId: "p1", etapa: "Entregue", quando: brt("2026-09-12T10:00:00") },
+    ]);
+    expect(m.get("p1")?.toISOString()).toBe(brt("2026-09-12T10:00:00").toISOString());
+  });
+
+  it("pedido que so ficou Pronto nao entra na conta de entrega", () => {
+    expect(primeiraEntregaPorPedido([{ orderId: "p1", etapa: "Pronto para retirada", quando: brt("2026-09-09T10:00:00") }]).size).toBe(0);
+  });
+
+  it("um pedido pronto no prazo e entregue atrasado e 1 entrega atrasada, e nao 50% no prazo", () => {
+    const prazo = new Date("2026-09-10T12:00:00Z");
+    const p = calcularPontualidade([
+      { numero: 1001, prazo, entregueEm: brt("2026-09-12T15:00:00") },
+      { numero: 1001, prazo, entregueEm: brt("2026-09-13T15:00:00") },
+    ]);
+    expect(p.entregues).toBe(1);
+    expect(p.atrasados).toBe(1);
+    expect(p.percentualNoPrazo).toBe(0);
+    expect(p.piorAtraso).toEqual({ numero: 1001, dias: 2 });
+  });
+
+  it("entregar as 22h do dia do prazo e no prazo (o servidor em UTC ja estaria no dia seguinte)", () => {
+    const prazo = new Date("2026-09-10T12:00:00Z");
+    const p = calcularPontualidade([{ numero: 1, prazo, entregueEm: brt("2026-09-10T22:00:00") }]);
+    expect(p.noPrazo).toBe(1);
+  });
+
+  it("entregar 00h30 do dia seguinte e 1 dia de atraso", () => {
+    const prazo = new Date("2026-09-10T12:00:00Z");
+    const p = calcularPontualidade([{ numero: 1, prazo, entregueEm: brt("2026-09-11T00:30:00") }]);
+    expect(p.atrasados).toBe(1);
+    expect(p.piorAtraso?.dias).toBe(1);
   });
 });

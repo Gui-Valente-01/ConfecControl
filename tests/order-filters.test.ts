@@ -7,7 +7,7 @@ import {
   type PedidoFiltravel,
 } from "@/lib/order-filters";
 
-const HOJE = new Date(2026, 7, 4, 10, 0); // 4 de agosto de 2026
+const HOJE = new Date("2026-08-04T10:00:00-03:00"); // 4 de agosto de 2026, 10h de Brasília
 
 function pedido(partes: Partial<PedidoFiltravel> = {}): PedidoFiltravel {
   return {
@@ -55,14 +55,16 @@ describe("atrasados", () => {
 });
 
 describe("hoje", () => {
+  // "Hoje" é o dia de Brasília: os instantes vão escritos com o fuso, para o
+  // teste valer igual no servidor (UTC) e na máquina do dono.
   it("pega o prazo de hoje, em qualquer hora do dia", () => {
-    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date(2026, 7, 4, 23, 30) }), "hoje", HOJE)).toBe(true);
-    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date(2026, 7, 4, 0, 1) }), "hoje", HOJE)).toBe(true);
+    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date("2026-08-04T23:30:00-03:00") }), "hoje", HOJE)).toBe(true);
+    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date("2026-08-04T00:01:00-03:00") }), "hoje", HOJE)).toBe(true);
   });
 
   it("ontem e amanha ficam de fora", () => {
-    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date(2026, 7, 3) }), "hoje", HOJE)).toBe(false);
-    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date(2026, 7, 5) }), "hoje", HOJE)).toBe(false);
+    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date("2026-08-03T12:00:00-03:00") }), "hoje", HOJE)).toBe(false);
+    expect(pedidoCasaFiltro(pedido({ deliveryDate: new Date("2026-08-05T00:00:00-03:00") }), "hoje", HOJE)).toBe(false);
   });
 
   it("o que ja foi entregue sai da lista de hoje", () => {
@@ -150,5 +152,29 @@ describe("descreverFiltro", () => {
 
   it("a mensagem de lista vazia e positiva, nao um erro", () => {
     expect(descreverFiltro("atrasados").vazio).toContain("Tudo dentro do prazo");
+  });
+});
+
+describe("prazo hoje (horario de Brasilia)", () => {
+  const brt = (t: string) => new Date(`${t}-03:00`);
+  // Prazo gravado como o sistema grava: meio-dia do dia combinado.
+  const prazoHoje = { deliveryDate: new Date("2026-09-14T12:00:00Z"), status: "SEWING" as const };
+
+  it("as 10h do dia do prazo o pedido e 'hoje', e NAO 'atrasado'", () => {
+    const agora = brt("2026-09-14T10:00:00");
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "hoje", agora)).toBe(true);
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "atrasados", agora)).toBe(false);
+  });
+
+  it("as 22h continua 'hoje' (o servidor em UTC ja estaria no dia seguinte)", () => {
+    const agora = brt("2026-09-14T22:00:00");
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "hoje", agora)).toBe(true);
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "atrasados", agora)).toBe(false);
+  });
+
+  it("no dia seguinte vira 'atrasado'", () => {
+    const agora = brt("2026-09-15T08:00:00");
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "hoje", agora)).toBe(false);
+    expect(pedidoCasaFiltro(pedido(prazoHoje), "atrasados", agora)).toBe(true);
   });
 });

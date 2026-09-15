@@ -1,3 +1,5 @@
+import { FUSO_BRASILIA, diaEmBrasilia, diaIso, inicioDoDia, lerDiaIso } from "@/lib/datas";
+
 // Dinheiro sempre com centavos. Arredondar na exibição escondia diferença do
 // cliente: R$ 43,25 impresso como "R$ 43" vira discussão na hora da entrega.
 export function centsToCurrency(value: number) {
@@ -57,17 +59,24 @@ export function centsToInput(value: number) {
   return (value / 100).toFixed(2).replace(".", ",");
 }
 
+// Prazo digitado ("2026-09-14") -> meio-dia de Brasília daquele dia. Meio-dia
+// porque fica longe das duas viradas: mostrado em qualquer fuso do Brasil, o
+// dia não muda.
 export function dateInputToDate(value: string) {
-  if (!value) return null;
-  const date = new Date(`${value}T12:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
+  const dia = lerDiaIso(value);
+  if (!dia) return null;
+  return new Date(inicioDoDia(dia).getTime() + 12 * 3_600_000);
 }
 
+// Toda data é mostrada no horário de Brasília. Sem o fuso explícito, o servidor
+// (em UTC) escrevia o recebimento das 14h como "17:00", e o pedido feito às 22h
+// do dia 31 aparecia com a data do dia 1.
 export function formatShortDate(date: Date | null) {
   if (!date) return "Sem prazo";
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "short",
+    timeZone: FUSO_BRASILIA,
   }).format(date);
 }
 
@@ -77,6 +86,7 @@ export function formatLongDate(date: Date | null) {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: FUSO_BRASILIA,
   }).format(date);
 }
 
@@ -88,16 +98,15 @@ export function formatDateTime(date: Date | null) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: FUSO_BRASILIA,
   }).format(date);
 }
 
-// Converte uma data para o formato aceito por <input type="date"> (yyyy-mm-dd).
+// Converte uma data para o formato aceito por <input type="date"> (yyyy-mm-dd),
+// pelo calendário de Brasília.
 export function dateToInputValue(date: Date | null) {
   if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return diaIso(diaEmBrasilia(date));
 }
 
 // Valor de serviço aceita conta de multiplicação: "4x100" e "4*100" viram 400,00.
@@ -106,12 +115,15 @@ export function dateToInputValue(date: Date | null) {
 export function priceExpressionToCents(value: string) {
   const parts = value.split(/[x*]/i);
   if (parts.length === 2) {
-    const right = parts[1].replace(",", ".").trim();
-    const quantity = Number(right);
+    const right = parts[1].trim();
+    // O lado da quantidade segue a mesma escrita brasileira do valor: "1.000"
+    // é mil, "1.500,00" é mil e quinhentos, "2,5" é dois e meio. Antes o ponto
+    // virava decimal, e "4x1.000" saía R$ 4,00.
     // Quantidade zero é conta válida e dá zero — sem isso "4x0" viraria R$ 40,
     // porque o "x" seria removido e sobraria "40". Já o campo pela metade
     // ("4x", quem ainda está digitando) cai na leitura simples do valor.
-    if (right !== "" && Number.isFinite(quantity) && quantity >= 0) {
+    if (/^\d[\d.,\s]*$/.test(right)) {
+      const quantity = currencyToCents(right) / 100;
       return Math.round(moneyToCents(parts[0]) * quantity);
     }
   }

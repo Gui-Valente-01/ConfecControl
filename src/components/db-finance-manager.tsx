@@ -5,6 +5,7 @@ import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { ToastForm } from "@/components/toast-form";
+import { diasDeAtraso } from "@/lib/datas";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
 import { computeBalance, sumReceipts } from "@/lib/payments";
 import { whatsappUrl } from "@/lib/whatsapp";
@@ -30,25 +31,24 @@ type ReceiptRow = {
 type DbFinanceManagerProps = {
   orders: OrderRow[];
   receipts: ReceiptRow[];
+  /** Quantos recebimentos existem ao todo. A lista abaixo mostra só os últimos. */
+  receiptsCount: number;
   canDelete: boolean;
 };
 
-const DAY = 86400000;
-
-export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManagerProps) {
+export function DbFinanceManager({ orders, receipts, receiptsCount, canDelete }: DbFinanceManagerProps) {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  const daysLate = (order: OrderRow) => {
-    if (!order.deliveryDate) return 0;
-    const due = order.deliveryDate;
-    const diff = Math.floor((today.getTime() - new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime()) / DAY);
-    return diff > 0 ? diff : 0;
-  };
+  // Dias de calendário em Brasília: o servidor roda em UTC, e contar pelo dia
+  // dele fazia o saldo "vencer" às 21h do próprio dia do prazo.
+  const daysLate = (order: OrderRow) => diasDeAtraso(order.deliveryDate, now);
 
   const expected = orders.reduce((sum, order) => sum + order.totalAmountInCents, 0);
   const paid = orders.reduce((sum, order) => sum + sumReceipts(order.payments), 0);
-  const receivable = Math.max(0, expected - paid);
+  // Saldo pedido a pedido. "Previsto − recebido" no total deixava o que foi
+  // pago a mais num pedido abater a dívida de outro, e o cartão discordava da
+  // lista "A cobrar" logo abaixo.
+  const receivable = orders.reduce((sum, order) => sum + computeBalance(order.totalAmountInCents, order.payments), 0);
 
   // Mais atrasado primeiro: é a ordem em que se pega o telefone.
   const toCharge = orders
@@ -64,7 +64,7 @@ export function DbFinanceManager({ orders, receipts, canDelete }: DbFinanceManag
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Previsto", value: centsToCurrency(expected), note: `${orders.length} pedido(s)`, icon: CircleDollarSign, tone: "primary" as const },
-          { label: "Recebido", value: centsToCurrency(paid), note: `${receipts.length} recebimento(s)`, icon: CheckCircle2, tone: "primary" as const },
+          { label: "Recebido", value: centsToCurrency(paid), note: `${receiptsCount} recebimento(s)`, icon: CheckCircle2, tone: "primary" as const },
           { label: "A receber", value: centsToCurrency(receivable), note: "saldo dos pedidos", icon: CreditCard, tone: "warning" as const },
           {
             label: "Atrasado",

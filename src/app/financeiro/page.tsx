@@ -11,7 +11,7 @@ export default async function FinanceiroPage() {
 
   // A cobrança olha pedidos (o saldo sai do total menos os recebimentos), e o
   // histórico olha recebimentos. São perguntas diferentes, com dados diferentes.
-  const [orders, receipts] = await Promise.all([
+  const [orders, receipts, receiptsCount] = await Promise.all([
     prisma.order.findMany({
       where: { companyId, status: { not: "CANCELED" } },
       select: {
@@ -36,11 +36,14 @@ export default async function FinanceiroPage() {
         order: { select: { id: true, number: true, client: { select: { name: true } } } },
       },
     }),
+    // A lista acima para em 60; a legenda do "Recebido" precisa do total de
+    // verdade, senão nunca passava de 60.
+    prisma.payment.count({ where: { order: { companyId, status: { not: "CANCELED" } } } }),
   ]);
 
   return (
     <AppShell eyebrow="Caixa" title="Financeiro" user={user}>
-      <DbFinanceManager orders={orders} receipts={receipts} canDelete={user.role === "ADMIN"} />
+      <DbFinanceManager orders={orders} receipts={receipts} receiptsCount={receiptsCount} canDelete={user.role === "ADMIN"} />
     </AppShell>
   );
 }

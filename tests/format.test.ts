@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centsToCurrency, centsToInput, currencyToCents, dateInputToDate, dateToInputValue, moneyToCents, priceExpressionToCents } from "@/lib/format";
+import { centsToCurrency, centsToInput, currencyToCents, dateInputToDate, dateToInputValue, formatDateTime, formatLongDate, moneyToCents, priceExpressionToCents } from "@/lib/format";
 
 describe("currencyToCents", () => {
   it("converte valores no formato brasileiro", () => {
@@ -157,5 +157,32 @@ describe("ida e volta do valor", () => {
     let cents = 1050;
     for (let i = 0; i < 10; i++) cents = currencyToCents(centsToInput(cents));
     expect(cents).toBe(1050);
+  });
+});
+
+describe("datas mostradas no horario de Brasilia", () => {
+  it("recebimento das 14h aparece como 14:00, e nao 17:00", () => {
+    expect(formatDateTime(new Date("2026-09-14T17:00:00Z"))).toBe("14/09/2026, 14:00");
+  });
+
+  it("pedido das 22h do dia 31 mostra o dia 31", () => {
+    expect(formatLongDate(new Date("2026-09-01T01:00:00Z"))).toBe("31/08/2026");
+  });
+
+  it("prazo digitado vira meio-dia de Brasilia e volta como o mesmo dia", () => {
+    const d = dateInputToDate("2026-09-14")!;
+    expect(d.toISOString()).toBe("2026-09-14T15:00:00.000Z");
+    expect(dateToInputValue(d)).toBe("2026-09-14");
+    expect(formatLongDate(d)).toBe("14/09/2026");
+  });
+
+  it("prazo antigo, gravado ao meio-dia UTC, continua no dia certo", () => {
+    const antigo = new Date("2026-09-14T12:00:00Z");
+    expect(dateToInputValue(antigo)).toBe("2026-09-14");
+    expect(formatLongDate(antigo)).toBe("14/09/2026");
+  });
+
+  it("data que nao existe e recusada", () => {
+    expect(dateInputToDate("2026-02-31")).toBeNull();
   });
 });

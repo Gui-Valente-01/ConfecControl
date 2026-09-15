@@ -15,6 +15,12 @@ export type LinhaVendida = {
   receitaInCents: number;
   /** Custo já multiplicado pela quantidade. Zero = custo não cadastrado. */
   custoInCents: number;
+  /**
+   * Serviço cobrado no pedido (silk, bordado...). Serviço não tem custo
+   * cadastrado no sistema, então custo zero aqui é a regra, e não esquecimento:
+   * não marca a margem como incompleta.
+   */
+  servico?: boolean;
 };
 
 export type Rentabilidade = {
@@ -54,7 +60,7 @@ export function agruparRentabilidade(linhas: LinhaVendida[]): Rentabilidade[] {
     atual.receitaInCents += linha.receitaInCents;
     atual.custoInCents += linha.custoInCents;
     // Receita sem custo é o sinal: alguém vendeu sem saber quanto gastou.
-    if (linha.custoInCents === 0 && linha.receitaInCents > 0) atual.custoIncompleto = true;
+    if (!linha.servico && linha.custoInCents === 0 && linha.receitaInCents > 0) atual.custoIncompleto = true;
 
     mapa.set(linha.chave, atual);
   }

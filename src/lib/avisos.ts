@@ -143,5 +143,5 @@ export function tempoRelativo(quando: Date, agora: Date = new Date()): string {
   const dias = Math.floor(horas / 24);
   if (dias === 1) return "ontem";
   if (dias < 7) return `há ${dias} dias`;
-  return quando.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  return quando.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" });
 }

@@ -121,7 +121,7 @@ export function DbProductsManager({ products, services, canEdit }: DbProductsMan
                       { name: "category", label: "Categoria", defaultValue: product.category ?? "" },
                       { name: "fabric", label: "Tecido", defaultValue: product.fabric ?? "" },
                       { name: "price", label: "Valor padrão (R$)", defaultValue: centsToInput(product.standardPriceInCents) },
-                      { name: "cost", label: "Outros custos por peça (R$) - facção, mão de obra", defaultValue: centsToInput(product.costInCents) },
+                      { name: "cost", label: "Custo por peça (R$) - tudo somado: peça, facção, mão de obra", defaultValue: centsToInput(product.costInCents) },
                       { name: "time", label: "Prazo médio (dias)", defaultValue: product.averageProductionDays ? String(product.averageProductionDays) : "" },
                     ]}
                   />

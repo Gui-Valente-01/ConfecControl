@@ -1,4 +1,5 @@
 import { OrderPriority, OrderStatus, PaymentStatus } from "@prisma/client";
+import { prazoVencido } from "@/lib/datas";
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   RECEIVED: "Recebido",
@@ -57,10 +58,14 @@ export const bancadaNoteBadge: Record<string, string> = {
 };
 
 // Considera atrasado: tem prazo vencido e ainda não saiu da produção.
+//
+// Vencido = o DIA do prazo já terminou em Brasília. Comparar o instante gravado
+// com "agora" marcava atraso às 9h do próprio dia, porque o prazo fica gravado
+// ao meio-dia UTC — e o cliente via o pedido vermelho no portal antes da hora.
 export function isOrderLate(deliveryDate: Date | null, status: OrderStatus, reference = new Date()) {
   if (!deliveryDate) return false;
   if (status === "DELIVERED" || status === "CANCELED") return false;
-  return deliveryDate < reference;
+  return prazoVencido(deliveryDate, reference);
 }
 
 export function stageNameToOrderStatus(stageName: string): OrderStatus {

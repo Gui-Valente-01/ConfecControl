@@ -10,6 +10,7 @@
 // informar onde o pedido está.
 
 import type { OrderStatus } from "@prisma/client";
+import { prazoVencido } from "@/lib/datas";
 
 export type MarcoFluxo = {
   chave: "recebido" | "material" | "producao" | "pronto" | "entregue";
@@ -131,7 +132,8 @@ export function situacaoPagamento(
 
   if (saldo <= 0) return { rotulo: "Pago", tom: "bom" };
 
-  const venceu = prazo !== null && prazo < agora;
+  // Vence quando o DIA do prazo acaba em Brasília, não ao meio-dia UTC.
+  const venceu = prazoVencido(prazo, agora);
   if (venceu && pedido.status !== "CANCELED") {
     return { rotulo: "Atrasado", tom: "ruim" };
   }

@@ -13,7 +13,7 @@ import { deleteAttachmentAction, deleteOrderAction } from "@/app/pedidos/actions
 import { requireRouteUser } from "@/lib/auth";
 import { canManageOrders, canSeeFinance } from "@/lib/roles";
 import { centsToCurrency, formatDateTime, formatLongDate } from "@/lib/format";
-import { orderStatusLabels, paymentStatusLabels } from "@/lib/status";
+import { isOrderLate, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   const canManage = canManageOrders(user.role);
   const showFinance = canSeeFinance(user.role);
   const balanceInCents = Math.max(0, order.totalAmountInCents - order.paidAmountInCents);
-  const late = order.deliveryDate && order.deliveryDate < new Date() && !["READY", "DELIVERED"].includes(order.status);
+  // A mesma regra do filtro "Atrasados" e do painel: vence quando o dia do
+  // prazo termina em Brasília, e não ao meio-dia do próprio dia.
+  const late = isOrderLate(order.deliveryDate, order.status);
 
   // Link de WhatsApp com mensagem pronta de status (telefone do cliente).
   const whatsappLink = whatsappUrl(

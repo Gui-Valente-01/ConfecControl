@@ -1,6 +1,8 @@
 // Tipos da lixeira e o que cada exclusão levaria junto se fosse definitiva.
 // Sem banco e sem Next, para permitir teste.
 
+import { diasDeCalendario } from "@/lib/datas";
+
 export const TIPOS_LIXEIRA = ["cliente", "peca", "material", "terceirizada", "servico"] as const;
 
 export type TipoLixeira = (typeof TIPOS_LIXEIRA)[number];
@@ -51,10 +53,11 @@ export function textoApagarDeVez(tipo: TipoLixeira, nome: string): string {
   return cabecalho + consequencia;
 }
 
-/** Há quantos dias o item está na lixeira. */
+/**
+ * Há quantos dias o item está na lixeira, contando dias do calendário de
+ * Brasília: pelo relógio do servidor (UTC), o que foi apagado às 20h já
+ * aparecia como "excluído ontem" às 22h.
+ */
 export function diasNaLixeira(deletedAt: Date, agora: Date = new Date()): number {
-  const DIA = 86400000;
-  const inicio = new Date(deletedAt.getFullYear(), deletedAt.getMonth(), deletedAt.getDate());
-  const fim = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-  return Math.max(0, Math.floor((fim.getTime() - inicio.getTime()) / DIA));
+  return Math.max(0, diasDeCalendario(deletedAt, agora));
 }

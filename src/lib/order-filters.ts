@@ -9,6 +9,7 @@
 // códigos internos do banco.
 
 import type { OrderStatus, PaymentStatus } from "@prisma/client";
+import { diasDeCalendario } from "@/lib/datas";
 import { isOrderLate } from "@/lib/status";
 
 export const FILTROS_PEDIDO = ["atrasados", "hoje", "material", "producao", "prontos", "receber"] as const;
@@ -70,10 +71,9 @@ export type PedidoFiltravel = {
 /** Etapas que contam como "sendo feito agora". */
 const EM_PRODUCAO: OrderStatus[] = ["CUTTING", "SEWING", "EMBROIDERY_PRINT", "FINISHING"];
 
+// Mesmo dia no calendário de Brasília: no servidor (UTC), o dia "virava" às 21h.
 function mesmoDia(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-  );
+  return diasDeCalendario(a, b) === 0;
 }
 
 /**

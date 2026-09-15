@@ -4,21 +4,90 @@
 // R$ 18 mil", vira informação: subiu, e quanto. Sem isso o dono olha o número,
 // não sabe se é bom ou ruim, e a tela inteira vira enfeite.
 //
-// A comparação é sempre com o MESMO tamanho de período imediatamente anterior:
-// comparar 30 dias com 7 daria uma queda que não existe.
+// A comparação é sempre com um período equivalente: comparar 30 dias com 7
+// daria uma queda que não existe. Ver periodoAnterior.
+
+import { diaEmBrasilia, inicioDoDia } from "@/lib/datas";
 
 export type Periodo = { de: Date; ate: Date };
 
+const DIA_MS = 86_400_000;
+
+function ultimoDiaDoMes(ano: number, mes: number): number {
+  return diaEmBrasilia(inicioDoDia({ ano, mes: mes + 1, dia: 0 })).dia;
+}
+
+/** Quanto do dia final o período cobre: fim do dia, ou "até agora". */
+function horaDoFim(periodo: Periodo): number {
+  return periodo.ate.getTime() - inicioDoDia(diaEmBrasilia(periodo.ate)).getTime();
+}
+
 /**
- * O período anterior, do mesmo tamanho, terminando onde o atual começa.
+ * O período com que o atual deve ser comparado. Calendário de Brasília.
  *
- * Exemplo: 1 a 31 de agosto devolve 1 a 31 de julho (mesmos 31 dias).
+ * - Mês inteiro (ou vários): os meses inteiros anteriores. Setembro (30 dias)
+ *   compara com agosto inteiro (31), e não com "2 a 31 de agosto".
+ * - Mês até hoje (1 a 14 de setembro): os mesmos dias do mês anterior
+ *   (1 a 14 de agosto). Comparar com os 14 dias imediatamente antes daria a
+ *   segunda quinzena de agosto, que não é o que o dono quer saber.
+ * - Semana a partir da segunda: os mesmos dias da semana anterior. Segunda a
+ *   quarta compara com segunda a quarta, e não com quinta a domingo.
+ * - Qualquer outro intervalo: o mesmo tamanho, imediatamente antes.
+ *
+ * `tipo` diz de qual botão o período veio. Precisa, porque as datas sozinhas
+ * são ambíguas: numa segunda-feira dia 1, "Esta semana" e "Este mês" são o
+ * mesmo intervalo, mas uma compara com a semana passada e o outro com o mês
+ * passado.
  */
-export function periodoAnterior(periodo: Periodo): Periodo {
+export function periodoAnterior(periodo: Periodo, tipo: "semana" | "mes" | "mes-passado" | null = null): Periodo {
+  const de = diaEmBrasilia(periodo.de);
+  const ate = diaEmBrasilia(periodo.ate);
+  const comecaNaMeiaNoite = periodo.de.getTime() === inicioDoDia(de).getTime();
+
+  if (tipo === "semana") {
+    return {
+      de: new Date(periodo.de.getTime() - 7 * DIA_MS),
+      ate: new Date(periodo.ate.getTime() - 7 * DIA_MS),
+    };
+  }
+
+  if (comecaNaMeiaNoite && de.dia === 1) {
+    const meses = (ate.ano - de.ano) * 12 + (ate.mes - de.mes);
+    const inicioAnterior = diaEmBrasilia(inicioDoDia({ ano: de.ano, mes: de.mes - Math.max(1, meses + 1), dia: 1 }));
+
+    // Termina no último dia de um mês: compara meses inteiros.
+    if (ate.dia === ultimoDiaDoMes(ate.ano, ate.mes)) {
+      const ultimoAnterior = diaEmBrasilia(inicioDoDia({ ano: de.ano, mes: de.mes, dia: 0 }));
+      return {
+        de: inicioDoDia(inicioAnterior),
+        ate: new Date(inicioDoDia(ultimoAnterior).getTime() + horaDoFim(periodo)),
+      };
+    }
+
+    // Mês até hoje: mesmos dias do mês anterior, cortando no fim dele (30 de
+    // março compara com 1 a 28 de fevereiro).
+    if (meses === 0) {
+      const diaFinal = Math.min(ate.dia, ultimoDiaDoMes(inicioAnterior.ano, inicioAnterior.mes));
+      return {
+        de: inicioDoDia(inicioAnterior),
+        ate: new Date(inicioDoDia({ ...inicioAnterior, dia: diaFinal }).getTime() + horaDoFim(periodo)),
+      };
+    }
+  }
+
+  // Semana a partir da segunda-feira, com até 7 dias: a mesma janela, uma
+  // semana antes.
+  const eSegunda = new Date(inicioDoDia(de).getTime() + 12 * 3_600_000).getUTCDay() === 1;
+  if (comecaNaMeiaNoite && eSegunda && periodo.ate.getTime() - periodo.de.getTime() < 7 * DIA_MS) {
+    return {
+      de: new Date(periodo.de.getTime() - 7 * DIA_MS),
+      ate: new Date(periodo.ate.getTime() - 7 * DIA_MS),
+    };
+  }
+
   const duracao = periodo.ate.getTime() - periodo.de.getTime();
-  const ate = new Date(periodo.de.getTime() - 1);
-  const de = new Date(ate.getTime() - duracao);
-  return { de, ate };
+  const fim = new Date(periodo.de.getTime() - 1);
+  return { de: new Date(fim.getTime() - duracao), ate: fim };
 }
 
 export type Variacao = {

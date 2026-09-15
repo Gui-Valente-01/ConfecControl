@@ -1,36 +1,6 @@
-// Regras puras de produção e consumo de material, sem banco e sem Next, para
-// permitir teste unitário. São as contas que mexem no estoque e movem o pedido
-// de etapa — onde um erro custa dinheiro do cliente.
-
-export type ConsumptionItem = {
-  productId: string | null;
-  quantity: number;
-};
-
-/**
- * Quanto sai do estoque de cada PEÇA quando um pedido é lançado.
- *
- * O estoque passou a ser da peça pronta, não do material: a confecção compra
- * a peça e presta o serviço em cima dela. Controlar matéria-prima exigia
- * manter preço e consumo de cada material em dia, e o que ninguém mantém
- * acaba fazendo o custo sair por baixo.
- *
- * Duas linhas do mesmo pedido podem apontar para a mesma peça (tamanhos
- * diferentes, por exemplo), então as quantidades se somam.
- *
- * Item sem peça do catálogo não baixa nada: não há o que descontar.
- */
-export function computeProductConsumption(items: ConsumptionItem[]): Map<string, number> {
-  const consumo = new Map<string, number>();
-
-  for (const item of items) {
-    if (!item.productId || item.quantity <= 0) continue;
-    consumo.set(item.productId, (consumo.get(item.productId) ?? 0) + item.quantity);
-  }
-
-  return consumo;
-}
-
+// Regras puras de produção, sem banco e sem Next, para permitir teste
+// unitário. São as contas que movem o pedido de etapa — onde um erro custa
+// dinheiro do cliente. O estoque que acompanha a etapa mora em prateleira.ts.
 
 export type Stage = {
   id: string;

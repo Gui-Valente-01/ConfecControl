@@ -8,29 +8,85 @@ import {
 
 const reais = (centavos: number) => `R$ ${(centavos / 100).toFixed(2).replace(".", ",")}`;
 
+// Instantes escritos no horário de Brasília, para o teste não depender do fuso
+// da máquina (a Vercel roda em UTC; o computador do dono, em Brasília).
+const brt = (texto: string) => new Date(`${texto}-03:00`);
+const iso = (d: Date) => d.toISOString();
+
 describe("periodoAnterior", () => {
-  it("agosto inteiro devolve julho inteiro, do mesmo tamanho", () => {
-    const atual = { de: new Date(2026, 7, 1, 0, 0, 0), ate: new Date(2026, 7, 31, 23, 59, 59) };
-    const anterior = periodoAnterior(atual);
-    expect(anterior.ate.getTime()).toBe(atual.de.getTime() - 1);
-    // Mesma duracao, com folga de 1ms pela borda.
-    const dur = (p: { de: Date; ate: Date }) => p.ate.getTime() - p.de.getTime();
-    expect(Math.abs(dur(anterior) - dur(atual))).toBeLessThanOrEqual(1);
+  it("agosto inteiro compara com julho inteiro", () => {
+    const anterior = periodoAnterior({ de: brt("2026-08-01T00:00:00"), ate: brt("2026-08-31T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-07-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-07-31T23:59:59.999")));
   });
 
-  it("uma semana compara com a semana anterior, e nao com um mes", () => {
-    const atual = { de: new Date(2026, 7, 10), ate: new Date(2026, 7, 16, 23, 59, 59) };
-    const anterior = periodoAnterior(atual);
-    const dias = (anterior.ate.getTime() - anterior.de.getTime()) / 86400000;
-    expect(Math.round(dias)).toBe(7);
-    expect(anterior.ate < atual.de).toBe(true);
+  it("setembro inteiro (30 dias) compara com agosto inteiro (31), e nao com 2 a 31 de agosto", () => {
+    const anterior = periodoAnterior({ de: brt("2026-09-01T00:00:00"), ate: brt("2026-09-30T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-08-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-08-31T23:59:59.999")));
+  });
+
+  it("mes ate hoje (1 a 14/09) compara com os mesmos dias do mes anterior (1 a 14/08)", () => {
+    const anterior = periodoAnterior({ de: brt("2026-09-01T00:00:00"), ate: brt("2026-09-14T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-08-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-08-14T23:59:59.999")));
+  });
+
+  it("mes ate hoje no dia 30 de marco corta no fim de fevereiro", () => {
+    const anterior = periodoAnterior({ de: brt("2026-03-01T00:00:00"), ate: brt("2026-03-30T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-02-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-02-28T23:59:59.999")));
+  });
+
+  it("janeiro compara com dezembro do ano anterior", () => {
+    const anterior = periodoAnterior({ de: brt("2027-01-01T00:00:00"), ate: brt("2027-01-10T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-12-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-12-10T23:59:59.999")));
+  });
+
+  it("trimestre inteiro compara com o trimestre anterior", () => {
+    const anterior = periodoAnterior({ de: brt("2026-07-01T00:00:00"), ate: brt("2026-09-30T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-04-01T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-06-30T23:59:59.999")));
+  });
+
+  it("semana inteira (segunda a domingo) compara com a semana anterior", () => {
+    const anterior = periodoAnterior({ de: brt("2026-09-07T00:00:00"), ate: brt("2026-09-13T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-08-31T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-09-06T23:59:59.999")));
+  });
+
+  it("semana ate quarta compara com segunda a quarta da semana passada, e nao com quinta a domingo", () => {
+    const anterior = periodoAnterior({ de: brt("2026-09-14T00:00:00"), ate: brt("2026-09-16T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-09-07T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-09-09T23:59:59.999")));
   });
 
   it("um dia so compara com o dia anterior", () => {
-    const atual = { de: new Date(2026, 7, 5, 0, 0, 0), ate: new Date(2026, 7, 5, 23, 59, 59) };
+    const anterior = periodoAnterior({ de: brt("2026-08-05T00:00:00"), ate: brt("2026-08-05T23:59:59.999") });
+    expect(iso(anterior.de)).toBe(iso(brt("2026-08-04T00:00:00")));
+    expect(iso(anterior.ate)).toBe(iso(brt("2026-08-04T23:59:59.999")));
+  });
+
+  it("intervalo qualquer compara com o mesmo tamanho logo antes, sem sobrepor", () => {
+    const atual = { de: brt("2026-08-10T00:00:00"), ate: brt("2026-08-20T23:59:59.999") };
     const anterior = periodoAnterior(atual);
-    expect(anterior.de.getDate()).toBe(4);
-    expect(anterior.ate.getDate()).toBe(4);
+    expect(iso(anterior.ate)).toBe(iso(new Date(atual.de.getTime() - 1)));
+    expect(anterior.ate.getTime() - anterior.de.getTime()).toBe(atual.ate.getTime() - atual.de.getTime());
+  });
+
+  it("o periodo anterior nunca encosta no atual", () => {
+    const casos = [
+      { de: brt("2026-09-01T00:00:00"), ate: brt("2026-09-14T23:59:59.999") },
+      { de: brt("2026-09-14T00:00:00"), ate: brt("2026-09-16T23:59:59.999") },
+      { de: brt("2026-02-01T00:00:00"), ate: brt("2026-02-28T23:59:59.999") },
+      { de: brt("2026-05-13T00:00:00"), ate: brt("2026-06-02T23:59:59.999") },
+    ];
+    for (const atual of casos) {
+      const anterior = periodoAnterior(atual);
+      expect(anterior.ate.getTime()).toBeLessThan(atual.de.getTime());
+      expect(anterior.de.getTime()).toBeLessThan(anterior.ate.getTime());
+    }
   });
 });
 

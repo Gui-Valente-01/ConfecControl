@@ -427,6 +427,10 @@ export function OrderForm({
         </p>
       </nav>
       {orderId ? <input type="hidden" name="id" value={orderId} /> : null}
+      {/* O "pago" que estava na tela ao abrir a edição. Se alguém lançar um
+          "Recebi" com esta tela aberta, o servidor percebe e não encolhe a
+          entrada para caber no valor velho. */}
+      {orderId ? <input type="hidden" name="paidOriginal" value={defaults?.paidReais ?? ""} /> : null}
       <input type="hidden" name="items" value={itemsJson} />
       <input type="hidden" name="services" value={servicesJson} />
       <datalist id="servicos-sugeridos">

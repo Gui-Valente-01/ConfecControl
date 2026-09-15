@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { companyIdWithCapability } from "@/lib/auth";
-import { moneyToCents } from "@/lib/format";
+import { centsToCurrency, moneyToCents } from "@/lib/format";
 import type { FormState } from "@/lib/form-state";
 import { computeBalance, resolveReceiptAmount, resolveStatusFromReceipts, sumReceipts } from "@/lib/payments";
 import { Prisma } from "@prisma/client";
@@ -29,6 +29,12 @@ export async function registerPaymentAction(_prev: FormState, formData: FormData
 
   const informado = String(formData.get("amount") ?? "").trim();
   const informadoEmCentavos = informado ? moneyToCents(informado) : null;
+  // Campo em branco = recebeu o saldo todo. Campo PREENCHIDO com 0, "-50" ou
+  // "abc" é erro de digitação, e não "quitar": antes virava o saldo inteiro e
+  // o pedido aparecia pago sem o dinheiro ter entrado.
+  if (informadoEmCentavos !== null && informadoEmCentavos <= 0) {
+    return { error: "Informe um valor maior que zero, ou deixe o campo em branco para receber o saldo todo." };
+  }
   // Chave gerada pelo formulário, uma por tentativa. É o que distingue "a
   // pessoa quis lançar dois recebimentos iguais" de "o mesmo clique chegou
   // duas vezes". Sem ela, os dois casos são indistinguíveis no servidor.
@@ -112,7 +118,7 @@ export async function registerPaymentAction(_prev: FormState, formData: FormData
 
     revalidateFinance(orderId);
     return {
-      success: `Recebimento de ${(resultado.valor / 100).toFixed(2)} registrado no pedido #${resultado.numero}.`,
+      success: `Recebimento de ${centsToCurrency(resultado.valor)} registrado no pedido #${resultado.numero}.`,
     };
   } catch (erro) {
     // Chave repetida = o mesmo clique chegou de novo. O primeiro já gravou,
@@ -143,7 +149,7 @@ export async function deletePaymentAction(_prev: FormState, formData: FormData):
 
   const payment = await prisma.payment.findFirst({
     where: { id: paymentId, order: { companyId } },
-    select: { id: true, orderId: true, order: { select: { totalAmountInCents: true, number: true } } },
+    select: { id: true, orderId: true, order: { select: { number: true } } },
   });
   if (!payment) return { error: "Recebimento não encontrado." };
 
@@ -162,12 +168,18 @@ export async function deletePaymentAction(_prev: FormState, formData: FormData):
           where: { orderId: payment.orderId },
           select: { amountInCents: true },
         });
+        // O total também é lido aqui dentro: se o pedido foi editado enquanto
+        // a tela estava aberta, a situação sai do total novo, não do antigo.
+        const pedidoAgora = await tx.order.findUniqueOrThrow({
+          where: { id: payment.orderId },
+          select: { totalAmountInCents: true },
+        });
 
         await tx.order.update({
           where: { id: payment.orderId },
           data: {
             paidAmountInCents: sumReceipts(restantes),
-            paymentStatus: resolveStatusFromReceipts(payment.order.totalAmountInCents, restantes),
+            paymentStatus: resolveStatusFromReceipts(pedidoAgora.totalAmountInCents, restantes),
           },
         });
       },

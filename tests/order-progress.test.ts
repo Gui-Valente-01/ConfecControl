@@ -103,3 +103,16 @@ describe("situacaoPagamento", () => {
     expect(s.rotulo).toBe("Pago");
   });
 });
+
+describe("situacaoPagamento no dia do prazo", () => {
+  const brt = (t: string) => new Date(`${t}-03:00`);
+  const prazo = new Date("2026-09-14T12:00:00Z");
+
+  it("saldo aberto no proprio dia do prazo nao e 'Atrasado'", () => {
+    expect(situacaoPagamento(pedido({ paidAmountInCents: 0 }), prazo, brt("2026-09-14T18:00:00")).rotulo).toBe("Não pago");
+  });
+
+  it("no dia seguinte e 'Atrasado'", () => {
+    expect(situacaoPagamento(pedido({ paidAmountInCents: 0 }), prazo, brt("2026-09-15T09:00:00")).rotulo).toBe("Atrasado");
+  });
+});

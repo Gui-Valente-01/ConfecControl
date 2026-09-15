@@ -1,48 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  computeProductConsumption,
   isStageOutdated,
   isTaskStageOutdated,
   pickNextStage,
   type Stage,
 } from "@/lib/production";
 
-describe("computeProductConsumption", () => {
-  it("baixa a quantidade vendida de cada peca", () => {
-    const c = computeProductConsumption([
-      { productId: "polo", quantity: 10 },
-      { productId: "boné", quantity: 4 },
-    ]);
-    expect(c.get("polo")).toBe(10);
-    expect(c.get("boné")).toBe(4);
-  });
-
-  it("mesma peca em duas linhas soma, nao substitui", () => {
-    // Acontece sempre que o pedido separa tamanhos em linhas diferentes.
-    const c = computeProductConsumption([
-      { productId: "polo", quantity: 10 },
-      { productId: "polo", quantity: 6 },
-    ]);
-    expect(c.get("polo")).toBe(16);
-  });
-
-  it("item avulso, sem peca do catalogo, nao baixa nada", () => {
-    const c = computeProductConsumption([{ productId: null, quantity: 50 }]);
-    expect(c.size).toBe(0);
-  });
-
-  it("quantidade zero ou negativa e ignorada", () => {
-    const c = computeProductConsumption([
-      { productId: "polo", quantity: 0 },
-      { productId: "boné", quantity: -3 },
-    ]);
-    expect(c.size).toBe(0);
-  });
-
-  it("pedido vazio devolve mapa vazio", () => {
-    expect(computeProductConsumption([]).size).toBe(0);
-  });
-});
+// A soma de peças por pedido saiu daqui e foi para prateleira.ts, junto com a
+// regra do estoque de loja. Os testes dela estão em prateleira.test.ts.
 
 // Etapas fora de ordem de proposito: a funcao nao pode depender da ordem do array.
 const stages: Stage[] = [

@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { TarefasDoDia, type ContagensDoDia } from "@/components/tarefas-do-dia";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
 import { filtrarPedidos } from "@/lib/order-filters";
-import { orderStatusLabels } from "@/lib/status";
+import { isOrderLate, orderStatusLabels } from "@/lib/status";
 import type { OrderStatus, PaymentStatus } from "@prisma/client";
 
 type DashboardStage = {
@@ -200,7 +200,7 @@ export function DbDashboard({ orders, stages, products, productsWithoutCost, pla
                       <td className="border-b border-divider py-4 font-mono font-semibold text-body">#{order.number}</td>
                       <td className="border-b border-divider py-4 font-medium">{order.client.name}</td>
                       <td className="border-b border-divider py-4 text-muted">{firstItem?.description || "Sem item"}</td>
-                      <td className="border-b border-divider py-4"><StatusBadge tone={order.deliveryDate && order.deliveryDate < now ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge></td>
+                      <td className="border-b border-divider py-4"><StatusBadge tone={isOrderLate(order.deliveryDate, order.status, now) ? "warn" : "good"}>{formatShortDate(order.deliveryDate)}</StatusBadge></td>
                       <td className="border-b border-divider py-4 text-muted">{orderStatusLabels[order.status]}</td>
                       <td className="border-b border-divider py-4 text-right font-semibold">{centsToCurrency(order.totalAmountInCents)}</td>
                     </tr>

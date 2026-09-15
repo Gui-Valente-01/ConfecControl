@@ -261,14 +261,22 @@ export async function recriarEmpresaTeste({ prisma, hashPassword, comFotos }: De
             totalPriceInCents: i.unitPriceInCents * i.quantity,
           })),
         },
-        payments: {
-          create: {
-            amountInCents: total,
-            status: o.paymentStatus,
-            method: "Pix",
-            paidAt: o.paymentStatus === "PAID" ? emDias(-1) : null,
-          },
-        },
+        // Cada linha de pagamento é dinheiro que ENTROU (ver src/lib/payments.ts).
+        // Antes gravava uma linha com o TOTAL do pedido mesmo quando só metade
+        // tinha sido paga — e o Financeiro da demo mostrava tudo quitado
+        // enquanto a tela do pedido dizia "Parcial".
+        payments:
+          pago > 0
+            ? {
+                create: {
+                  amountInCents: pago,
+                  status: "PAID",
+                  method: "Pix",
+                  note: pago >= total ? "Pagamento do pedido" : "Entrada do pedido",
+                  paidAt: emDias(-(o.idade ?? 3)),
+                },
+              }
+            : undefined,
         attachments:
           comFotos && o.foto
             ? { create: { name: "Arte do pedido", url: `https://picsum.photos/seed/${o.foto}/800/600`, type: "image/jpeg" } }
@@ -298,6 +306,30 @@ export async function recriarEmpresaTeste({ prisma, hashPassword, comFotos }: De
     p9: await criarPedido({ number: 1009, cliente: "Igreja Batista Central", etapa: "Costura", priority: "URGENT", deliveryDate: emDias(-1), assignee: "Camila Torres", paymentStatus: "PARTIAL", paidRatio: 0.3, idade: 7,
       items: [{ productId: pecas["Camiseta Gola Careca"].id, description: "Camiseta retiro (ATRASADA)", size: "Vários", color: "Verde", quantity: 25, unitPriceInCents: reais(30) }] }),
   };
+
+  // ---- Prateleira: pedido pronto põe as peças no estoque ----
+  //
+  // Mesma regra do sistema (src/lib/prateleira.ts): pronto entra, entregue
+  // sai. Sem isto a demo mostraria o #1005 em "Prontos esperando retirada"
+  // com a prateleira de aventais vazia.
+  const pronto = pedidos.p5;
+  const itensProntos = await prisma.order.findUniqueOrThrow({
+    where: { id: pronto.id },
+    select: { number: true, items: { select: { productId: true, quantity: true } } },
+  });
+  for (const item of itensProntos.items) {
+    if (!item.productId || item.quantity <= 0) continue;
+    await prisma.product.update({ where: { id: item.productId }, data: { currentQuantity: { increment: item.quantity } } });
+    await prisma.stockMovement.create({
+      data: {
+        productId: item.productId,
+        orderId: pronto.id,
+        type: "IN",
+        quantity: item.quantity,
+        note: `Pedido #${itensProntos.number} ficou pronto — entrou na prateleira`,
+      },
+    });
+  }
 
   // ---- Mesas da bancada ----
   const mesas: Record<string, { id: string }> = {};

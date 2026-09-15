@@ -6,18 +6,19 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// Estoque é da PEÇA PRONTA, não do material.
+// Estoque de LOJA: o que já está feito.
 //
-// A confecção compra a peça e presta o serviço em cima dela. Controlar
-// matéria-prima exigia manter preço e consumo de cada material em dia — o que
-// ninguém mantinha, e o custo saía por baixo no relatório.
+// Criar o pedido não mexe aqui. Quando o pedido chega em "Pronto", as peças
+// dele entram na prateleira; quando vai para "Entregue", saem. Entrada, saída
+// e acerto à mão continuam valendo para o que foi feito ou comprado fora de
+// pedido. Regra em src/lib/prateleira.ts.
 //
 // Os materiais continuam no banco; só não aparecem mais aqui.
 
 export default async function EstoquePage() {
   const user = await requireRouteUser("/estoque");
 
-  const [pecas, movimentos] = await Promise.all([
+  const [pecas, movimentos, prontos] = await Promise.all([
     prisma.product.findMany({
       where: { companyId: user.companyId },
       orderBy: { name: "asc" },
@@ -43,6 +44,18 @@ export default async function EstoquePage() {
         order: { select: { number: true } },
       },
     }),
+    // A prateleira por pedido: tudo que ficou pronto e o cliente ainda não levou.
+    prisma.order.findMany({
+      where: { companyId: user.companyId, status: "READY" },
+      orderBy: [{ deliveryDate: "asc" }, { number: "asc" }],
+      select: {
+        id: true,
+        number: true,
+        deliveryDate: true,
+        client: { select: { name: true } },
+        items: { select: { id: true, description: true, size: true, color: true, quantity: true } },
+      },
+    }),
   ]);
 
   const movimentosMapeados = movimentos.map((m) => ({
@@ -59,7 +72,7 @@ export default async function EstoquePage() {
 
   return (
     <AppShell eyebrow="Peças prontas" title="Estoque" user={user}>
-      <DbStockManager pecas={pecas} movimentos={movimentosMapeados} canManage={canManage} />
+      <DbStockManager pecas={pecas} movimentos={movimentosMapeados} prontos={prontos} canManage={canManage} />
     </AppShell>
   );
 }

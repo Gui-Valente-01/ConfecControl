@@ -8,7 +8,7 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { centsToCurrency, formatShortDate } from "@/lib/format";
 import type { FiltroPedido } from "@/lib/order-filters";
-import { orderPriorityBadge, orderPriorityLabels, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
+import { isOrderLate, orderPriorityBadge, orderPriorityLabels, orderStatusLabels, paymentStatusLabels } from "@/lib/status";
 import type { OrderPriority, OrderStatus, PaymentStatus } from "@prisma/client";
 
 type ClientOption = { id: string; name: string };
@@ -156,7 +156,8 @@ export function DbOrdersManager({
                 {orders.map((order) => {
                   const firstItem = order.items[0];
                   const extraItems = order.items.length - 1;
-                  const late = order.deliveryDate && order.deliveryDate < now && !["READY", "DELIVERED"].includes(order.status);
+                  // Regra única de atraso (fim do dia do prazo, em Brasília).
+                  const late = isOrderLate(order.deliveryDate, order.status, now);
                   return (
                     <tr key={order.id} className="transition hover:bg-canvas">
                       <td className="border-b border-divider py-4 font-mono font-semibold text-body">

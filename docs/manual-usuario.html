@@ -192,8 +192,8 @@
 
         <h3>O que tem nela</h3>
         <ul class="dots">
-          <li><b>Faixa vermelha no topo:</b> pedidos atrasados, material acabando e pagamentos em aberto. Cada aviso é um atalho — clique e vá direto ao problema.</li>
-          <li><b>Quatro números:</b> pedidos em aberto, atrasados, faturamento previsto e materiais em falta.</li>
+          <li><b>Faixa de avisos no topo:</b> pedidos atrasados, entregas de hoje, pedidos prontos, pagamentos em aberto, peças acabando e peças sem custo. Cada aviso é um atalho — clique e vá direto ao problema.</li>
+          <li><b>Números do resumo:</b> pedidos em aberto e faturamento previsto (este só aparece para quem vê valores).</li>
           <li><b>Quadro de produção:</b> um resumo de onde está cada pedido.</li>
           <li><b>Últimos pedidos:</b> a lista com prazo, etapa e valor.</li>
         </ul>
@@ -251,27 +251,22 @@
           </li>
           <li>Preencha nome, categoria e tecido.</li>
           <li><b>Valor padrão:</b> quanto você cobra por peça.</li>
-          <li><b>Outros custos por peça:</b> o que não é material nem serviço cadastrado — por exemplo, a facção que costura para você.</li>
+          <li><b>Custo por peça:</b> é <b>o custo da peça inteira</b>, que você mesmo digita — tecido, aviamentos, facção, mão de obra, tudo somado num número só. O sistema não calcula material sozinho.</li>
           <li>Clique em <span class="ui">Salvar peça</span>.</li>
         </ol>
+        <div class="tip warn"><b>Coloque o custo completo, não só a facção.</b> O relatório de lucro usa exatamente este número. Se você digitar só a costura e esquecer o tecido, o lucro vai aparecer maior do que é.</div>
 
-        <h3>Ficha técnica: o que a peça gasta de material</h3>
-        <ol class="pass">
-          <li>No cartão da peça, escolha um <b>material</b> e quanto ele gasta <b>por unidade</b> (ex.: 0,3 kg de malha por camiseta).</li>
-          <li>Clique em <span class="ui">Vincular</span> e repita para cada material.</li>
-        </ol>
-        <div class="tip warn"><b>Isso é o que faz o estoque baixar sozinho.</b> Sem a ficha preenchida, você vende 100 camisetas e o estoque de malha continua igual. Vale o trabalho de preencher uma vez.</div>
-
-        <h3>O custo aparece sozinho</h3>
-        <p class="para">Com a ficha técnica preenchida, o sistema mostra a conta:</p>
-        <div class="calc">Materiais                        R$ 11,50
-Outros custos                    R$  6,00
-─────────────────────────────────────────
+        <h3>O cartão da peça mostra a conta</h3>
+        <p class="para">Com o custo preenchido, o cartão mostra quanto sobra em cada peça:</p>
+        <div class="calc">Valor padrão                     R$ 49,90
 Custo por peça                   R$ 17,50
+─────────────────────────────────────────
 Lucro por peça          R$ 32,40   (65%)</div>
         <p class="para" style="margin-top:.8rem">Repare que <b>serviço não entra aqui</b>: ele é cobrado dentro de cada
         pedido, porque o mesmo silk raramente sai pelo mesmo preço duas vezes.</p>
-        <div class="tip"><b>Se aparecer aviso amarelo</b> dizendo que falta preço em algum material, vá no <a href="#estoque">Estoque</a> e preencha. Enquanto faltar, o custo está incompleto e o lucro parece maior do que é.</div>
+        <p class="para">O cartão também mostra quantas unidades daquela peça estão <b>na prateleira</b> (veja <a href="#estoque">Estoque</a>).</p>
+        <div class="tip"><b>Se aparecer aviso amarelo "Sem custo digitado"</b>, clique em <span class="ui">Editar</span> e preencha o custo. Enquanto estiver zerado, cada venda dessa peça entra no relatório como lucro cheio.</div>
+        <div class="tip"><b>Mudou o custo? O relatório muda junto.</b> O lucro dos relatórios usa o custo que está cadastrado <b>agora</b>, inclusive para pedidos antigos.</div>
       </section>
 
       <!-- SERVICOS -->
@@ -293,25 +288,39 @@ Lucro por peça          R$ 32,40   (65%)</div>
       <section class="pg" id="estoque">
         <p class="kick">Cadastros <span class="where">Estoque</span> <span class="plan">módulo</span></p>
         <h2>Estoque</h2>
-        <p class="para">Controle de tecido, linha, tinta e aviamentos.</p>
+        <p class="para">Estoque de <b>peças prontas</b>, como numa loja: responde "o que eu tenho feito na prateleira agora?".
+        Tecido, linha e aviamentos <b>não</b> são controlados aqui.</p>
 
-        <h3>Cadastrar um material</h3>
+        <h3>Como as peças entram e saem sozinhas</h3>
         <ol class="pass">
-          <li>Preencha nome, categoria e <b>unidade</b> (kg, metro, unidade, cone...).</li>
-          <li><b>Quantidade atual:</b> quanto você tem hoje.</li>
-          <li><b>Estoque mínimo:</b> quando chegar nesse número, o sistema te avisa.</li>
-          <li><b>Preço por unidade:</b> quanto custa 1 kg, 1 metro, 1 unidade.</li>
-          <li>Clique em <span class="ui">Salvar material</span>.</li>
+          <li><b>Lançar o pedido não mexe no estoque.</b> Enquanto ele está sendo produzido, nada muda.</li>
+          <li>Quando o pedido chega em <b>Pronto</b>, as peças dele <b>entram</b> na prateleira.</li>
+          <li>Quando ele sai de Pronto — <b>Entregue</b>, por exemplo — as peças <b>saem</b>.</li>
+        </ol>
+        <div class="tip"><b>Só conta peça do catálogo.</b> Entram na prateleira os itens do pedido ligados a uma peça cadastrada como <b>Peça própria</b> em <a href="#produtos">Produtos</a>. Serviço na peça do cliente e item digitado à mão, sem peça do catálogo, não entram.</div>
+
+        <h3>Prontos esperando retirada</h3>
+        <p class="para">Lista os pedidos que estão em Pronto: feitos, esperando o cliente buscar. Cada um aparece com as peças e o prazo, até ser entregue.</p>
+
+        <h3>Lançar à mão</h3>
+        <ol class="pass">
+          <li>Na tabela <b>Peças prontas</b>, na linha da peça, escolha:
+            <ul class="dots" style="margin-top:.35rem">
+              <li><b>Chegou</b> — soma ao que você tem (ex.: peças feitas para pronta-entrega).</li>
+              <li><b>Saiu</b> — tira do que você tem, fora de pedido (perda, amostra, brinde). Nunca fica abaixo de zero.</li>
+              <li><b>Contei e tenho</b> — você contou a prateleira; o número digitado passa a ser o que você tem.</li>
+            </ul>
+          </li>
+          <li>Digite a quantidade e clique em <span class="ui">Lançar</span>.</li>
         </ol>
 
-        <h3>Lançar entrada e saída</h3>
+        <h3>Aviso de peça acabando</h3>
         <ol class="pass">
-          <li>No cartão do material, escolha <b>Entrada</b> (compra), <b>Saída</b> ou <b>Ajuste</b>.</li>
-          <li>Digite a quantidade e, se quiser, uma observação.</li>
-          <li>Clique em <span class="ui">Lançar</span>.</li>
+          <li>Na coluna <b>Avisar quando chegar em</b>, digite o mínimo daquela peça e clique em <span class="ui">Salvar</span>.</li>
+          <li>Quando a quantidade chegar nesse número ou abaixo, a peça aparece como <b>acabando</b> aqui e no <a href="#painel">Painel</a>.</li>
         </ol>
-        <div class="tip"><b>Você quase não precisa lançar saída.</b> Se a ficha técnica da peça estiver preenchida, cada pedido já desconta o material sozinho. Na prática você só lança as compras.</div>
-        <div class="tip warn"><b>O preço é o que dá sentido ao resto.</b> Sem ele o sistema sabe quanto você tem, mas não quanto vale — e aí não consegue calcular seu lucro de verdade.</div>
+        <div class="tip"><b>Mínimo zero = sem aviso.</b> Peça que você só faz por encomenda pode ficar com mínimo 0 e nunca vai incomodar.</div>
+        <p class="para">No alto da tela: peças na prateleira, pedidos esperando retirada, peças acabando e <b>valor parado</b> (quantidade × custo cadastrado da peça). O <b>histórico</b> embaixo mostra as últimas movimentações, com o número do pedido quando veio de um.</p>
       </section>
 
       <!-- PEDIDOS -->
@@ -405,17 +414,20 @@ Lucro por peça          R$ 32,40   (65%)</div>
         <h2>Financeiro</h2>
         <p class="para">Quem pagou, quem deve e de qual pedido — sem planilha.</p>
         <h3>Os quatro números</h3>
+        <p class="para">Aqui não tem filtro de data: os números somam <b>todos os pedidos desde o começo</b> (menos os cancelados).
+        Para ver um mês ou uma semana, use <a href="#relatorios">Relatórios</a>.</p>
         <div class="tw">
           <table>
             <thead><tr><th>Número</th><th>O que é</th></tr></thead>
             <tbody>
               <tr><td><b>Previsto</b></td><td>A soma de todos os pedidos</td></tr>
-              <tr><td><b>Recebido</b></td><td>O que já entrou no caixa</td></tr>
+              <tr><td><b>Recebido</b></td><td>Tudo o que já foi pago nesses pedidos</td></tr>
               <tr><td><b>A receber</b></td><td>O que ainda vão te pagar</td></tr>
-              <tr><td><b>Atrasado</b></td><td>Passou do prazo — é a sua lista de cobrança</td></tr>
+              <tr><td><b>Atrasado</b></td><td>Saldo dos pedidos cujo prazo já passou — é a sua lista de cobrança</td></tr>
             </tbody>
           </table>
         </div>
+        <div class="tip"><b>Quando um pedido fica atrasado?</b> Só a partir do <b>dia seguinte</b> ao prazo, no horário de Brasília. No próprio dia do prazo ele ainda não conta como atrasado.</div>
         <h3>Cobrar quem está devendo</h3>
         <ol class="pass">
           <li>A lista <b>A cobrar</b> já vem ordenada do <b>mais atrasado</b> para o menos — é a ordem em que se pega o telefone.</li>
@@ -425,7 +437,7 @@ Lucro por peça          R$ 32,40   (65%)</div>
         </ol>
 
         <h3>O histórico</h3>
-        <p class="para">Abaixo, <b>Pagamentos recebidos</b> mostra tudo que já entrou, do mais recente para o mais antigo,
+        <p class="para">Abaixo, <b>Pagamentos recebidos</b> mostra os últimos 60 recebimentos, do mais recente para o mais antigo,
         com a <b>data</b> em que foi pago e a forma de pagamento.</p>
         <div class="tip"><b>Cliente sem WhatsApp cadastrado?</b> No lugar do botão aparece um aviso. Preencha o telefone
         dele em Clientes para poder cobrar por ali.</div>
@@ -438,18 +450,45 @@ Lucro por peça          R$ 32,40   (65%)</div>
         <h2>Relatórios</h2>
         <p class="para">Onde o sistema deixa de ser cadastro e vira decisão.</p>
         <ol class="pass">
-          <li>Escolha o período (ou use <span class="ui">Mês atual</span>) e clique em <span class="ui">Aplicar</span>.</li>
-          <li>Leia faturamento, recebido, <b>lucro estimado</b> e <b>margem</b>.</li>
+          <li>Clique em <span class="ui">Esta semana</span>, <span class="ui">Este mês</span> ou <span class="ui">Mês passado</span> — ou digite as datas <b>De</b> e <b>Até</b> e clique em <span class="ui">Aplicar</span>.</li>
+          <li>Leia os quatro números do alto (tabela abaixo).</li>
           <li>Use <span class="ui">Exportar CSV</span> para abrir no Excel ou mandar para o contador.</li>
         </ol>
+        <h3>Os quatro números do alto</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Número</th><th>O que é</th></tr></thead>
+            <tbody>
+              <tr><td><b>Faturamento</b></td><td>O total dos pedidos <b>lançados</b> no período (pela data do pedido), sem os cancelados. Embaixo, quanto desses pedidos ainda falta receber.</td></tr>
+              <tr><td><b>Entrou no caixa</b></td><td>O dinheiro que <b>entrou</b> no período, pela data do recebimento — não importa de quando é o pedido. Pagamento de pedido cancelado não conta.</td></tr>
+              <tr><td><b>Lucro estimado</b></td><td>Peças + serviços cobrados − custo cadastrado das peças × quantidade. Embaixo, a margem.</td></tr>
+              <tr><td><b>Pedidos no período</b></td><td>Quantos pedidos foram lançados no período.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip"><b>Faturamento e Entrou no caixa são perguntas diferentes.</b> Um pedido de agosto pago em setembro conta no faturamento de agosto e no caixa de setembro.</div>
+
+        <h3>Comparação com o período anterior</h3>
+        <p class="para">Embaixo de cada número aparece quanto subiu ou caiu "vs período anterior". O período anterior é o equivalente:</p>
+        <ul class="dots">
+          <li><b>Mês inteiro</b> (ex.: Mês passado, ou de 1º a 31/08 digitado) — compara com o mês inteiro antes dele.</li>
+          <li><b>Este mês</b>, até hoje — compara com os mesmos dias do mês anterior (dia 1 a 14 com dia 1 a 14).</li>
+          <li><b>Esta semana</b> (começa na segunda) — compara com os mesmos dias da semana anterior.</li>
+          <li><b>Qualquer outro intervalo</b> — compara com um período do mesmo tamanho, logo antes.</li>
+        </ul>
+
+        <h3>O lucro é uma estimativa</h3>
+        <div class="tip warn"><b>O lucro só desconta o custo que você cadastrou na peça.</b> Aluguel, salários, luz e impostos <b>não</b> entram. Serviço (silk, bordado...) entra sem custo nenhum, porque o sistema não guarda custo de serviço. E o custo usado é o que está cadastrado <b>hoje</b> em <a href="#produtos">Produtos</a>. Se aparecer o aviso amarelo de peças sem custo, o lucro está maior do que o real.</div>
+
         <h3>O que dá para descobrir</h3>
         <ul class="dots">
-          <li><b>Qual peça vende mais</b> e qual cliente compra mais.</li>
+          <li><b>Qual peça vende mais</b>, qual cliente compra mais e quais peças e clientes <b>dão mais lucro</b> (o lucro por cliente inclui os serviços).</li>
           <li><b>Faturamento por serviço:</b> quanto o silk, o bordado e a costura renderam — pelo que foi realmente cobrado nos pedidos.</li>
           <li><b>Serviço x peça própria:</b> você ganha mais prestando serviço ou fazendo sua própria peça?</li>
+          <li><b>Entregue no prazo:</b> a porcentagem de pedidos entregues até o dia do prazo. Conta só a chegada na etapa <b>Entregue</b> (a primeira vez), e pedido sem prazo fica de fora. Entregar no próprio dia do prazo é no prazo.</li>
           <li><b>Produção por responsável</b> e pedidos parados em cada etapa.</li>
         </ul>
-        <div class="tip warn"><b>Os números valem o que os cadastros valem.</b> Se o preço dos materiais estiver desatualizado, a margem vai estar errada. Reveja de vez em quando.</div>
+        <div class="tip warn"><b>Os números valem o que os cadastros valem.</b> Se o custo das peças estiver desatualizado, a margem vai estar errada. Reveja de vez em quando.</div>
       </section>
 
       <!-- PORTAL -->
@@ -563,8 +602,9 @@ Lucro por peça          R$ 32,40   (65%)</div>
           <li><b>Ao vender:</b> lance o <a href="#pedidos">pedido</a> com prazo e entrada. Imprima a ficha para a oficina.</li>
           <li><b>Durante o dia:</b> a equipe usa a <a href="#bancada">Bancada</a>. O quadro de Produção se atualiza sozinho.</li>
           <li><b>Ao receber dinheiro:</b> dê baixa no <a href="#financeiro">Financeiro</a>.</li>
-          <li><b>Ao comprar material:</b> lance a entrada no <a href="#estoque">Estoque</a>.</li>
-          <li><b>Fim do mês:</b> confira lucro e margem em <a href="#relatorios">Relatórios</a>.</li>
+          <li><b>Ao terminar e ao entregar:</b> mova o pedido para <b>Pronto</b> e depois para <b>Entregue</b>. É isso que põe e tira as peças da prateleira no <a href="#estoque">Estoque</a> — não precisa lançar nada à mão.</li>
+          <li><b>De vez em quando:</b> conte a prateleira e use <b>Contei e tenho</b> no <a href="#estoque">Estoque</a> para acertar o número.</li>
+          <li><b>Fim do mês:</b> clique em <span class="ui">Mês passado</span> em <a href="#relatorios">Relatórios</a> e confira faturamento, o que entrou no caixa e o lucro estimado.</li>
         </ol>
       </section>
 
@@ -577,8 +617,12 @@ Lucro por peça          R$ 32,40   (65%)</div>
             <thead><tr><th>Situação</th><th>O que fazer</th></tr></thead>
             <tbody>
               <tr><td>Não vejo uma tela que está neste manual</td><td>Ou o seu cargo não tem acesso, ou a sua confecção não contratou aquele módulo. Fale com o dono.</td></tr>
-              <tr><td>Vendi peças e o estoque não baixou</td><td>A ficha técnica daquela peça está vazia. Preencha em <a href="#produtos">Produtos</a>.</td></tr>
-              <tr><td>O lucro no relatório parece alto demais</td><td>Falta preço em algum material, ou os <b>outros custos</b> da peça (facção, mão de obra) não foram preenchidos.</td></tr>
+              <tr><td>Lancei o pedido e o estoque não mudou</td><td>É assim mesmo. As peças só entram na prateleira quando o pedido chega em <b>Pronto</b>, e saem quando ele vai para <b>Entregue</b>. Veja <a href="#estoque">Estoque</a>.</td></tr>
+              <tr><td>O pedido ficou pronto e a peça não entrou no estoque</td><td>O item do pedido não está ligado a uma peça do catálogo, ou a peça está cadastrada como <b>Serviço na peça do cliente</b>. Só <b>Peça própria</b> do catálogo entra.</td></tr>
+              <tr><td>O número do estoque não bate com a prateleira</td><td>Conte e lance <b>Contei e tenho</b> com o número real no <a href="#estoque">Estoque</a>.</td></tr>
+              <tr><td>O lucro no relatório parece alto demais</td><td>Alguma peça está sem custo, ou o custo digitado não inclui tudo (tecido, facção, mão de obra). Corrija em <a href="#produtos">Produtos</a>. Lembre também que aluguel, salários e impostos não são descontados.</td></tr>
+              <tr><td>Faturamento e "Entrou no caixa" dão valores diferentes</td><td>Normal: faturamento é pela data do pedido; caixa é pela data em que o dinheiro entrou. Veja <a href="#relatorios">Relatórios</a>.</td></tr>
+              <tr><td>O prazo é hoje e o pedido não aparece como atrasado</td><td>Correto: ele só fica atrasado a partir do dia seguinte ao prazo.</td></tr>
               <tr><td>O pedido sumiu da fila da bancada</td><td>Ele foi concluído e avançou de etapa. Procure no quadro de <a href="#producao">Produção</a>.</td></tr>
               <tr><td>Esqueci minha senha</td><td>Peça ao dono para criar uma nova em <a href="#funcionarios">Funcionários</a>.</td></tr>
               <tr><td>Quero mudar as etapas da produção</td><td><a href="#configuracoes">Configurações</a> → Etapas da produção.</td></tr>

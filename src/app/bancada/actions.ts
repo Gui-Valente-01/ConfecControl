@@ -10,6 +10,7 @@ import type { FormState } from "@/lib/form-state";
 import { canAccessRoute } from "@/lib/roles";
 import { registrarAviso } from "@/app/avisos/actions";
 import { prisma } from "@/lib/prisma";
+import { sincronizarPrateleira } from "@/lib/prateleira-db";
 import { storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 import { explicarRecusa, mesaAceitaEtapa, mesasCompativeis } from "@/lib/mesa-rules";
 import { isTaskStageOutdated, pickNextStage } from "@/lib/production";
@@ -145,26 +146,29 @@ export async function completeTaskAction(_prev: FormState, formData: FormData): 
     return { success: `Pedido #${task.order.number} concluído.` };
   }
 
-  await prisma.$transaction([
-    prisma.bancadaTask.update({ where: { id: task.id }, data: doneData }),
-    prisma.order.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.bancadaTask.update({ where: { id: task.id }, data: doneData });
+    await tx.order.update({
       where: { id: task.orderId },
       data: { currentStageId: nextStage.id, status: stageNameToOrderStatus(nextStage.name) },
-    }),
-    prisma.productionHistory.create({
+    });
+    await tx.productionHistory.create({
       data: {
         orderId: task.orderId,
         fromStageId: currentStage.id,
         toStageId: nextStage.id,
         note: note ? `Concluído na bancada por ${user.name} - ${note}` : `Concluído na bancada por ${user.name}`,
       },
-    }),
-  ]);
+    });
+    // A bancada também leva pedido até Pronto: a prateleira acompanha.
+    await sincronizarPrateleira(tx, task.orderId, "etapa");
+  });
 
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
   revalidatePath("/bancada");
+  revalidatePath("/estoque");
   const nomeFinal = nextStage.name.toLowerCase();
   await registrarAviso({
     companyId: user.companyId,

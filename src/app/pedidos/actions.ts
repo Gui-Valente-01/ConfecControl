@@ -10,16 +10,20 @@ import { dateInputToDate, moneyToCents } from "@/lib/format";
 import { companyIdWithCapability, requireUser } from "@/lib/auth";
 import { canManageOrders } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
-import { parseItems, parseServices, resolvePaymentStatus, type ParsedItem } from "@/lib/order-items";
-import { computeProductConsumption } from "@/lib/production";
+import { parseItems, parseServices, resolvePaymentStatus } from "@/lib/order-items";
+import { planejarEdicaoDaEntrada, resolveStatusFromReceipts, sumReceipts } from "@/lib/payments";
+import { sincronizarPrateleira } from "@/lib/prateleira-db";
 import { registrarAviso } from "@/app/avisos/actions";
-import { prisma, type TransactionClient } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import { stageNameToOrderStatus } from "@/lib/status";
 import { removeAttachmentByPath, removeAttachmentFromStorage, storageConfigured, uploadAttachmentToStorage } from "@/lib/storage";
 import { caminhoNoBucket, normalizarNome, validarArquivo } from "@/lib/upload-validation";
 
 
 const orderPriorities: OrderPriority[] = ["LOW", "NORMAL", "HIGH", "URGENT"];
+
+// Recusa de dentro da transação: desfaz tudo e vira mensagem para quem editou.
+class ErroDeEdicao extends Error {}
 
 // Bloqueia cargos sem permissão de gerir pedidos (ex.: Produção é só leitura).
 async function ensureCanManageOrders(): Promise<FormState | null> {
@@ -147,7 +151,7 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   const clientId = String(formData.get("clientId") ?? "");
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
-  const paidAmountInCents = moneyToCents(String(formData.get("paid") ?? ""));
+  const entradaInformada = moneyToCents(String(formData.get("paid") ?? ""));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
   const services = parseServices(String(formData.get("services") ?? "[]"));
@@ -179,6 +183,10 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   const servicesTotalInCents = services.reduce((sum, service) => sum + service.priceInCents, 0);
   const totalAmountInCents =
     normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0) + servicesTotalInCents;
+  // A entrada nunca passa do total, como no "Recebi". Cliente que paga R$ 200
+  // num pedido de R$ 150 leva R$ 50 de troco: entraram R$ 150, e gravar R$ 200
+  // inflava o caixa do relatório.
+  const paidAmountInCents = Math.min(entradaInformada, totalAmountInCents);
   const paymentStatus = resolvePaymentStatus(paidAmountInCents, totalAmountInCents);
 
   const firstStage = await prisma.productionStage.findFirst({
@@ -186,7 +194,8 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
     orderBy: { position: "asc" },
   });
 
-  // Cria pedido, itens, pagamento e baixa de estoque numa única transação.
+  // Cria pedido, itens e pagamento numa única transação. Criar NÃO mexe no
+  // estoque: as peças só entram na prateleira quando o pedido fica pronto.
   // O número é gerado dentro da transação; se houver corrida (P2002 no
   // @@unique [companyId, number]), tenta de novo com o próximo número.
   let criado: { id: string; number: number } | null = null;
@@ -248,7 +257,9 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
           select: { id: true },
         });
 
-        await consumeStockForOrder(tx, created.id, number, companyId, normalizedItems);
+        // Não faz nada no caso comum. Só age se a primeira etapa da empresa já
+        // for "Pronto" — aí o pedido nasce na prateleira.
+        await sincronizarPrateleira(tx, created.id, "etapa");
         return { id: created.id, number };
       });
       break;
@@ -281,61 +292,6 @@ export async function createOrderAction(_prev: FormState, formData: FormData): P
   return { success: `Pedido #${pedidoCriado.number} criado.` };
 }
 
-// Baixa automática de materiais conforme a ficha tecnica (BOM) dos produtos do pedido.
-// Roda sempre dentro de uma transação (tx) e usa update atômico no banco
-// (GREATEST(0, qty - x)) para evitar lost update em baixas concorrentes.
-async function consumeStockForOrder(
-  tx: TransactionClient,
-  orderId: string,
-  orderNumber: number,
-  companyId: string,
-  items: ParsedItem[],
-) {
-  const consumo = computeProductConsumption(items);
-  if (consumo.size === 0) return;
-
-  for (const [productId, qty] of consumo) {
-    if (qty <= 0) continue;
-    // GREATEST(0, ...) evita estoque negativo: vender peça que acabou é
-    // comum e legítimo (encomenda), e travar o pedido por isso seria pior
-    // do que mostrar zero.
-    const afetadas = await tx.$executeRaw`
-      UPDATE "produtos"
-      SET "currentQuantity" = GREATEST(0, "currentQuantity" - ${qty})
-      WHERE "id" = ${productId} AND "companyId" = ${companyId}`;
-    if (afetadas > 0) {
-      await tx.stockMovement.create({
-        data: { productId, orderId, type: "OUT", quantity: qty, note: `Baixa automática do pedido #${orderNumber}` },
-      });
-    }
-  }
-}
-
-// Devolve ao estoque tudo que foi baixado automaticamente por este pedido
-// e remove os movimentos correspondentes. Usado ao editar ou excluir pedido.
-async function reverseStockForOrder(tx: TransactionClient, orderId: string) {
-  const movimentos = await tx.stockMovement.findMany({
-    where: { orderId, type: "OUT" },
-    select: { materialId: true, productId: true, quantity: true },
-  });
-  for (const m of movimentos) {
-    // Pedido antigo baixou material; pedido novo baixa peça. Devolver cada um
-    // ao lugar certo mantém correto o histórico anterior à mudança.
-    if (m.productId) {
-      await tx.product.update({
-        where: { id: m.productId },
-        data: { currentQuantity: { increment: Number(m.quantity) } },
-      });
-    } else if (m.materialId) {
-      await tx.material.update({
-        where: { id: m.materialId },
-        data: { currentQuantity: { increment: m.quantity } },
-      });
-    }
-  }
-  await tx.stockMovement.deleteMany({ where: { orderId, type: "OUT" } });
-}
-
 export async function updateOrderAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const denied = await ensureCanManageOrders();
   if (denied) return denied;
@@ -344,6 +300,9 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
   const deliveryDate = dateInputToDate(String(formData.get("deliveryDate") ?? ""));
   const paymentMethod = String(formData.get("paymentMethod") ?? "").trim();
   const paidAmountInCents = moneyToCents(String(formData.get("paid") ?? ""));
+  // O "pago" que a tela mostrava ao abrir. Ausente = formulário antigo.
+  const paidOriginalRaw = formData.get("paidOriginal");
+  const pagoMostrado = paidOriginalRaw === null ? null : moneyToCents(String(paidOriginalRaw));
   const internalNotes = String(formData.get("notes") ?? "").trim();
   const items = parseItems(String(formData.get("items") ?? "[]"));
   const services = parseServices(String(formData.get("services") ?? "[]"));
@@ -357,9 +316,14 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
 
   const order = await prisma.order.findFirst({
     where: { id, companyId },
-    include: { payments: { orderBy: { createdAt: "asc" } } },
+    include: { payments: { orderBy: [{ createdAt: "asc" }, { id: "asc" }] } },
   });
   if (!order) return { error: "Pedido não encontrado." };
+
+  // Confere antes de abrir a transação, para responder rápido no caso comum.
+  // A mesma conta é refeita lá dentro, com o que existir no banco na hora.
+  const previa = planejarEdicaoDaEntrada(order.payments, paidAmountInCents, pagoMostrado);
+  if ("erro" in previa) return { error: previa.erro };
 
   const client = await prisma.client.findFirst({ where: { id: clientId, companyId }, select: { id: true } });
   if (!client) return { error: "Cliente inválido." };
@@ -379,75 +343,101 @@ export async function updateOrderAction(_prev: FormState, formData: FormData): P
   const servicesTotalInCents = services.reduce((sum, service) => sum + service.priceInCents, 0);
   const totalAmountInCents =
     normalizedItems.reduce((sum, item) => sum + item.totalPriceInCents, 0) + servicesTotalInCents;
-  const paymentStatus = resolvePaymentStatus(paidAmountInCents, totalAmountInCents);
 
-  await prisma.$transaction(async (tx) => {
-    await tx.orderItem.deleteMany({ where: { orderId: id } });
-    await tx.orderService.deleteMany({ where: { orderId: id } });
-    await tx.order.update({
-      where: { id },
-      data: {
-        clientId,
-        deliveryDate,
-        paymentStatus,
-        totalAmountInCents,
-        paidAmountInCents,
-        paymentMethod: paymentMethod || null,
-        internalNotes: internalNotes || null,
-        items: {
-          create: normalizedItems.map((item) => ({
-            productId: item.productId,
-            description: item.description,
-            size: item.size,
-            color: item.color,
-            quantity: item.quantity,
-            unitPriceInCents: item.unitPriceInCents,
-            totalPriceInCents: item.totalPriceInCents,
-          })),
-        },
-        services: {
-          create: services.map((service) => ({
-            name: service.name,
-            priceInCents: service.priceInCents,
-          })),
-        },
+  try {
+    await prisma.$transaction(
+      async (tx) => {
+        // O campo "pago" da edição mexe só no PRIMEIRO recebimento — o da entrada.
+        // Recebimentos posteriores são histórico de caixa e não podem ser reescritos
+        // por quem só voltou ao pedido para ajustar um prazo. Lido AQUI DENTRO:
+        // um "Recebi" lançado enquanto a tela de edição estava aberta conta.
+        const recebimentos = await tx.payment.findMany({
+          where: { orderId: id },
+          orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+          select: { id: true, amountInCents: true, method: true },
+        });
+        const plano = planejarEdicaoDaEntrada(recebimentos, paidAmountInCents, pagoMostrado);
+        if ("erro" in plano) throw new ErroDeEdicao(plano.erro);
+
+        await tx.orderItem.deleteMany({ where: { orderId: id } });
+        await tx.orderService.deleteMany({ where: { orderId: id } });
+        await tx.order.update({
+          where: { id },
+          data: {
+            clientId,
+            deliveryDate,
+            totalAmountInCents,
+            paymentMethod: paymentMethod || null,
+            internalNotes: internalNotes || null,
+            items: {
+              create: normalizedItems.map((item) => ({
+                productId: item.productId,
+                description: item.description,
+                size: item.size,
+                color: item.color,
+                quantity: item.quantity,
+                unitPriceInCents: item.unitPriceInCents,
+                totalPriceInCents: item.totalPriceInCents,
+              })),
+            },
+            services: {
+              create: services.map((service) => ({
+                name: service.name,
+                priceInCents: service.priceInCents,
+              })),
+            },
+          },
+        });
+
+        const [entrada] = recebimentos;
+        if (plano.acao === "atualizar" && entrada) {
+          await tx.payment.update({
+            where: { id: entrada.id },
+            data: { amountInCents: plano.valor, method: paymentMethod || entrada.method },
+          });
+        } else if (plano.acao === "apagar" && entrada) {
+          // Entrada zerada na edição: some do histórico, porque aquele dinheiro não entrou.
+          await tx.payment.delete({ where: { id: entrada.id } });
+        } else if (plano.acao === "criar") {
+          await tx.payment.create({
+            data: {
+              orderId: id,
+              amountInCents: plano.valor,
+              status: "PAID",
+              method: paymentMethod || null,
+              note: "Entrada do pedido",
+              paidAt: new Date(),
+            },
+          });
+        }
+
+        // O "pago" do pedido é a soma do que existe DE FATO em recebimentos,
+        // e não o número digitado. Gravar o digitado deixava o relatório e o
+        // financeiro com valores diferentes para o mesmo pedido.
+        const depois = await tx.payment.findMany({ where: { orderId: id }, select: { amountInCents: true } });
+        await tx.order.update({
+          where: { id },
+          data: {
+            paidAmountInCents: sumReceipts(depois),
+            paymentStatus: resolveStatusFromReceipts(totalAmountInCents, depois),
+          },
+        });
+
+        // Pedido pronto que teve item alterado: a prateleira acompanha.
+        await sincronizarPrateleira(tx, id, "edicao");
       },
-    });
-
-    // O campo "entrada" da edição mexe só no PRIMEIRO recebimento — o da entrada.
-    // Recebimentos posteriores são histórico de caixa e não podem ser reescritos
-    // por quem só voltou ao pedido para ajustar um prazo.
-    const [entrada, ...posteriores] = order.payments;
-    const recebidoDepois = posteriores.reduce((sum, p) => sum + p.amountInCents, 0);
-    const novaEntrada = Math.max(0, paidAmountInCents - recebidoDepois);
-
-    if (entrada && novaEntrada > 0) {
-      await tx.payment.update({
-        where: { id: entrada.id },
-        data: { amountInCents: novaEntrada, method: paymentMethod || entrada.method },
-      });
-    } else if (entrada && novaEntrada === 0) {
-      // Entrada zerada na edição: some do histórico, porque aquele dinheiro não entrou.
-      await tx.payment.delete({ where: { id: entrada.id } });
-    } else if (!entrada && novaEntrada > 0) {
-      await tx.payment.create({
-        data: {
-          orderId: id,
-          amountInCents: novaEntrada,
-          status: "PAID",
-          method: paymentMethod || null,
-          note: "Entrada do pedido",
-          paidAt: new Date(),
-        },
-      });
+      { isolationLevel: "Serializable" },
+    );
+  } catch (erro) {
+    if (erro instanceof ErroDeEdicao) return { error: erro.message };
+    if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2034") {
+      return { error: "Outra pessoa mexeu neste pedido ao mesmo tempo. Confira e salve de novo." };
     }
-
-    // Recalcula o estoque: devolve a baixa antiga e aplica a nova conforme os itens atuais.
-    await reverseStockForOrder(tx, id);
-    await consumeStockForOrder(tx, id, order.number, companyId, normalizedItems);
-  });
+    throw erro;
+  }
 
   revalidatePath("/");
+  revalidatePath("/estoque");
   revalidatePath("/pedidos");
   revalidatePath(`/pedidos/${id}`);
   revalidatePath("/producao");
@@ -472,8 +462,10 @@ export async function deleteOrderAction(_prev: FormState, formData: FormData): P
       select: { id: true, attachments: { select: { url: true } } },
     });
     if (!order) return null;
-    // Devolve o estoque baixado antes de remover o pedido (os movimentos seriam perdidos).
-    await reverseStockForOrder(tx, id);
+    // Se o pedido estava pronto, as peças dele saem da prateleira. Não
+    // "devolve" nada: criar o pedido não tira peça do estoque, então não há
+    // o que devolver — era a devolução que inventava estoque que não existia.
+    await sincronizarPrateleira(tx, id, "exclusao", { remover: true });
     await tx.order.delete({ where: { id } });
     return order.attachments.map((a) => a.url);
   });

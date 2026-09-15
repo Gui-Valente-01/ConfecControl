@@ -1,17 +1,17 @@
-import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Package, SlidersHorizontal } from "lucide-react";
+import { AlertTriangle, ArrowDownCircle, ArrowUpCircle, Package, PackageCheck, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 import { registerStockMovementAction, setProductMinimumAction } from "@/app/estoque/actions";
 import { MetricCard } from "@/components/metric-card";
 import { SectionCard } from "@/components/section-card";
 import { ToastForm } from "@/components/toast-form";
-import { centsToCurrency, formatDateTime } from "@/lib/format";
+import { centsToCurrency, formatDateTime, formatShortDate } from "@/lib/format";
 import type { StockMovementType } from "@prisma/client";
 
-// Estoque da PEÇA PRONTA.
+// Estoque de LOJA: o que já está feito.
 //
-// Quem usa isto é a confecção que compra a peça e presta serviço em cima dela
-// (estampa, bordado). A pergunta que a tela responde é "quantos bonés brancos
-// eu tenho na prateleira agora?" — não quanto tecido sobrou.
+// A pergunta que a tela responde é "o que eu tenho pronto na prateleira
+// agora?" — não quanto tecido sobrou, nem o que vai entrar na produção. O
+// pedido pronto entra aqui sozinho e sai quando é entregue.
 
 type Peca = {
   id: string;
@@ -34,9 +34,19 @@ type Movimento = {
   orderNumber: number | null;
 };
 
+type PedidoPronto = {
+  id: string;
+  number: number;
+  deliveryDate: Date | null;
+  client: { name: string };
+  items: { id: string; description: string; size: string | null; color: string | null; quantity: number }[];
+};
+
 type Props = {
   pecas: Peca[];
   movimentos: Movimento[];
+  /** Pedidos em "Pronto": feitos, esperando o cliente buscar. */
+  prontos: PedidoPronto[];
   canManage: boolean;
 };
 
@@ -51,22 +61,30 @@ function descrever(p: Peca) {
   return [p.name, p.size, p.color].filter(Boolean).join(" · ");
 }
 
-export function DbStockManager({ pecas, movimentos, canManage }: Props) {
+export function DbStockManager({ pecas, movimentos, prontos, canManage }: Props) {
   // Só entra no aviso quem tem mínimo definido: peça com mínimo 0 e estoque 0
   // não está "acabando", é peça que a confecção não guarda em prateleira.
   const acabando = pecas.filter((p) => p.minimumQuantity > 0 && p.currentQuantity <= p.minimumQuantity);
   const totalPecas = pecas.reduce((s, p) => s + p.currentQuantity, 0);
   const valorParado = pecas.reduce((s, p) => s + p.currentQuantity * p.costInCents, 0);
+  const pecasProntas = prontos.reduce((s, o) => s + o.items.reduce((x, i) => x + i.quantity, 0), 0);
 
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Resumo do estoque">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Resumo do estoque">
         <MetricCard
           label="Peças na prateleira"
           value={String(totalPecas)}
           note="somando todas as peças"
           icon={Package}
           tone="info"
+        />
+        <MetricCard
+          label="Esperando retirada"
+          value={String(prontos.length)}
+          note={prontos.length === 0 ? "nenhum pedido pronto" : `${pecasProntas} peça(s) em pedidos prontos`}
+          icon={PackageCheck}
+          tone={prontos.length > 0 ? "primary" : "neutral"}
         />
         <MetricCard
           label="Acabando"
@@ -95,6 +113,32 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
           </p>
         </div>
       ) : null}
+
+      <SectionCard eyebrow="Prateleira" title="Prontos esperando retirada">
+        {prontos.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted">
+            Nenhum pedido pronto agora. Quando um pedido chega em Pronto, ele aparece aqui até ser entregue.
+          </p>
+        ) : (
+          <ul className="divide-y divide-divider">
+            {prontos.map((o) => (
+              <li key={o.id} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1 py-3">
+                <div className="min-w-0 flex-1">
+                  <Link href={`/pedidos/${o.id}`} className="font-semibold text-fg hover:text-primary-dark">
+                    <span className="font-mono text-muted">#{o.number}</span> {o.client.name}
+                  </Link>
+                  <p className="mt-0.5 text-sm text-muted">
+                    {o.items
+                      .map((i) => `${i.quantity}× ${[i.description, i.size, i.color].filter(Boolean).join(" · ")}`)
+                      .join(" · ")}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-soft">prazo {formatShortDate(o.deliveryDate)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
 
       <SectionCard
         eyebrow="Prateleira"
@@ -202,7 +246,7 @@ export function DbStockManager({ pecas, movimentos, canManage }: Props) {
       <SectionCard eyebrow="Histórico" title="Últimas movimentações">
         {movimentos.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted">
-            Nenhuma movimentação ainda. Ao lançar um pedido, a peça sai daqui sozinha.
+            Nenhuma movimentação ainda. Quando um pedido fica pronto, as peças entram aqui sozinhas; na entrega, saem.
           </p>
         ) : (
           <ul className="divide-y divide-divider">

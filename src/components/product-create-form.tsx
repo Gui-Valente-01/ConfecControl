@@ -12,7 +12,7 @@ const fields: [string, string, string][] = [
   ["category", "Categoria", "Ex.: Uniformes"],
   ["fabric", "Tecido", "Ex.: Moletom 3 cabos"],
   ["price", "Valor padrão", "Ex.: R$ 120"],
-  ["cost", "Outros custos por peça", "Ex.: R$ 70"],
+  ["cost", "Custo por peça (tudo somado)", "Ex.: R$ 70"],
   ["time", "Prazo médio", "Ex.: 8 dias"],
 ];
 

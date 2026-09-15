@@ -7,6 +7,7 @@ import { canManageProduction } from "@/lib/roles";
 import type { FormState } from "@/lib/form-state";
 import { registrarAviso } from "@/app/avisos/actions";
 import { prisma } from "@/lib/prisma";
+import { sincronizarPrateleira } from "@/lib/prateleira-db";
 import { isStageOutdated, pickNextStage } from "@/lib/production";
 import { stageNameToOrderStatus } from "@/lib/status";
 
@@ -59,27 +60,30 @@ export async function moveOrderStageAction(_prev: FormState, formData: FormData)
 
   if (!nextStage) return { error: "O pedido já está na última etapa ativa." };
 
-  await prisma.$transaction([
-    prisma.order.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
       where: { id: orderId },
       data: {
         currentStageId: nextStage.id,
         status: stageNameToOrderStatus(nextStage.name),
       },
-    }),
-    prisma.productionHistory.create({
+    });
+    await tx.productionHistory.create({
       data: {
         orderId,
         fromStageId: currentStage.id,
         toStageId: nextStage.id,
         note: note || null,
       },
-    }),
-  ]);
+    });
+    // Chegou em Pronto: as peças entram na prateleira. Foi para Entregue: saem.
+    await sincronizarPrateleira(tx, orderId, "etapa");
+  });
 
   revalidatePath("/");
   revalidatePath("/pedidos");
   revalidatePath("/producao");
+  revalidatePath("/estoque");
   const nomeEtapa = nextStage.name.toLowerCase();
   const tipoAviso =
     nomeEtapa.includes("entregue") ? "PEDIDO_ENTREGUE" : nomeEtapa.includes("pronto") ? "PEDIDO_PRONTO" : "ETAPA_MUDOU";

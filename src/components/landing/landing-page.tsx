@@ -13,7 +13,7 @@ import { Reveal } from "./reveal";
 const pains = [
   {
     quote: "Vendi o que não tinha na prateleira.",
-    fix: "Cada peça mostra quantas você tem. Ao lançar o pedido, o sistema baixa do estoque e avisa quando chega no mínimo, antes de faltar.",
+    fix: "Cada peça mostra quantas você tem pronta. O pedido que fica pronto entra na prateleira sozinho e sai na entrega, e o sistema avisa quando uma peça chega no mínimo.",
   },
   {
     quote: "A cliente ligou cobrando um pedido que ninguém lembrava.",
@@ -32,7 +32,7 @@ const steps = [
   },
   {
     title: "Lance os pedidos em aberto",
-    body: "Cliente, itens, prazo e entrada. O estoque baixa sozinho e o pedido entra na fila de produção.",
+    body: "Cliente, itens, prazo e entrada. O pedido entra na fila de produção e, quando fica pronto, vai sozinho para o estoque.",
   },
   {
     title: "Acompanhe o quadro todo dia",
@@ -127,9 +127,9 @@ export function LandingPage() {
             <Reveal className="md:col-span-7">
               <div className="flex h-full flex-col justify-between gap-6 rounded-2xl border border-line bg-canvas p-6">
                 <div>
-                  <h3 className="text-lg font-semibold">Estoque que baixa sozinho</h3>
+                  <h3 className="text-lg font-semibold">Estoque que se atualiza sozinho</h3>
                   <p className="mt-1.5 max-w-md text-sm leading-relaxed text-muted">
-                    Cada pedido desconta as peças que saíram. Quando uma peça chega no mínimo que você definiu, aparece o alerta de reposição.
+                    Pedido pronto entra na prateleira e sai quando é entregue. Quando uma peça chega no mínimo que você definiu, aparece o alerta de reposição.
                   </p>
                 </div>
                 <MiniStock />

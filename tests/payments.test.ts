@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeBalance,
+  planejarEdicaoDaEntrada,
   resolveReceiptAmount,
   resolveStatusFromReceipts,
   sumReceipts,
@@ -83,5 +84,36 @@ describe("resolveReceiptAmount", () => {
 
   it("pedido quitado nao aceita mais nada", () => {
     expect(resolveReceiptAmount(0, 10000)).toBe(0);
+  });
+});
+
+describe("planejarEdicaoDaEntrada (editar o pedido e mexer no valor pago)", () => {
+  const entradaDe = (v: number) => ({ amountInCents: v });
+
+  it("sem mudar o valor pago, nada muda", () => {
+    expect(planejarEdicaoDaEntrada([entradaDe(22500), entradaDe(52500)], 75000)).toEqual({ acao: "manter" });
+  });
+
+  it("aumentar o pago muda so a entrada, nao o recebimento de depois", () => {
+    expect(planejarEdicaoDaEntrada([entradaDe(22500), entradaDe(10000)], 40000)).toEqual({ acao: "atualizar", valor: 30000 });
+  });
+
+  it("pago igual ao que entrou depois: a entrada some", () => {
+    expect(planejarEdicaoDaEntrada([entradaDe(22500), entradaDe(10000)], 10000)).toEqual({ acao: "apagar" });
+  });
+
+  it("pago MENOR do que entrou depois da entrada: recusa, em vez de descasar os valores", () => {
+    const plano = planejarEdicaoDaEntrada([entradaDe(22500), entradaDe(52500)], 30000);
+    expect("erro" in plano).toBe(true);
+    if ("erro" in plano) expect(plano.erro).toContain("525,00");
+  });
+
+  it("pedido sem nenhum recebimento: digitar um valor cria a entrada", () => {
+    expect(planejarEdicaoDaEntrada([], 20000)).toEqual({ acao: "criar", valor: 20000 });
+    expect(planejarEdicaoDaEntrada([], 0)).toEqual({ acao: "manter" });
+  });
+
+  it("zerar a entrada de um pedido que so tinha a entrada apaga ela", () => {
+    expect(planejarEdicaoDaEntrada([entradaDe(22500)], 0)).toEqual({ acao: "apagar" });
   });
 });

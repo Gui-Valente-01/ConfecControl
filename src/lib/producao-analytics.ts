@@ -12,6 +12,9 @@
 //   - quem produz quanto?
 //   - com que frequência falta material no meio do trabalho?
 
+import { diasDeCalendario } from "@/lib/datas";
+import { stageNameToOrderStatus } from "@/lib/status";
+
 const DIA_MS = 86400000;
 
 function emDias(inicio: Date, fim: Date): number {
@@ -62,19 +65,26 @@ export type Pontualidade = {
  * não foi prometido, e incluí-lo como "no prazo" inflaria o número.
  */
 export function calcularPontualidade(pedidos: PedidoEntregue[]): Pontualidade {
-  const comPrazo = pedidos.filter((p): p is PedidoEntregue & { prazo: Date } => p.prazo !== null);
+  // Um pedido é UMA entrega. Se o mesmo número vier repetido, vale a primeira
+  // vez: contar duas vezes transformava um atraso em "50% no prazo".
+  const porNumero = new Map<number, PedidoEntregue>();
+  for (const p of pedidos) {
+    const ja = porNumero.get(p.numero);
+    if (!ja || p.entregueEm < ja.entregueEm) porNumero.set(p.numero, p);
+  }
+  const comPrazo = [...porNumero.values()].filter((p): p is PedidoEntregue & { prazo: Date } => p.prazo !== null);
 
   let noPrazo = 0;
   const atrasos: { numero: number; dias: number }[] = [];
 
   for (const pedido of comPrazo) {
-    // Comparação por DIA: entregar às 18h de uma data prometida para aquele dia
-    // é no prazo, não um atraso de algumas horas.
-    const prazoFim = new Date(pedido.prazo.getFullYear(), pedido.prazo.getMonth(), pedido.prazo.getDate(), 23, 59, 59);
-    if (pedido.entregueEm <= prazoFim) {
+    // Comparação por DIA, no calendário de Brasília: entregar às 22h do dia
+    // prometido é no prazo, não um atraso de algumas horas.
+    const dias = diasDeCalendario(pedido.prazo, pedido.entregueEm);
+    if (dias <= 0) {
       noPrazo++;
     } else {
-      atrasos.push({ numero: pedido.numero, dias: Math.ceil(emDias(prazoFim, pedido.entregueEm)) });
+      atrasos.push({ numero: pedido.numero, dias });
     }
   }
 
@@ -88,6 +98,37 @@ export function calcularPontualidade(pedidos: PedidoEntregue[]): Pontualidade {
     atrasoMedioDias: media(atrasos.map((a) => a.dias)),
     piorAtraso: pior,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Quando o pedido foi entregue
+// ---------------------------------------------------------------------------
+
+export type ChegadaEmEtapa = {
+  orderId: string;
+  /** Nome da etapa em que o pedido entrou. */
+  etapa: string;
+  quando: Date;
+};
+
+/**
+ * A entrega de cada pedido: a PRIMEIRA vez que ele entrou numa etapa de entrega.
+ *
+ * Antes, "Pronto" e "Entregue" contavam as duas como entrega. Como todo modelo
+ * de conta tem as duas etapas, cada pedido virava duas entregas, e um "Pronto"
+ * no prazo escondia uma entrega atrasada. Pronto é pronto; entregue é entregue.
+ *
+ * Quem decide se a etapa é de entrega é a mesma regra que dá o status ao
+ * pedido (nome com "entregue"), para relatório e quadro nunca discordarem.
+ */
+export function primeiraEntregaPorPedido(chegadas: ChegadaEmEtapa[]): Map<string, Date> {
+  const entregas = new Map<string, Date>();
+  for (const c of chegadas) {
+    if (stageNameToOrderStatus(c.etapa) !== "DELIVERED") continue;
+    const ja = entregas.get(c.orderId);
+    if (!ja || c.quando < ja) entregas.set(c.orderId, c.quando);
+  }
+  return entregas;
 }
 
 // ---------------------------------------------------------------------------

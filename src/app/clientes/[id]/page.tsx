@@ -55,7 +55,9 @@ export default async function ClienteDetalhePage({ params }: { params: Params })
 
   const totalBought = client.orders.reduce((sum, o) => sum + o.totalAmountInCents, 0);
   const totalPaid = client.orders.reduce((sum, o) => sum + o.paidAmountInCents, 0);
-  const balance = totalBought - totalPaid;
+  // Saldo pedido a pedido: pago a mais num pedido não abate o que o cliente
+  // deve em outro. É a soma dos "deve" da lista abaixo.
+  const balance = client.orders.reduce((sum, o) => sum + Math.max(0, o.totalAmountInCents - o.paidAmountInCents), 0);
 
   // Só pagamentos que realmente entraram, com a data em que caiu.
   const received = client.orders
