@@ -58,7 +58,7 @@ const navPrincipal = [
 const navMais = [
   { label: "Clientes", href: "/clientes", icon: Users },
   { label: "Peças", href: "/produtos", icon: Shirt },
-  { label: "Materiais", href: "/estoque", icon: Package },
+  { label: "Estoque", href: "/estoque", icon: Package },
   { label: "Terceirizadas", href: "/terceirizadas", icon: Handshake },
   { label: "Funcionários", href: "/usuarios", icon: ShieldCheck },
   { label: "Configurações", href: "/configuracoes", icon: Settings },
